@@ -124,7 +124,7 @@ export function PowerTileView() {
   return (
     <>
       <TileHead icon={<Bloom className="size-4" />} title="tu superpoder de hoy" />
-      <div className="grid gap-3 sm:grid-cols-[auto_1fr] sm:items-end sm:gap-8">
+      <div className="grid gap-3 xl:grid-cols-[auto_1fr] xl:items-end xl:gap-8">
         <p className="t-display text-5xl">{p?.name ?? " "}</p>
         <p className="max-w-[48ch] text-pretty text-ink-soft">{p?.today}</p>
       </div>
@@ -146,7 +146,7 @@ export function JazzTileView({ estado, failed }: { estado: Estado | null; failed
     <>
       <TileHead icon={<Icon className="size-4" />} title="jazz ahora" />
       {e ? (
-        <div className="grid gap-3 sm:grid-cols-[auto_1fr] sm:items-end sm:gap-8">
+        <div className="grid gap-3 xl:grid-cols-[auto_1fr] xl:items-end xl:gap-8">
           <p className="t-display text-5xl">
             {e.modo}
             {now && (

@@ -20,7 +20,7 @@ export function AvisoView({ id, titulo, para }: { id: string; titulo: string; pa
   if (!show) return null;
 
   return (
-    <aside className="rise w-full max-w-sm rounded-3xl border border-line bg-surface p-5 text-left max-lg:order-first">
+    <aside className="rise w-full max-w-sm rounded-3xl border border-line bg-surface p-5 text-left order-first">
       <p className="text-pretty text-lg leading-snug">
         <span className="font-semibold">{titulo}</span> es {when}. ¿Un paso hoy?
       </p>
