@@ -5,6 +5,8 @@ import { refresh } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { saveEstado } from "@/lib/estado";
+import { MAX_RESPUESTA } from "@/lib/entre";
+import { contestar, marcarPresente } from "@/lib/presente";
 import { type Abierto, MAX_REGALO, MAX_TITULO, MAX_TRAS } from "@/lib/regalo";
 import { abrir, borrar, crear, usar } from "@/lib/regalos";
 import { MAX_ABIERTAS, MAX_TEXTO } from "@/lib/mision";
@@ -257,6 +259,33 @@ export async function abrirRegalo(id: string): Promise<EstadoResult & { regalo: 
 }
 
 export const usarCupon = async (id: string) => deJazz(() => usar(id));
+
+// «Entre los dos»: either of them answers the question of the day; only Brian marks «aquí estoy».
+export async function contestarPregunta(t: string): Promise<EstadoResult> {
+  const role = await currentRole();
+  if (!role) return { ok: false, error: "Entra primero." };
+  const v = texto(t, MAX_RESPUESTA);
+  if (typeof v !== "string") return { ok: false, error: v.error };
+  try {
+    const err = await contestar(role, v);
+    if (err) return { ok: false, error: err };
+  } catch {
+    return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
+  }
+  refresh();
+  return { ok: true, error: null };
+}
+
+export async function aquiEstoy(horas: number): Promise<EstadoResult> {
+  if ((await currentRole()) !== "brian") return { ok: false, error: "Solo Brian marca «aquí estoy»." };
+  try {
+    await marcarPresente([0, 1, 2, 4].includes(horas) ? horas : 0);
+  } catch {
+    return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
+  }
+  refresh();
+  return { ok: true, error: null };
+}
 
 export async function borrarNota(form: FormData) {
   if ((await currentRole()) !== "brian") return;

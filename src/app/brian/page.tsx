@@ -5,10 +5,12 @@ import { Letter } from "@/components/icons";
 import { Tabs } from "@/components/tabs";
 import { loadMisiones } from "@/lib/misiones";
 import { formatDate, loadNotes } from "@/lib/notes";
+import { vistaDe } from "@/lib/presente";
 import { hayParaAbrir, loadRegalos, vistaDeJazz } from "@/lib/regalos";
 import { currentRole } from "@/lib/session";
 import { borrarNota } from "../actions";
 import { Composer, MarkSeen } from "./composer";
+import { EntreLosDos } from "./presente";
 import { RegaloForm } from "./regalo-form";
 import { Regalos } from "./regalos";
 
@@ -35,13 +37,28 @@ async function Content({ searchParams }: { searchParams: Search }) {
   const tabs = (
     <Tabs
       label="de Brian"
-      current={v === "regalos" ? "regalos" : "notas"}
+      current={v === "regalos" || v === "presente" ? v : "notas"}
       items={[
         { key: "notas", href: "/brian", label: "notas" },
         { key: "regalos", href: "/brian?v=regalos", label: "regalos", dot: role === "jazz" && !!regalos && hayParaAbrir(regalos, total) },
+        { key: "presente", href: "/brian?v=presente", label: "entre los dos" },
       ]}
     />
   );
+
+  if (v === "presente") {
+    const vista = await vistaDe(role).catch(() => null);
+    return (
+      <>
+        {tabs}
+        {vista ? (
+          <EntreLosDos vista={vista} isBrian={role === "brian"} />
+        ) : (
+          <p className="mt-10 text-pretty text-lg text-ink-soft">No pude leer esta parte. Vuelve a abrir en un momento.</p>
+        )}
+      </>
+    );
+  }
 
   if (v === "regalos") {
     if (!regalos) {

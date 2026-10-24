@@ -5,6 +5,7 @@ import { Shell } from "@/components/shell";
 import { Doors } from "@/components/doors";
 import { DailyLine, RunningTimer } from "@/components/home-live";
 import { AvisoSlot } from "@/components/aviso-slot";
+import { PresenteSlot } from "@/components/presente-slot";
 import { EstadoSlot, WideTile } from "@/components/estado-slot";
 import { BrianTile, GardenTile, TileSkeleton } from "@/components/tiles";
 import { Sparkle } from "@/components/icons";
@@ -22,6 +23,9 @@ export default function Home() {
           </h1>
           <Suspense>
             <EstadoSlot />
+          </Suspense>
+          <Suspense>
+            <PresenteSlot />
           </Suspense>
           <Suspense>
             <AvisoSlot />
