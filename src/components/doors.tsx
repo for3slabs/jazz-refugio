@@ -6,7 +6,7 @@ import { notesSeen } from "@/lib/local";
 import { Bloom, Letter, Star } from "./icons";
 
 const doors = [
-  { href: "/superpoderes", label: "tus superpoderes", Icon: Bloom },
+  { href: "/superpoderes", label: "superpoderes", Icon: Bloom },
   { href: "/brian", label: "de Brian", Icon: Letter },
   { href: "/tu", label: "tú", Icon: Star },
 ];
@@ -33,14 +33,14 @@ function useUnreadNote() {
 export function Doors() {
   const unread = useUnreadNote();
   return (
-    <nav className="grid grid-cols-3 border-t border-line pt-5">
+    <nav className="grid grid-cols-3 border-t border-dashed border-line pt-5">
       {doors.map(({ href, label, Icon }) => {
         const glow = unread && href === "/brian";
         return (
           <Link
             key={href}
             href={href}
-            className={`group flex flex-col items-center gap-2 rounded-2xl py-2 text-xs transition-colors hover:text-ink ${
+            className={`press group t-label flex flex-col items-center gap-2.5 text-center rounded-2xl py-2 hover:text-ink ${
               glow ? "text-ink" : "text-ink-soft"
             }`}
           >

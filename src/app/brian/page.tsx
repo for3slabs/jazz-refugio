@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { Shell } from "@/components/shell";
+import { PageTitle, Shell } from "@/components/shell";
 import { Letter } from "@/components/icons";
 import { formatDate, loadNotes } from "@/lib/notes";
 import { currentRole } from "@/lib/session";
@@ -10,10 +10,7 @@ import { Composer, MarkSeen } from "./composer";
 export default function DeBrian() {
   return (
     <Shell back>
-      <div className="mt-8 flex items-center gap-3">
-        <Letter className="size-6 text-accent" />
-        <h1 className="font-display text-3xl tracking-tight">de Brian</h1>
-      </div>
+      <PageTitle icon={<Letter className="size-7" />}>de Brian</PageTitle>
       <Suspense fallback={<NotesSkeleton />}>
         <Notes />
       </Suspense>
@@ -48,7 +45,7 @@ async function Notes() {
               style={{ animationDelay: `${Math.min(i, 6) * 60}ms` }}
             >
               <div className="flex items-baseline justify-between gap-4">
-                <p className="text-xs font-medium uppercase tracking-[0.14em] text-accent">{formatDate(n.at)}</p>
+                <p className="t-label text-accent">{formatDate(n.at)}</p>
                 {isBrian && (
                   <form action={borrarNota}>
                     <input type="hidden" name="id" value={n.id} />

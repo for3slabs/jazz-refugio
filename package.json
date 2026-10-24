@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/check-palette.mjs && next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:palette": "node scripts/check-palette.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.8.2",

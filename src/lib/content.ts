@@ -19,10 +19,13 @@ export const dailyLines = [
   "Tu ojo para el detalle es un regalo. Úsalo hoy.",
 ];
 
-export function lineOfTheDay(date = new Date()): string {
+function dayOfYear(date: Date) {
   const start = new Date(date.getFullYear(), 0, 0).getTime();
-  const day = Math.floor((date.getTime() - start) / 86_400_000);
-  return dailyLines[day % dailyLines.length];
+  return Math.floor((date.getTime() - start) / 86_400_000);
+}
+
+export function lineOfTheDay(date = new Date()): string {
+  return dailyLines[dayOfYear(date) % dailyLines.length];
 }
 
 export type Power = { name: string; what: string; today: string };
@@ -54,3 +57,8 @@ export const powers: Power[] = [
     today: "Pon esa energía en algo que te guste, aunque sea pequeño.",
   },
 ];
+
+// One strength a day for the home tile — the same all day, a different one tomorrow.
+export function powerOfTheDay(date = new Date()): Power {
+  return powers[dayOfYear(date) % powers.length];
+}

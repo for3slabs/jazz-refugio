@@ -14,7 +14,7 @@ export function Cards() {
     <div className="flex flex-1 flex-col justify-center gap-6 py-8">
       <div
         key={i}
-        className="rise touch-pan-y select-none rounded-[2rem] border border-line bg-surface p-8 shadow-[0_20px_50px_-30px_var(--accent)]"
+        className="rise touch-pan-y select-none rounded-[2rem] border border-line bg-surface p-8"
         onPointerDown={(e) => (startX.current = e.clientX)}
         onPointerUp={(e) => {
           if (startX.current === null) return;
@@ -29,10 +29,10 @@ export function Cards() {
             {i + 1} / {powers.length}
           </span>
         </div>
-        <h1 className="mt-6 font-display text-4xl tracking-tight">{p.name}</h1>
+        <h2 className="mt-6 t-display text-5xl ">{p.name}</h2>
         <p className="mt-4 text-pretty text-lg leading-relaxed">{p.what}</p>
         <div className="mt-8 rounded-2xl bg-accent-soft px-5 py-4">
-          <p className="text-xs font-medium uppercase tracking-[0.14em] text-accent">cómo usarlo hoy</p>
+          <p className="t-label text-accent">cómo usarlo hoy</p>
           <p className="mt-1.5 text-pretty">{p.today}</p>
         </div>
       </div>
@@ -42,7 +42,7 @@ export function Cards() {
           type="button"
           aria-label="anterior"
           onClick={() => go(-1)}
-          className="grid size-11 place-items-center rounded-full text-ink-soft ring-1 ring-line transition-colors hover:text-ink"
+          className="press grid size-11 place-items-center rounded-full text-ink-soft ring-1 ring-line hover:bg-surface-2 hover:text-ink"
         >
           <ArrowLeft className="size-5" />
         </button>
@@ -58,7 +58,7 @@ export function Cards() {
           type="button"
           aria-label="siguiente"
           onClick={() => go(1)}
-          className="grid size-11 place-items-center rounded-full text-ink-soft ring-1 ring-line transition-colors hover:text-ink"
+          className="press grid size-11 place-items-center rounded-full text-ink-soft ring-1 ring-line hover:bg-surface-2 hover:text-ink"
         >
           <ArrowRight className="size-5" />
         </button>

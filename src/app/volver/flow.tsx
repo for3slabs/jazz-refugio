@@ -33,7 +33,7 @@ function Dots({ step }: { step: Step }) {
 function BreathOrbLabel({ inhale, round }: { inhale: boolean; round: number }) {
   return (
     <div className="text-center" aria-live="polite">
-      <p className="font-display text-2xl">{inhale ? "inhala…" : "exhala…"}</p>
+      <p className="t-display text-2xl">{inhale ? "inhala…" : "exhala…"}</p>
       <p className="mt-1 text-sm text-ink-soft">
         {round} de {ROUNDS}
       </p>
@@ -84,7 +84,7 @@ export function Flow() {
             commit();
           }}
         >
-          <h1 className="text-balance font-display text-3xl leading-tight tracking-tight">
+          <h1 className="text-balance t-display text-3xl leading-tight ">
             ¿qué es lo <em className="text-accent">más pequeño</em> que puedes hacer ahora?
           </h1>
           <input
@@ -104,7 +104,7 @@ export function Flow() {
                   role="radio"
                   aria-checked={minutes === m}
                   onClick={() => setMinutes(m)}
-                  className={`rounded-full px-4 py-2 text-sm transition-colors ${
+                  className={`press rounded-full px-4 py-2 text-sm ${
                     minutes === m ? "bg-accent-soft text-ink ring-1 ring-accent" : "text-ink-soft hover:text-ink"
                   }`}
                 >
@@ -114,7 +114,7 @@ export function Flow() {
             </div>
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-medium text-accent-ink transition-transform hover:-translate-y-0.5"
+              className="press inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-accent-ink"
             >
               listo <ArrowRight className="size-4" />
             </button>
@@ -172,7 +172,7 @@ function Breathe({ onDone }: { onDone: () => void }) {
 
   return (
     <div className="rise flex flex-1 flex-col items-center justify-center gap-10">
-      <h1 className="font-display text-3xl tracking-tight">respira conmigo</h1>
+      <h1 className="t-display text-3xl ">respira conmigo</h1>
       <div className="grid size-64 place-items-center">
         <Orb
           className="size-64"
@@ -186,7 +186,7 @@ function Breathe({ onDone }: { onDone: () => void }) {
       <button
         type="button"
         onClick={() => done.current()}
-        className="inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-ink-soft transition-colors hover:text-ink"
+        className="press inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm text-ink-soft hover:text-ink"
       >
         saltar <ArrowRight className="size-4" />
       </button>
@@ -207,12 +207,12 @@ function Back({ celebrate, flowers, again }: { celebrate: boolean; flowers: numb
 
       {finished ? (
         <div className="rise space-y-3">
-          <h1 className="font-display text-3xl tracking-tight">lo lograste.</h1>
+          <h1 className="t-display text-3xl ">lo lograste.</h1>
           <p className="text-ink-soft">el tiempo terminó. ¿otra vuelta, o un descanso?</p>
         </div>
       ) : (
         <div className="rise space-y-3">
-          <h1 className="text-balance font-display text-3xl leading-tight tracking-tight">
+          <h1 className="text-balance t-display text-3xl leading-tight ">
             {celebrate ? (
               <>
                 <span className="block">volviste.</span>
@@ -227,8 +227,8 @@ function Back({ celebrate, flowers, again }: { celebrate: boolean; flowers: numb
       )}
 
       {active && (
-        <div className="rise flex w-full flex-col items-center gap-2 rounded-3xl border border-line bg-surface px-6 py-6">
-          <p className="font-display text-5xl tabular-nums tracking-tight">{label}</p>
+        <div className="rise flex w-full flex-col items-center gap-2 rounded-[1.75rem] border border-dashed border-line bg-surface px-6 py-6">
+          <p className="t-display text-5xl tabular-nums ">{label}</p>
           <p className="text-ink-soft">{active.step}</p>
         </div>
       )}
@@ -252,13 +252,13 @@ function Back({ celebrate, flowers, again }: { celebrate: boolean; flowers: numb
         <button
           type="button"
           onClick={again}
-          className="rounded-full px-5 py-2.5 text-sm text-ink-soft ring-1 ring-line transition-colors hover:text-ink"
+          className="press rounded-full px-5 py-2.5 text-sm text-ink-soft ring-1 ring-line hover:bg-surface-2 hover:text-ink"
         >
           otra vuelta
         </button>
         <Link
           href="/tu"
-          className="rounded-full bg-accent-soft px-5 py-2.5 text-sm text-ink transition-colors hover:ring-1 hover:ring-accent"
+          className="press rounded-full bg-accent-soft px-5 py-2.5 text-sm text-ink hover:ring-1 hover:ring-accent"
         >
           ver mi jardín
         </Link>

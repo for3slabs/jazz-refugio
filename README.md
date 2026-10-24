@@ -18,6 +18,13 @@ Built with Next.js 16 (App Router, Cache Components) and Tailwind CSS 4.
 | `/ajustes` | less motion, sign out of this device |
 | `/entrar` | the door: a single passphrase |
 
+## Design
+
+Neon Noir by default (a light «calm» theme is opt-in), one type family (Bricolage Grotesque: display,
+label and body voices), glow only on the orb, depth from two surface steps instead of shadows.
+⛔ No blue in any shade: `npm run check:palette` (run by `npm run build`) fails if any color in `src/`
+sits at OKLCH hue 200–300°, if a theme token leaves 305–345°, or if a text pair drops under 4.5:1.
+
 ## Privacy by design
 
 - **Every page is behind a passphrase** (`src/proxy.ts`). The access cookie is an HMAC-signed
