@@ -1,4 +1,6 @@
 import { loadEstado } from "@/lib/estado";
+import { loadMisiones } from "@/lib/misiones";
+import { loadRegalados } from "@/lib/personajes";
 import type { Estado } from "@/lib/modos";
 import { currentRole } from "@/lib/session";
 import { EstadoOrb } from "./estado";
@@ -19,9 +21,12 @@ export async function EstadoSlot({ className = "" }: { className?: string }) {
   const role = await currentRole();
   if (!role) return <Orb className={className} />;
   const { estado, failed } = await read();
-  return role === "jazz" ? (
-    <EstadoOrb initial={estado} className={className} />
-  ) : (
+  if (role === "jazz") {
+    // A failed read leaves her collection with what her browser knows — never an error card.
+    const [m, regalados] = await Promise.all([loadMisiones(), loadRegalados()]).catch(() => [null, []] as const);
+    return <EstadoOrb initial={estado} coleccion={{ misiones: m?.total ?? 0, regalados: [...regalados] }} className={className} />;
+  }
+  return (
     <>
       <JazzTile estado={estado} failed={failed} className="flex w-full max-lg:order-first lg:hidden" />
       <Orb modo={estado?.modo ?? null} className={className} />

@@ -216,6 +216,13 @@ a {
 :has(> .orb-tint[data-modo="recargando"]) > .desvio { --btn: oklch(0.7 0.012 315); --btn-ink: oklch(0.17 0.045 315); }
 :has(> .orb-tint[data-modo="no arranco"]) > .desvio { --btn: oklch(0.75 0.15 355); --btn-ink: oklch(0.17 0.045 315); }
 
+/* A character card's art: the orb's light, flattened into a card — her mode's colour. */
+.carta-arte {
+  background:
+    radial-gradient(circle at 30% 22%, oklch(1 0 0 / 0.35), transparent 45%),
+    radial-gradient(circle at 50% 55%, var(--orb), var(--orb-deep) 115%);
+}
+
 /* The chip on the orb's upper right: dark glass, so it reads on every colour the orb can take. */
 .orb-chip {
   color: oklch(0.98 0.008 320);
