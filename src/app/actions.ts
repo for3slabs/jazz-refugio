@@ -14,6 +14,8 @@ import { MAX_RESPUESTA } from "@/lib/entre";
 import { contestar, marcarPresente } from "@/lib/presente";
 import { type Abierto, MAX_REGALO, MAX_TITULO, MAX_TRAS } from "@/lib/regalo";
 import { abrir, borrar, crear, usar } from "@/lib/regalos";
+import { isPersonaje } from "@/lib/personaje";
+import { regalar } from "@/lib/personajes";
 import { MAX_ABIERTAS, MAX_TEXTO } from "@/lib/mision";
 import { MAX_PASOS, siguiente, terminada } from "@/lib/pendiente";
 import { agregar, cumplir, florDePaso, loadMisiones, soltar } from "@/lib/misiones";
@@ -243,6 +245,15 @@ export async function dejarRegalo(_: RegaloState, form: FormData): Promise<Regal
   }
   refresh();
   return { ok: true, error: null };
+}
+
+// A character from Brian: it joins her collection at once, whatever her garden says.
+export async function regalarPersonaje(form: FormData) {
+  if ((await currentRole()) !== "brian") return;
+  const id = form.get("id");
+  if (!isPersonaje(id)) return;
+  await regalar(id);
+  refresh();
 }
 
 export async function borrarRegalo(form: FormData) {

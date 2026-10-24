@@ -4,6 +4,7 @@ import { useEffect, useOptimistic, useRef, useState, useTransition } from "react
 import { marcarEstado } from "@/app/actions";
 import { type Estado, type ModoId, modos, vigente } from "@/lib/modos";
 import { Focus, Ideas, Linked, Rest, Sparkle, Start, Waves } from "./icons";
+import { Coleccion, type ColeccionData } from "./coleccion";
 import { Orb } from "./orb";
 
 export const modoIcon: Record<ModoId, (p: { className?: string }) => React.ReactElement> = {
@@ -41,7 +42,15 @@ type Msg = { text: string; ok: boolean };
 // right says which one — no icon, no minutes, so the orb itself carries the news. One tap: the chip
 // opens the sheet, a mode closes it, and the orb has already changed before the server
 // answers. If saving fails it goes back and says so.
-export function EstadoOrb({ initial, className = "" }: { initial: Estado | null; className?: string }) {
+export function EstadoOrb({
+  initial,
+  coleccion,
+  className = "",
+}: {
+  initial: Estado | null;
+  coleccion: ColeccionData;
+  className?: string;
+}) {
   const [optimistic, setOptimistic] = useOptimistic(initial);
   const [, start] = useTransition();
   const [msg, setMsg] = useState<Msg | null>(null);
@@ -66,6 +75,8 @@ export function EstadoOrb({ initial, className = "" }: { initial: Estado | null;
 
   return (
     <Orb modo={current?.modo ?? null} className={className}>
+      {/* The orb's body opens her characters; the chip on its edge, her mode. */}
+      <Coleccion data={coleccion} modo={current?.modo ?? null} />
       <button
         type="button"
         aria-haspopup="dialog"
