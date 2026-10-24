@@ -26,7 +26,7 @@ in six moods on a 3 × 2 grid. The app never reads these — it reads the cut sp
 2. **Save it** here as `<id>.jpg` and **cut it**:
 
    ```
-   node scripts/cutout-personaje.cjs personajes-src/<id>.jpg public/personajes/<id> hiperfoco,conectada,mil-ideas,saturada,recargando,no-arranco
+   node scripts/cutout-personaje.mjs personajes-src/<id>.jpg public/personajes/<id> hiperfoco,conectada,mil-ideas,saturada,recargando,no-arranco
    ```
 
 3. **Look at every sprite on every mode colour** before shipping: the cut removes the paper by a flood

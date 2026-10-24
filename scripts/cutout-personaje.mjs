@@ -1,10 +1,10 @@
 // Cut a 3x2 character sheet into six transparent sprites.
 // The paper is removed by a flood fill from the border over light, low-saturation pixels,
 // so the cat's cream fill (enclosed by its outline) survives.
-// usage: node scripts/cutout-personaje.cjs personajes-src/<id>.jpg public/personajes/<id> hiperfoco,conectada,mil-ideas,saturada,recargando,no-arranco
-const sharp = require("sharp");
-const fs = require("node:fs");
-const path = require("node:path");
+// usage: node scripts/cutout-personaje.mjs personajes-src/<id>.jpg public/personajes/<id> hiperfoco,conectada,mil-ideas,saturada,recargando,no-arranco
+import fs from "node:fs";
+import path from "node:path";
+import sharp from "sharp";
 
 const [sheet, outDir, namesArg] = process.argv.slice(2);
 const names = namesArg.split(",");
