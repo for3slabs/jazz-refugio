@@ -36,16 +36,16 @@ function useUnreadNote() {
 export function Doors() {
   const unread = useUnreadNote();
   return (
-    <nav className="grid grid-cols-6 gap-y-3 border-t border-dashed border-line pt-5">
+    <nav className="grid grid-cols-6 gap-y-3 border-t border-dashed border-line pt-5 lg:grid-cols-5">
       {doors.map(({ href, label, Icon }, i) => {
         const glow = unread && href === "/brian";
         return (
           <Link
             key={href}
             href={href}
-            // five doors: three on top, two centred below
-            className={`press group t-label col-span-2 flex flex-col items-center gap-2.5 text-center rounded-2xl py-2 hover:text-ink ${
-              i === 3 ? "col-start-2" : ""
+            // five doors: three on top and two centred below on a phone, one row on a wide screen
+            className={`press group t-label col-span-2 flex flex-col items-center gap-2.5 text-center rounded-2xl py-2 hover:text-ink lg:col-span-1 ${
+              i === 3 ? "col-start-2 lg:col-start-auto" : ""
             } ${
               glow ? "text-ink" : "text-ink-soft"
             }`}

@@ -63,7 +63,7 @@ export function EstadoChip({ initial }: { initial: Estado | null }) {
   const Icon = current ? modoIcon[current.modo] : null;
 
   return (
-    <div className="relative z-10 flex justify-center max-lg:order-first">
+    <div className="relative z-10 flex justify-center order-first">
       <button
         type="button"
         aria-haspopup="dialog"
