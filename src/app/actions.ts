@@ -5,6 +5,8 @@ import { refresh } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { saveEstado } from "@/lib/estado";
+import { agregar as agregarAlTablero, borrarTablero, compartir, crearTablero, quitar } from "@/lib/lienzo";
+import { MAX_NOMBRE, MAX_NOTA, isHex } from "@/lib/tablero";
 import { MAX_RESPUESTA } from "@/lib/entre";
 import { contestar, marcarPresente } from "@/lib/presente";
 import { type Abierto, MAX_REGALO, MAX_TITULO, MAX_TRAS } from "@/lib/regalo";
@@ -286,6 +288,30 @@ export async function aquiEstoy(horas: number): Promise<EstadoResult> {
   refresh();
   return { ok: true, error: null };
 }
+
+// Her boards: only she changes them (images and drawings arrive through /api/lienzo/subir).
+export const nuevoTablero = async (t: string) =>
+  deJazz(async () => {
+    const v = texto(t, MAX_NOMBRE);
+    if (typeof v !== "string") return v.error;
+    return crearTablero(v);
+  });
+
+export const soltarTablero = async (id: string) => deJazz(() => borrarTablero(id));
+
+export const compartirTablero = async (id: string, si: boolean) => deJazz(() => compartir(id, si));
+
+export const agregarColor = async (tablero: string, color: string) =>
+  deJazz(async () => (isHex(color) ? agregarAlTablero(tablero, { tipo: "color", color: color.toLowerCase() }) : "Ese color no es válido."));
+
+export const agregarNota = async (tablero: string, t: string) =>
+  deJazz(async () => {
+    const v = texto(t, MAX_NOTA);
+    if (typeof v !== "string") return v.error;
+    return agregarAlTablero(tablero, { tipo: "nota", texto: v });
+  });
+
+export const quitarDelTablero = async (tablero: string, item: string) => deJazz(() => quitar(tablero, item));
 
 export async function borrarNota(form: FormData) {
   if ((await currentRole()) !== "brian") return;

@@ -146,3 +146,33 @@ export const Gift = ({ className }: P) => (
     <path d="M12 7c-1.4-2.8-4.8-3.1-4.6-.9.2 1.2 2.6.9 4.6.9Zm0 0c1.4-2.8 4.8-3.1 4.6-.9-.2 1.2-2.6.9-4.6.9Z" />
   </svg>
 );
+
+// Her canvas: a painter's palette.
+export const Palette = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.3 0 1.9-.9 1.6-1.9-.4-1.2.3-2.4 1.6-2.4h1.9a3.4 3.4 0 0 0 3.4-3.4c0-5-3.8-9.3-8.5-9.3Z" />
+    <circle cx="8" cy="11" r="1.1" />
+    <circle cx="10.5" cy="7.5" r="1.1" />
+    <circle cx="14.8" cy="8" r="1.1" />
+  </svg>
+);
+
+export const Pencil = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <path d="M4.5 19.5 5.6 15 16 4.6a2 2 0 0 1 2.8 0l.6.6a2 2 0 0 1 0 2.8L9 18.4l-4.5 1.1Z" />
+    <path d="m14.5 6.1 3.4 3.4" />
+  </svg>
+);
+
+export const Undo = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <path d="M9 14 4.5 9.5 9 5" />
+    <path d="M4.5 9.5H14a5.5 5.5 0 0 1 0 11h-3" />
+  </svg>
+);
+
+export const Close = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <path d="M6 6l12 12M18 6 6 18" />
+  </svg>
+);
