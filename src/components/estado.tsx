@@ -37,8 +37,8 @@ export function since(at: number, now: number) {
 
 type Msg = { text: string; ok: boolean };
 
-// The home's orb is hers: it takes the colour of her mode, and the small chip inside it says
-// which one — no icon, no minutes, so the orb itself carries the news. One tap: the chip
+// The home's orb is hers: it takes the colour of her mode, and the small chip on its upper
+// right says which one — no icon, no minutes, so the orb itself carries the news. One tap: the chip
 // opens the sheet, a mode closes it, and the orb has already changed before the server
 // answers. If saving fails it goes back and says so.
 export function EstadoOrb({ initial, className = "" }: { initial: Estado | null; className?: string }) {
@@ -70,7 +70,7 @@ export function EstadoOrb({ initial, className = "" }: { initial: Estado | null;
         type="button"
         aria-haspopup="dialog"
         onClick={() => sheet.current?.showModal()}
-        className="orb-chip press absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full px-3.5 py-1.5 text-sm font-semibold"
+        className="orb-chip press absolute right-0 top-[6%] z-10 translate-x-1/4 rounded-full px-3.5 py-1.5 text-sm font-semibold"
       >
         {current ? current.modo : "¿cómo estás?"}
       </button>

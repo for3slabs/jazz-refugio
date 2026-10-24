@@ -96,8 +96,19 @@ for (const [name, t] of Object.entries(themes)) {
   }
 }
 
+// «me estoy desviando» in each mode's colour: its text must read on it too.
+const MODE_BTN = /data-modo="([^"]+)"\]\) > \.desvio \{ --btn: oklch\(([\d.]+) ([\d.]+) ([\d.]+)\); --btn-ink: oklch\(([\d.]+) ([\d.]+) ([\d.]+)\);/g;
+const modeButtons = [...css.matchAll(MODE_BTN)];
+if (modeButtons.length !== 6) errors.push(`mode buttons: read ${modeButtons.length}, expected 6 — the reader missed a rule`);
+for (const m of modeButtons) {
+  const [bg, fg] = [m.slice(2, 5).map(Number), m.slice(5, 8).map(Number)];
+  const r = contrast(fg, bg);
+  console.log(`modo       ${m[1].padEnd(11)} button     ${r.toFixed(2).padStart(5)} ${r >= 4.5 ? "✅" : "🔴"}`);
+  if (r < 4.5) errors.push(`mode "${m[1]}": button text is ${r.toFixed(2)}:1, under 4.5`);
+}
+
 if (errors.length) {
   console.error(`\n🔴 ${errors.length} violation(s):\n  ` + errors.join("\n  "));
   process.exit(1);
 }
-console.log("\n✅ no blue anywhere in src/, every token at 305–345°, every text pair ≥ 4.5:1");
+console.log("\n✅ no blue anywhere in src/, every token at 305–345°, every text pair ≥ 4.5:1 (mode buttons included)");
