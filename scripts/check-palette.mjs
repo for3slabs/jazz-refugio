@@ -80,7 +80,7 @@ const themes = { "neon noir": block(":root {"), calma: block(':root[data-theme="
 const PAIRS = [
   ["ink", "canvas"], ["ink", "surface"], ["ink-soft", "canvas"], ["ink-soft", "surface"],
   ["accent", "canvas"], ["accent", "surface"], ["accent-ink", "accent"], ["ink", "accent-soft"],
-  ["accent", "accent-soft"], ["ink-soft", "surface-2"],
+  ["accent", "accent-soft"], ["ink-soft", "surface-2"], ["ink", "surface-2"],
 ];
 
 for (const [name, t] of Object.entries(themes)) {

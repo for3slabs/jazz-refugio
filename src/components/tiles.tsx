@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { loadNotes } from "@/lib/notes";
 import { currentRole } from "@/lib/session";
-import { BrianTileView, GardenTileView, PowerTileView } from "./tiles-live";
+import type { Estado } from "@/lib/modos";
+import { BrianTileView, GardenTileView, JazzTileView, PowerTileView } from "./tiles-live";
 
 const tile =
   "press group flex-col gap-6 rounded-[1.75rem] border border-line bg-surface p-6 hover:border-accent/60 hover:bg-surface-2";
@@ -33,6 +34,15 @@ export function PowerTile({ className = "" }: { className?: string }) {
   return (
     <Link href="/superpoderes" className={`${tile} ${className}`}>
       <PowerTileView />
+    </Link>
+  );
+}
+
+// Her mode, for Brian — it leads to «de Brian», where he can write to her.
+export function JazzTile({ estado, failed, className = "" }: { estado: Estado | null; failed: boolean; className?: string }) {
+  return (
+    <Link href="/brian" className={`${tile} ${className}`}>
+      <JazzTileView estado={estado} failed={failed} />
     </Link>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
+import { Greeting } from "./greeting";
 import { ArrowLeft, Gear } from "./icons";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -23,7 +24,10 @@ export function Shell({ children, back = false, wide = false }: { children: Reac
           </Link>
         ) : (
           <p className="t-label text-ink-soft">
-            hola, <span className="text-accent">Jazz</span>
+            hola
+            <Suspense>
+              <Greeting />
+            </Suspense>
           </p>
         )}
         <div className="flex items-center gap-1">
@@ -48,15 +52,6 @@ export function PageTitle({ icon, children }: { icon: ReactNode; children: React
     <div className="mt-8 flex items-center gap-3">
       <span className="text-accent">{icon}</span>
       <h1 className="t-display text-4xl">{children}</h1>
-    </div>
-  );
-}
-
-export function Orb({ className = "", style }: { className?: string; style?: React.CSSProperties }) {
-  return (
-    <div aria-hidden className={`relative ${className}`} style={style}>
-      <div className="orb-halo absolute -inset-[45%] rounded-full" />
-      <div className="orb absolute inset-0 rounded-full" />
     </div>
   );
 }

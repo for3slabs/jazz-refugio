@@ -74,3 +74,44 @@ export const ArrowRight = ({ className }: P) => (
     <path d="M5 12h14M13 6l6 6-6 6" />
   </svg>
 );
+
+// The five modes — told apart by shape, since every color is the same purple family.
+export const Focus = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <circle cx="12" cy="12" r="8" />
+    <circle cx="12" cy="12" r="4.5" />
+    <circle cx="12" cy="12" r="1.2" />
+  </svg>
+);
+
+export const Linked = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <circle cx="9" cy="12" r="5.5" />
+    <circle cx="15" cy="12" r="5.5" />
+  </svg>
+);
+
+export const Ideas = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <circle cx="6.5" cy="7.5" r="1.8" />
+    <circle cx="16.5" cy="5.5" r="1.3" />
+    <circle cx="12.5" cy="12.5" r="2.4" />
+    <circle cx="6" cy="17.5" r="1.3" />
+    <circle cx="18" cy="16.5" r="1.8" />
+  </svg>
+);
+
+export const Waves = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <path d="M3.5 7.5c2.1-1.6 4.2-1.6 6.3 0s4.2 1.6 6.3 0 3.4-1.4 4.4-.8" />
+    <path d="M3.5 12c2.1-1.6 4.2-1.6 6.3 0s4.2 1.6 6.3 0 3.4-1.4 4.4-.8" />
+    <path d="M3.5 16.5c2.1-1.6 4.2-1.6 6.3 0s4.2 1.6 6.3 0 3.4-1.4 4.4-.8" />
+  </svg>
+);
+
+export const Rest = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <path d="M16.5 15.8A6.6 6.6 0 0 1 8.7 6a7 7 0 1 0 7.8 9.8Z" />
+    <path d="M18 4.5v3.5M16.25 6.25h3.5" />
+  </svg>
+);

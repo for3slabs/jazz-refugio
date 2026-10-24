@@ -4,6 +4,8 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { refresh } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { saveEstado } from "@/lib/estado";
+import { isModo } from "@/lib/modos";
 import { MAX_NOTE, addNote, removeNote } from "@/lib/notes";
 import { currentRole } from "@/lib/session";
 import { COOKIE, MAX_AGE_S, type Role, issueToken } from "@/lib/token";
@@ -63,6 +65,21 @@ export async function dejarNota(_: NotaState, form: FormData): Promise<NotaState
     await addNote(texto);
   } catch {
     return { ok: false, error: "No se pudo guardar. Inténtalo de nuevo en un momento." };
+  }
+  refresh();
+  return { ok: true, error: null };
+}
+
+export type EstadoResult = { ok: boolean; error: string | null };
+
+// Her mode is hers: only her session marks or clears it.
+export async function marcarEstado(modo: string | null): Promise<EstadoResult> {
+  if ((await currentRole()) !== "jazz") return { ok: false, error: "Solo Jazz marca cómo está." };
+  if (modo !== null && !isModo(modo)) return { ok: false, error: "Ese modo no existe." };
+  try {
+    await saveEstado(modo);
+  } catch {
+    return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
   }
   refresh();
   return { ok: true, error: null };

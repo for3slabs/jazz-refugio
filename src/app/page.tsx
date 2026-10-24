@@ -1,13 +1,16 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { Orb, Shell } from "@/components/shell";
+import { Orb } from "@/components/orb";
+import { Shell } from "@/components/shell";
 import { Doors } from "@/components/doors";
 import { DailyLine, RunningTimer } from "@/components/home-live";
-import { BrianTile, GardenTile, PowerTile, TileSkeleton } from "@/components/tiles";
+import { EstadoSlot, WideTile } from "@/components/estado-slot";
+import { BrianTile, GardenTile, TileSkeleton } from "@/components/tiles";
 import { Sparkle } from "@/components/icons";
 
 // Phone: one column, the way Brian liked it. Wide screen: the same pieces as a bento —
 // the orb and its button own the left, three tiles carry what lives behind each door.
+// Her mode sits above the title on a phone and under it on a wide screen.
 export default function Home() {
   return (
     <Shell wide>
@@ -16,6 +19,9 @@ export default function Home() {
           <h1 className="t-display text-center text-[2.75rem] lg:text-6xl">
             tu lienzo <span className="t-narrow text-accent">mental</span>
           </h1>
+          <Suspense>
+            <EstadoSlot />
+          </Suspense>
           <Orb className="orb-idle size-44 lg:size-56" />
           <Link
             href="/volver"
@@ -32,7 +38,9 @@ export default function Home() {
           <BrianTile className="hidden lg:flex" />
         </Suspense>
         <GardenTile className="hidden lg:flex" />
-        <PowerTile className="hidden lg:col-span-2 lg:flex" />
+        <Suspense fallback={<TileSkeleton className="hidden lg:col-span-2 lg:block" />}>
+          <WideTile className="hidden lg:col-span-2 lg:flex" />
+        </Suspense>
       </div>
       <div className="lg:hidden">
         <Doors />

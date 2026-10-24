@@ -3,8 +3,10 @@
 import { useEffect, useState } from "react";
 import { powerOfTheDay } from "@/lib/content";
 import { moments, notesSeen } from "@/lib/local";
+import { type Estado, modoOf, vigente } from "@/lib/modos";
+import { modoIcon, since, useNow } from "./estado";
 import { Flower } from "./flower";
-import { ArrowRight, Bloom, Letter, Star } from "./icons";
+import { ArrowRight, Bloom, Letter, Sparkle, Star } from "./icons";
 
 const rel = new Intl.RelativeTimeFormat("es-MX", { numeric: "auto" });
 function ago(at: number) {
@@ -112,6 +114,41 @@ export function PowerTileView() {
       </div>
       <div className="mt-auto flex justify-end">
         <Go>los cinco</Go>
+      </div>
+    </>
+  );
+}
+
+// Brian's view of her mode: what it is, since when, and what helps right now.
+// A failed read says so — «no ha marcado» would be a claim the server never made.
+export function JazzTileView({ estado, failed }: { estado: Estado | null; failed: boolean }) {
+  const now = useNow();
+  const e = now ? vigente(estado, now) : estado;
+  const Icon = e ? modoIcon[e.modo] : Sparkle;
+
+  return (
+    <>
+      <TileHead icon={<Icon className="size-4" />} title="jazz ahora" />
+      {e ? (
+        <div className="grid gap-3 sm:grid-cols-[auto_1fr] sm:items-end sm:gap-8">
+          <p className="t-display text-5xl">
+            {e.modo}
+            {now && (
+              <span className="ml-3 align-middle text-base font-medium tabular-nums text-ink-soft">
+                {" "}
+                {since(e.at, now) === "ahora" ? "justo ahora" : `hace ${since(e.at, now)}`}
+              </span>
+            )}
+          </p>
+          <p className="max-w-[48ch] text-pretty text-lg text-ink-soft">{modoOf(e.modo).ayuda}</p>
+        </div>
+      ) : (
+        <p className="text-pretty text-lg text-ink-soft">
+          {failed ? "No pude leer cómo está ahora. Vuelve a abrir en un momento." : "Jazz no ha marcado cómo está."}
+        </p>
+      )}
+      <div className="mt-auto flex justify-end">
+        <Go>escribirle</Go>
       </div>
     </>
   );

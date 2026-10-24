@@ -176,6 +176,38 @@ a {
   animation: rise 280ms var(--ease-out-strong) both;
 }
 
+/* The sheet where she picks her mode: rises from the bottom on a phone, settles in
+   the middle on a wide screen. A transition, not a keyframe, so a quick close is smooth. */
+.sheet {
+  transition:
+    transform 280ms var(--ease-out-strong),
+    opacity 200ms ease,
+    overlay 280ms allow-discrete,
+    display 280ms allow-discrete;
+}
+.sheet:not([open]) {
+  transform: translateY(24px);
+  opacity: 0;
+}
+@starting-style {
+  .sheet[open] {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+.sheet::backdrop {
+  background: color-mix(in oklab, var(--canvas) 72%, transparent);
+  transition: opacity 200ms ease, overlay 280ms allow-discrete, display 280ms allow-discrete;
+}
+.sheet:not([open])::backdrop {
+  opacity: 0;
+}
+@starting-style {
+  .sheet[open]::backdrop {
+    opacity: 0;
+  }
+}
+
 @keyframes confetti-fall {
   0% { opacity: 0; transform: translate3d(0, -10px, 0) rotate(0deg); }
   10% { opacity: 1; }
@@ -197,6 +229,7 @@ a {
   .orb-idle, .animate-ping { animation: none; }
   .confetti { display: none; }
   .press:active { transform: none; }
+  .sheet, .sheet:not([open]) { transform: none; }
 }
 
 :root[data-motion="off"] .rise { animation-name: fade; animation-duration: 200ms; }
@@ -204,3 +237,5 @@ a {
 :root[data-motion="off"] .animate-ping { animation: none; }
 :root[data-motion="off"] .confetti { display: none; }
 :root[data-motion="off"] .press:active { transform: none; }
+:root[data-motion="off"] .sheet,
+:root[data-motion="off"] .sheet:not([open]) { transform: none; }
