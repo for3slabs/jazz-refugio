@@ -7,6 +7,7 @@ export const modos = [
   { id: "mil ideas", ella: "mi mente va rapidísimo", ayuda: "Escúchala, no le pidas orden." },
   { id: "saturada", ella: "demasiado a la vez", ayuda: "Algo corto y cálido, sin pedirle nada." },
   { id: "recargando", ella: "necesito bajar el ritmo", ayuda: "Déjala descansar." },
+  { id: "no arranco", ella: "quiero hacer algo y no arranco", ayuda: "Ofrécele empezar juntos algo pequeño." },
 ] as const;
 
 export type ModoId = (typeof modos)[number]["id"];
