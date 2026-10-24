@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+/* Theme follows the system unless the viewer picked one (data-theme on <html>). */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+:root {
+  --bg: #faf7ff;
+  --surface: #ffffff;
+  --ink: #2a1b47;
+  --ink-soft: #6b5b8a;
+  --line: #e7defa;
+  --accent: #7c3aed;
+  --accent-ink: #ffffff;
+  --accent-soft: #ede4ff;
+  --glow: #c4b5fd;
+  --orb: #7c3aed;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #14101f;
+    --surface: #1e1830;
+    --ink: #ede7fa;
+    --ink-soft: #a99cc6;
+    --line: #2f2648;
+    --accent: #a78bfa;
+    --accent-ink: #1a1030;
+    --accent-soft: #2d2347;
+    --glow: #6d4fc2;
+    --orb: #8b5cf6;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #14101f;
+  --surface: #1e1830;
+  --ink: #ede7fa;
+  --ink-soft: #a99cc6;
+  --line: #2f2648;
+  --accent: #a78bfa;
+  --accent-ink: #1a1030;
+  --accent-soft: #2d2347;
+  --glow: #6d4fc2;
+  --orb: #8b5cf6;
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-glow: var(--glow);
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-inter);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  transition: background-color 400ms ease, color 400ms ease;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Fields already change their border on focus: a second ring around them reads as a glitch. */
+input:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 4px var(--accent-soft);
+}
+
+/* ── The orb: a slow idle breath on the home, a guided one in /volver ── */
+.orb {
+  background:
+    radial-gradient(circle at 35% 30%, rgb(255 255 255 / 0.55), transparent 42%),
+    radial-gradient(circle at 50% 50%, var(--orb), color-mix(in oklab, var(--orb) 50%, #1a1030));
+  box-shadow: inset 0 -12px 30px rgb(0 0 0 / 0.18);
+}
+
+/* The glow is a gradient that fades to nothing — a blurred shadow leaves a visible edge. */
+.orb-halo {
+  background: radial-gradient(closest-side, color-mix(in oklab, var(--glow) 60%, transparent), color-mix(in oklab, var(--glow) 18%, transparent) 55%, transparent);
+}
+
+@keyframes idle-breath {
+  0%, 100% { transform: scale(0.94); }
+  50% { transform: scale(1.04); }
+}
+
+.orb-idle {
+  animation: idle-breath 7s ease-in-out infinite;
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.rise {
+  animation: rise 500ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+
+@keyframes confetti-fall {
+  0% { opacity: 0; transform: translate3d(0, -10px, 0) rotate(0deg); }
+  10% { opacity: 1; }
+  100% { opacity: 0; transform: translate3d(var(--dx), 240px, 0) rotate(var(--rot)); }
+}
+
+.confetti {
+  animation: confetti-fall 1800ms cubic-bezier(0.2, 0.6, 0.3, 1) both;
+}
+
+/* The viewer's own choice (ajustes) and the system's both switch motion off. */
+:root[data-motion="off"] *,
+:root[data-motion="off"] *::before,
+:root[data-motion="off"] *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
