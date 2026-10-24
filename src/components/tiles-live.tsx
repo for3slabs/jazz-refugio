@@ -25,7 +25,7 @@ function TileHead({ icon, title, dot = false }: { icon: React.ReactNode; title: 
         {title}
       </h2>
       {dot && (
-        <span aria-label="hay una nota nueva" className="relative grid size-3 place-items-center">
+        <span aria-label="hay algo nuevo de Brian" className="relative grid size-3 place-items-center">
           <span className="absolute size-3 animate-ping rounded-full bg-accent opacity-60" />
           <span className="size-2.5 rounded-full bg-accent" />
         </span>
@@ -43,14 +43,24 @@ function Go({ children }: { children: React.ReactNode }) {
   );
 }
 
-export function BrianTileView({ isBrian, at, preview }: { isBrian: boolean; at: number | null; preview: string | null }) {
+export function BrianTileView({
+  isBrian,
+  at,
+  preview,
+  regalo = false,
+}: {
+  isBrian: boolean;
+  at: number | null;
+  preview: string | null;
+  regalo?: boolean;
+}) {
   const [unread, setUnread] = useState(false);
   const [when, setWhen] = useState("");
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect -- what she has seen lives in her browser
     if (at) setWhen(ago(at));
-    if (at && !isBrian) setUnread(at > notesSeen.get());
-  }, [at, isBrian]);
+    if (!isBrian) setUnread(regalo || (!!at && at > notesSeen.get()));
+  }, [at, isBrian, regalo]);
 
   return (
     <>

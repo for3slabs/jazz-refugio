@@ -137,3 +137,12 @@ export const More = ({ className }: P) => (
     <circle cx="18" cy="12" r="1.2" />
   </svg>
 );
+
+export const Gift = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <rect x="4.5" y="10" width="15" height="10" rx="1.5" />
+    <rect x="3.5" y="7" width="17" height="3" rx="1" />
+    <path d="M12 7v13" />
+    <path d="M12 7c-1.4-2.8-4.8-3.1-4.6-.9.2 1.2 2.6.9 4.6.9Zm0 0c1.4-2.8 4.8-3.1 4.6-.9-.2 1.2-2.6.9-4.6.9Z" />
+  </svg>
+);
