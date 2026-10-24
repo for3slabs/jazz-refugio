@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { loadMisiones } from "@/lib/misiones";
 import { loadNotes } from "@/lib/notes";
+import { hayParaAbrir, loadRegalos } from "@/lib/regalos";
 import { currentRole } from "@/lib/session";
 import type { Estado } from "@/lib/modos";
 import { BrianTileView, GardenTileView, JazzTileView, PowerTileView } from "./tiles-live";
@@ -12,10 +13,17 @@ const tile =
 export async function BrianTile({ className = "" }: { className?: string }) {
   const role = await currentRole();
   const [newest] = role ? await loadNotes() : [];
+  // a gift ready to open lights the tile too — for her only
+  const regalo =
+    role === "jazz" &&
+    (await Promise.all([loadRegalos(), loadMisiones()])
+      .then(([list, m]) => hayParaAbrir(list, m.total))
+      .catch(() => false));
   return (
     <Link href="/brian" className={`${tile} ${className}`}>
       <BrianTileView
         isBrian={role === "brian"}
+        regalo={regalo}
         at={newest?.at ?? null}
         preview={newest ? newest.texto.slice(0, 180) : null}
       />

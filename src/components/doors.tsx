@@ -12,7 +12,8 @@ const doors = [
   { href: "/tu", label: "tú", Icon: Star },
 ];
 
-// «If I don't see it, it doesn't exist»: a note she has not read makes its door glow —
+// «If I don't see it, it doesn't exist»: a note she has not read, or a gift ready to open,
+// makes its door glow —
 // warm, no number, no "you have unread messages".
 function useUnreadNote() {
   const [unread, setUnread] = useState(false);
@@ -20,8 +21,8 @@ function useUnreadNote() {
     let alive = true;
     fetch("/api/ultima", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: { at: number | null } | null) => {
-        if (alive && d?.at) setUnread(d.at > notesSeen.get());
+      .then((d: { at: number | null; regalo?: boolean } | null) => {
+        if (alive && d) setUnread(!!d.regalo || (!!d.at && d.at > notesSeen.get()));
       })
       .catch(() => {});
     return () => {
@@ -59,7 +60,7 @@ export function Doors() {
               )}
             </span>
             {label}
-            {glow && <span className="sr-only">(hay una nota nueva)</span>}
+            {glow && <span className="sr-only">(hay algo nuevo de Brian)</span>}
           </Link>
         );
       })}

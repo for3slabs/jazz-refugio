@@ -5,6 +5,8 @@ import { refresh } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { saveEstado } from "@/lib/estado";
+import { type Abierto, MAX_REGALO, MAX_TITULO, MAX_TRAS } from "@/lib/regalo";
+import { abrir, borrar, crear, usar } from "@/lib/regalos";
 import { MAX_ABIERTAS, MAX_TEXTO } from "@/lib/mision";
 import { agregar, cumplir, florDePaso, loadMisiones, soltar } from "@/lib/misiones";
 import {
@@ -210,6 +212,51 @@ export const cumplirPaso = async (metaId: string, pasoId: string) =>
     await florDePaso(paso.texto);
     return marcarPaso(metaId, pasoId, "hecho");
   });
+
+// Gifts: Brian leaves and deletes them; she opens and uses them.
+export type RegaloState = { ok: boolean; error: string | null };
+
+export async function dejarRegalo(_: RegaloState, form: FormData): Promise<RegaloState> {
+  if ((await currentRole()) !== "brian") return { ok: false, error: "Solo Brian deja regalos aquí." };
+  const tipo = form.get("tipo") === "carta" ? "carta" : "cupon";
+  const titulo = String(form.get("titulo") ?? "").trim();
+  const cuerpo = String(form.get("texto") ?? "").trim();
+  if (!titulo) return { ok: false, error: "Ponle un título." };
+  if (titulo.length > MAX_TITULO) return { ok: false, error: `El título, máximo ${MAX_TITULO} caracteres.` };
+  if (cuerpo.length > MAX_REGALO) return { ok: false, error: `El texto, máximo ${MAX_REGALO} caracteres.` };
+  const tras = form.get("abre") === "tras" ? Math.min(MAX_TRAS, Math.max(1, Math.floor(Number(form.get("n")) || 1))) : 0;
+  try {
+    // «tras N misiones» counts from her total right now.
+    const desde = tras ? (await loadMisiones()).total + tras : 0;
+    await crear(tipo, titulo, cuerpo, desde);
+  } catch {
+    return { ok: false, error: "No se pudo guardar. Inténtalo de nuevo en un momento." };
+  }
+  refresh();
+  return { ok: true, error: null };
+}
+
+export async function borrarRegalo(form: FormData) {
+  if ((await currentRole()) !== "brian") return;
+  const id = String(form.get("id") ?? "");
+  if (id) await borrar(id);
+  refresh();
+}
+
+// The only way a gift's content reaches her browser: she opens it, and its missions are done.
+export async function abrirRegalo(id: string): Promise<EstadoResult & { regalo: Abierto | null }> {
+  if ((await currentRole()) !== "jazz") return { ok: false, error: "Esto es solo de Jazz.", regalo: null };
+  try {
+    const regalo = await abrir(id, (await loadMisiones()).total);
+    if (!regalo) return { ok: false, error: "Este todavía no se abre.", regalo: null };
+    refresh();
+    return { ok: true, error: null, regalo };
+  } catch {
+    return { ok: false, error: "No se pudo abrir. Inténtalo otra vez.", regalo: null };
+  }
+}
+
+export const usarCupon = async (id: string) => deJazz(() => usar(id));
 
 export async function borrarNota(form: FormData) {
   if ((await currentRole()) !== "brian") return;

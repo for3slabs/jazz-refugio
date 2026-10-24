@@ -2,28 +2,74 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { PageTitle, Shell } from "@/components/shell";
 import { Letter } from "@/components/icons";
+import { Tabs } from "@/components/tabs";
+import { loadMisiones } from "@/lib/misiones";
 import { formatDate, loadNotes } from "@/lib/notes";
+import { hayParaAbrir, loadRegalos, vistaDeJazz } from "@/lib/regalos";
 import { currentRole } from "@/lib/session";
 import { borrarNota } from "../actions";
 import { Composer, MarkSeen } from "./composer";
+import { RegaloForm } from "./regalo-form";
+import { Regalos } from "./regalos";
 
-export default function DeBrian() {
+type Search = Promise<{ v?: string }>;
+
+export default function DeBrian({ searchParams }: { searchParams: Search }) {
   return (
     <Shell back>
       <PageTitle icon={<Letter className="size-7" />}>de Brian</PageTitle>
       <Suspense fallback={<NotesSkeleton />}>
-        <Notes />
+        <Content searchParams={searchParams} />
       </Suspense>
     </Shell>
   );
 }
 
-async function Notes() {
+// Two tabs: his notes, and his gifts — a dot on «regalos» when one is ready for her.
+async function Content({ searchParams }: { searchParams: Search }) {
   const role = await currentRole();
   if (!role) redirect("/entrar");
-  const notes = await loadNotes();
-  const isBrian = role === "brian";
+  const { v } = await searchParams;
+  const [regalos, m] = await Promise.all([loadRegalos(), loadMisiones()]).catch(() => [null, null] as const);
+  const total = m?.total ?? 0;
+  const tabs = (
+    <Tabs
+      label="de Brian"
+      current={v === "regalos" ? "regalos" : "notas"}
+      items={[
+        { key: "notas", href: "/brian", label: "notas" },
+        { key: "regalos", href: "/brian?v=regalos", label: "regalos", dot: role === "jazz" && !!regalos && hayParaAbrir(regalos, total) },
+      ]}
+    />
+  );
 
+  if (v === "regalos") {
+    if (!regalos) {
+      return (
+        <>
+          {tabs}
+          <p className="mt-10 text-pretty text-lg text-ink-soft">No pude leer los regalos. Vuelve a abrir en un momento.</p>
+        </>
+      );
+    }
+    return (
+      <>
+        {tabs}
+        {role === "brian" ? <RegaloForm regalos={regalos} total={total} /> : <Regalos {...vistaDeJazz(regalos, total)} />}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {tabs}
+      <Notes isBrian={role === "brian"} />
+    </>
+  );
+}
+
+async function Notes({ isBrian }: { isBrian: boolean }) {
+  const notes = await loadNotes();
   return (
     <>
       {isBrian && <Composer />}
