@@ -37,7 +37,9 @@ export default function Home() {
         <Suspense fallback={<TileSkeleton className="hidden lg:block" />}>
           <BrianTile className="hidden lg:flex" />
         </Suspense>
-        <GardenTile className="hidden lg:flex" />
+        <Suspense fallback={<TileSkeleton className="hidden lg:block" />}>
+          <GardenTile className="hidden lg:flex" />
+        </Suspense>
         <Suspense fallback={<TileSkeleton className="hidden lg:col-span-2 lg:block" />}>
           <WideTile className="hidden lg:col-span-2 lg:flex" />
         </Suspense>

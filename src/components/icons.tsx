@@ -115,3 +115,17 @@ export const Rest = ({ className }: P) => (
     <path d="M18 4.5v3.5M16.25 6.25h3.5" />
   </svg>
 );
+
+// A mission: a diamond with its tick — and the tick alone, for the button that completes it.
+export const Diamond = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <path d="M12 3.5 20.5 12 12 20.5 3.5 12Z" />
+    <path d="m9.2 12 2 2 3.8-3.8" />
+  </svg>
+);
+
+export const Check = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <path d="m6.5 12.5 3.6 3.6 7.4-7.6" />
+  </svg>
+);

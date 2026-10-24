@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { loadMisiones } from "@/lib/misiones";
 import { loadNotes } from "@/lib/notes";
 import { currentRole } from "@/lib/session";
 import type { Estado } from "@/lib/modos";
@@ -22,10 +23,12 @@ export async function BrianTile({ className = "" }: { className?: string }) {
   );
 }
 
-export function GardenTile({ className = "" }: { className?: string }) {
+// Her missions are read only for her session; on Brian's screen the tile counts his browser.
+export async function GardenTile({ className = "" }: { className?: string }) {
+  const m = (await currentRole()) === "jazz" ? await loadMisiones().catch(() => null) : null;
   return (
     <Link href="/tu" className={`${tile} ${className}`}>
-      <GardenTileView />
+      <GardenTileView misiones={m?.total ?? 0} abiertas={m?.abiertas.length ?? 0} />
     </Link>
   );
 }

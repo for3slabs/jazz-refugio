@@ -66,10 +66,11 @@ export function BrianTileView({ isBrian, at, preview }: { isBrian: boolean; at: 
   );
 }
 
-export function GardenTileView() {
+// Her flowers: the times she came back (her browser) + the missions she completed (synced).
+export function GardenTileView({ misiones = 0, abiertas = 0 }: { misiones?: number; abiertas?: number }) {
   const [n, setN] = useState<number | null>(null);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- the garden lives in her browser
-  useEffect(() => setN(moments.all().length), []);
+  useEffect(() => setN(moments.all().length + misiones), [misiones]);
   const shown = Math.min(n ?? 0, 12);
 
   return (
@@ -82,13 +83,18 @@ export function GardenTileView() {
           ))}
         </div>
       ) : (
-        <p className="text-pretty text-ink-soft">Cada vez que vuelvas a ti, aquí crece una flor.</p>
+        <p className="text-pretty text-ink-soft">Cada vez que vuelvas a ti o cumplas una misión, aquí crece una flor.</p>
+      )}
+      {abiertas > 0 && (
+        <p className="text-sm text-ink-soft">
+          {abiertas} {abiertas === 1 ? "misión abierta" : "misiones abiertas"}
+        </p>
       )}
       <div className="mt-auto flex items-baseline justify-between">
         <p className="text-sm text-ink-soft">
           {n ? (
             <>
-              <strong className="t-display text-3xl text-ink">{n}</strong> {n === 1 ? "vez" : "veces"}
+              <strong className="t-display text-3xl text-ink">{n}</strong> {n === 1 ? "flor" : "flores"}
             </>
           ) : (
             " "
