@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { Confetti } from "@/components/confetti";
 import { Flower } from "@/components/flower";
-import { Orb } from "@/components/shell";
+import { Orb } from "@/components/orb";
 import { ArrowRight } from "@/components/icons";
 import { useCountdown } from "@/components/home-live";
 import { moments, timer } from "@/lib/local";

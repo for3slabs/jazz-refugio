@@ -1,4 +1,4 @@
-import { Orb } from "@/components/shell";
+import { Orb } from "@/components/orb";
 import { Door } from "./door";
 
 export default function Entrar() {
