@@ -1,6 +1,7 @@
 // What a mission is — shared by the server (storage) and her screen (the board).
 
-export type Mision = { id: string; texto: string; at: number };
+// `origen`: the goal step this mission came from (block pendientes), if any.
+export type Mision = { id: string; texto: string; at: number; origen?: { meta: string; paso: string } };
 export type Hecha = Mision & { hecha: number };
 export type Misiones = { abiertas: Mision[]; hechas: Hecha[]; total: number; mejorDia: number };
 

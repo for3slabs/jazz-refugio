@@ -5,8 +5,18 @@ import { refresh } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { saveEstado } from "@/lib/estado";
-import { MAX_TEXTO } from "@/lib/mision";
-import { agregar, cumplir, soltar } from "@/lib/misiones";
+import { MAX_ABIERTAS, MAX_TEXTO } from "@/lib/mision";
+import { agregar, cumplir, florDePaso, loadMisiones, soltar } from "@/lib/misiones";
+import {
+  anotarIdea,
+  marcarPaso,
+  nuevaMeta,
+  nuevoPaso,
+  pasoDe,
+  sacarIdea,
+  soltarMeta,
+  soltarPaso,
+} from "@/lib/pendientes";
 import { isModo } from "@/lib/modos";
 import { MAX_NOTE, addNote, removeNote } from "@/lib/notes";
 import { currentRole } from "@/lib/session";
@@ -87,14 +97,13 @@ export async function marcarEstado(modo: string | null): Promise<EstadoResult> {
   return { ok: true, error: null };
 }
 
-// Her missions are hers: only her session adds, completes or lets one go.
-export async function nuevaMision(texto: string): Promise<EstadoResult> {
-  if ((await currentRole()) !== "jazz") return { ok: false, error: "Las misiones son de Jazz." };
-  const t = texto.trim();
-  if (!t) return { ok: false, error: "Escribe la misión primero." };
-  if (t.length > MAX_TEXTO) return { ok: false, error: `Máximo ${MAX_TEXTO} caracteres.` };
+// Her missions and goals are hers: only her session changes them. One wrapper says so,
+// turns a failure into a sentence for her, and refreshes what she sees.
+async function deJazz(op: () => Promise<string | void>): Promise<EstadoResult> {
+  if ((await currentRole()) !== "jazz") return { ok: false, error: "Esto es solo de Jazz." };
   try {
-    if (!(await agregar(t))) return { ok: false, error: "Ya tienes 3. Termina una primero." };
+    const err = await op();
+    if (err) return { ok: false, error: err };
   } catch {
     return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
   }
@@ -102,27 +111,105 @@ export async function nuevaMision(texto: string): Promise<EstadoResult> {
   return { ok: true, error: null };
 }
 
-export async function cumplirMision(id: string): Promise<EstadoResult> {
-  if ((await currentRole()) !== "jazz") return { ok: false, error: "Las misiones son de Jazz." };
-  try {
-    await cumplir(id);
-  } catch {
-    return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
-  }
-  refresh();
-  return { ok: true, error: null };
+function texto(t: string, max = MAX_TEXTO): string | { error: string } {
+  const v = t.trim();
+  if (!v) return { error: "Escribe algo primero." };
+  if (v.length > max) return { error: `Máximo ${max} caracteres.` };
+  return v;
 }
 
-export async function soltarMision(id: string): Promise<EstadoResult> {
-  if ((await currentRole()) !== "jazz") return { ok: false, error: "Las misiones son de Jazz." };
-  try {
-    await soltar(id);
-  } catch {
-    return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
-  }
-  refresh();
-  return { ok: true, error: null };
-}
+const LLENO = "Ya tienes 3 para hoy. Termina una primero.";
+
+export const nuevaMision = async (t: string) =>
+  deJazz(async () => {
+    const v = texto(t);
+    if (typeof v !== "string") return v.error;
+    if (!(await agregar(v))) return LLENO;
+  });
+
+// Completing a mission born from a goal step marks that step done too.
+export const cumplirMision = async (id: string) =>
+  deJazz(async () => {
+    const m = await cumplir(id);
+    if (m?.origen) await marcarPaso(m.origen.meta, m.origen.paso, "hecho");
+  });
+
+// Letting it go sends the step back to wait in its goal — nothing is lost.
+export const soltarMision = async (id: string) =>
+  deJazz(async () => {
+    const m = await soltar(id);
+    if (m?.origen) await marcarPaso(m.origen.meta, m.origen.paso, "espera");
+  });
+
+export const anotar = async (t: string) =>
+  deJazz(async () => {
+    const v = texto(t);
+    if (typeof v !== "string") return v.error;
+    return anotarIdea(v);
+  });
+
+export const soltarIdea = async (id: string) => deJazz(async () => void (await sacarIdea(id)));
+
+export const ideaAHoy = async (id: string) =>
+  deJazz(async () => {
+    if ((await loadMisiones()).abiertas.length >= MAX_ABIERTAS) return LLENO;
+    const idea = await sacarIdea(id);
+    if (idea) await agregar(idea.texto.slice(0, MAX_TEXTO));
+  });
+
+export const ideaAMeta = async (id: string) =>
+  deJazz(async () => {
+    const idea = await sacarIdea(id);
+    if (!idea) return;
+    const err = await nuevaMeta(idea.texto.slice(0, MAX_TEXTO), null);
+    if (err) {
+      await anotarIdea(idea.texto); // the goal list is full: the thought goes back where it was
+      return err;
+    }
+  });
+
+export const crearMeta = async (t: string, para: string | null) =>
+  deJazz(async () => {
+    const v = texto(t);
+    if (typeof v !== "string") return v.error;
+    return nuevaMeta(v, para && /^\d{4}-\d{2}-\d{2}$/.test(para) ? para : null);
+  });
+
+export const borrarMeta = async (id: string) => deJazz(() => soltarMeta(id));
+
+export const agregarPaso = async (metaId: string, t: string) =>
+  deJazz(async () => {
+    const v = texto(t);
+    if (typeof v !== "string") return v.error;
+    return nuevoPaso(metaId, v);
+  });
+
+export const borrarPaso = async (metaId: string, pasoId: string) => deJazz(() => soltarPaso(metaId, pasoId));
+
+export const pasoAHoy = async (metaId: string, pasoId: string) =>
+  deJazz(async () => {
+    const paso = await pasoDe(metaId, pasoId);
+    if (!paso || paso.hecho || paso.enHoy) return;
+    if (!(await agregar(paso.texto, { meta: metaId, paso: pasoId }))) return LLENO;
+    return marcarPaso(metaId, pasoId, "enHoy");
+  });
+
+// Done right in the goal: the step is marked and the garden still gets its flower.
+export const cumplirPaso = async (metaId: string, pasoId: string) =>
+  deJazz(async () => {
+    const paso = await pasoDe(metaId, pasoId);
+    if (!paso || paso.hecho) return;
+    if (paso.enHoy) {
+      // it is also waiting in «hoy»: complete that mission, which marks the step
+      const m = (await loadMisiones()).abiertas.find((x) => x.origen?.paso === pasoId);
+      if (m) {
+        await cumplir(m.id);
+        return marcarPaso(metaId, pasoId, "hecho");
+      }
+    }
+    await florDePaso(paso.texto);
+    return marcarPaso(metaId, pasoId, "hecho");
+  });
 
 export async function borrarNota(form: FormData) {
   if ((await currentRole()) !== "brian") return;
