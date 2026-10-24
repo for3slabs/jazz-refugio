@@ -4,6 +4,8 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { refresh } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { agregarAprendido, agregarLibro, agregarViaje, moverLibro, moverViaje, soltarDe } from "@/lib/coleccion";
+import { MAX_NOTA as MAX_NOTA_ESTANTE, MAX_TITULO as MAX_TITULO_ESTANTE } from "@/lib/estante";
 import { saveEstado } from "@/lib/estado";
 import { agregar as agregarAlTablero, borrarTablero, compartir, crearTablero, quitar } from "@/lib/lienzo";
 import { MAX_NOMBRE, MAX_NOTA, isHex } from "@/lib/tablero";
@@ -312,6 +314,48 @@ export const agregarNota = async (tablero: string, t: string) =>
   });
 
 export const quitarDelTablero = async (tablero: string, item: string) => deJazz(() => quitar(tablero, item));
+
+// Her shelf and trips: only she writes them. Optional fields may be empty; the rest are short.
+function opcional(t: string, max: number): string | { error: string } {
+  const v = t.trim();
+  return v.length > max ? { error: `Máximo ${max} caracteres.` } : v;
+}
+
+export const guardarLibro = async (titulo: string, autor: string, estado: string, nota: string) =>
+  deJazz(async () => {
+    const t = texto(titulo, MAX_TITULO_ESTANTE);
+    const a = opcional(autor, MAX_TITULO_ESTANTE);
+    const n = opcional(nota, MAX_NOTA_ESTANTE);
+    for (const v of [t, a, n]) if (typeof v !== "string") return v.error;
+    const e = estado === "leyendo" || estado === "leido" ? estado : "quiero";
+    return agregarLibro(t as string, a as string, e, n as string);
+  });
+
+export const guardarAprendido = async (titulo: string, donde: string, nota: string) =>
+  deJazz(async () => {
+    const t = texto(titulo, MAX_TITULO_ESTANTE);
+    const d = opcional(donde, MAX_TITULO_ESTANTE);
+    const n = opcional(nota, MAX_NOTA_ESTANTE);
+    for (const v of [t, d, n]) if (typeof v !== "string") return v.error;
+    return agregarAprendido(t as string, d as string, n as string);
+  });
+
+export const guardarViaje = async (lugar: string, cuando: string, estado: string, nota: string) =>
+  deJazz(async () => {
+    const l = texto(lugar, MAX_TITULO_ESTANTE);
+    const c = opcional(cuando, 40);
+    const n = opcional(nota, MAX_NOTA_ESTANTE);
+    for (const v of [l, c, n]) if (typeof v !== "string") return v.error;
+    return agregarViaje(l as string, c as string, estado === "fui" ? "fui" : "quiero", n as string);
+  });
+
+export const cambiarLibro = async (id: string, estado: string) =>
+  deJazz(() => moverLibro(id, estado === "leyendo" || estado === "leido" ? estado : "quiero"));
+
+export const cambiarViaje = async (id: string, estado: string) => deJazz(() => moverViaje(id, estado === "fui" ? "fui" : "quiero"));
+
+export const soltarDelEstante = async (lista: string, id: string) =>
+  deJazz(() => soltarDe(lista === "aprendido" ? "aprendido" : lista === "viajes" ? "viajes" : "libros", id));
 
 export async function borrarNota(form: FormData) {
   if ((await currentRole()) !== "brian") return;
