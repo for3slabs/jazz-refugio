@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { ArrowLeft, Bloom, Gear, Letter, Star } from "./icons";
+import { ArrowLeft, Gear } from "./icons";
 import { ThemeToggle } from "./theme-toggle";
 
 // The frame every screen shares: a quiet top bar and a single column.
@@ -34,29 +34,6 @@ export function Shell({ children, back = false }: { children: ReactNode; back?: 
       </header>
       <main className="flex flex-1 flex-col">{children}</main>
     </div>
-  );
-}
-
-const doors = [
-  { href: "/superpoderes", label: "tus superpoderes", Icon: Bloom },
-  { href: "/brian", label: "de Brian", Icon: Letter },
-  { href: "/tu", label: "tú", Icon: Star },
-];
-
-export function Doors() {
-  return (
-    <nav className="grid grid-cols-3 border-t border-line pt-5">
-      {doors.map(({ href, label, Icon }) => (
-        <Link
-          key={href}
-          href={href}
-          className="group flex flex-col items-center gap-2 rounded-2xl py-2 text-xs text-ink-soft transition-colors hover:text-ink"
-        >
-          <Icon className="size-5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:text-accent" />
-          {label}
-        </Link>
-      ))}
-    </nav>
   );
 }
 

@@ -10,6 +10,7 @@ const K = {
   timer: "refugio:timer",
   theme: "refugio:theme",
   motion: "refugio:motion",
+  notesSeen: "refugio:notes-seen",
 } as const;
 
 function read<T>(key: string, fallback: T): T {
@@ -48,6 +49,12 @@ export const timer = {
   start: (minutes: number, step: string) =>
     write(K.timer, { endsAt: Date.now() + minutes * 60_000, step }),
   clear: () => write(K.timer, null),
+};
+
+// The time of the newest note she has opened — the home's «de Brian» door glows past it.
+export const notesSeen = {
+  get: (): number => read<number>(K.notesSeen, 0),
+  set: (at: number) => write(K.notesSeen, at),
 };
 
 export type Theme = "light" | "dark";

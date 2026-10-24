@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Doors, Orb, Shell } from "@/components/shell";
+import { Orb, Shell } from "@/components/shell";
+import { Doors } from "@/components/doors";
 import { DailyLine, RunningTimer } from "@/components/home-live";
 import { Sparkle } from "@/components/icons";
 
