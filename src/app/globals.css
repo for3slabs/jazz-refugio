@@ -1,70 +1,79 @@
 @import "tailwindcss";
 
-/* Theme follows the system unless the viewer picked one (data-theme on <html>). */
-@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+/* Neon Noir is the default; the light «calm» theme is opt-in (data-theme="light").
+   ⛔ Every chromatic value here sits at OKLCH hue 305–345° — purple → orchid → magenta,
+   never the violet-blue band. `npm run check:palette` enforces it on every build. */
+@custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
 
 :root {
-  --bg: #faf7ff;
-  --surface: #ffffff;
-  --ink: #2a1b47;
-  --ink-soft: #6b5b8a;
-  --line: #e7defa;
-  --accent: #7c3aed;
-  --accent-ink: #ffffff;
-  --accent-soft: #ede4ff;
-  --glow: #c4b5fd;
-  --orb: #7c3aed;
-  color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #14101f;
-    --surface: #1e1830;
-    --ink: #ede7fa;
-    --ink-soft: #a99cc6;
-    --line: #2f2648;
-    --accent: #a78bfa;
-    --accent-ink: #1a1030;
-    --accent-soft: #2d2347;
-    --glow: #6d4fc2;
-    --orb: #8b5cf6;
-    color-scheme: dark;
-  }
-}
-
-:root[data-theme="dark"] {
-  --bg: #14101f;
-  --surface: #1e1830;
-  --ink: #ede7fa;
-  --ink-soft: #a99cc6;
-  --line: #2f2648;
-  --accent: #a78bfa;
-  --accent-ink: #1a1030;
-  --accent-soft: #2d2347;
-  --glow: #6d4fc2;
-  --orb: #8b5cf6;
+  --canvas: oklch(0.14 0.028 315);
+  --surface: oklch(0.185 0.038 315);
+  --surface-2: oklch(0.225 0.05 314);
+  --line: oklch(0.34 0.06 314);
+  --ink: oklch(0.955 0.022 320);
+  --ink-soft: oklch(0.78 0.05 318);
+  --accent: oklch(0.72 0.19 310);
+  --accent-ink: oklch(0.17 0.045 315);
+  --accent-soft: oklch(0.29 0.085 312);
+  --spark: oklch(0.7 0.23 345);
+  --glow: oklch(0.56 0.23 310);
+  --orb: oklch(0.63 0.245 308);
+  --orb-deep: oklch(0.3 0.13 312);
   color-scheme: dark;
 }
 
+:root[data-theme="light"] {
+  --canvas: oklch(0.975 0.012 320);
+  --surface: oklch(0.995 0.006 320);
+  --surface-2: oklch(0.955 0.02 318);
+  --line: oklch(0.86 0.035 316);
+  --ink: oklch(0.25 0.065 315);
+  --ink-soft: oklch(0.47 0.07 315);
+  --accent: oklch(0.5 0.23 310);
+  --accent-ink: oklch(0.99 0.008 320);
+  --accent-soft: oklch(0.93 0.045 315);
+  --spark: oklch(0.56 0.24 345);
+  --glow: oklch(0.8 0.12 312);
+  --orb: oklch(0.56 0.25 308);
+  --orb-deep: oklch(0.32 0.15 312);
+  color-scheme: light;
+}
+
 @theme inline {
-  --color-bg: var(--bg);
+  --color-canvas: var(--canvas);
   --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
-  --color-line: var(--line);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
-  --color-glow: var(--glow);
-  --font-display: var(--font-fraunces);
-  --font-sans: var(--font-inter);
+  --color-spark: var(--spark);
+  --font-sans: var(--font-bricolage);
+  --ease-out-strong: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+html {
+  background: var(--canvas);
+  scrollbar-color: var(--line) var(--canvas);
+  accent-color: var(--accent);
 }
 
 body {
-  background: var(--bg);
+  background: var(--canvas);
   color: var(--ink);
-  transition: background-color 400ms ease, color 400ms ease;
+  caret-color: var(--accent);
+  font-optical-sizing: auto;
+  /* light text on a dark canvas reads thinner: a touch more weight and air */
+  font-weight: 420;
+  letter-spacing: 0.005em;
+  transition: background-color 300ms ease, color 300ms ease;
+}
+
+:root[data-theme="light"] body {
+  font-weight: 400;
+  letter-spacing: 0;
 }
 
 ::selection {
@@ -78,40 +87,93 @@ body {
 }
 
 /* Fields already change their border on focus: a second ring around them reads as a glitch. */
-input:focus-visible {
+input:focus-visible,
+textarea:focus-visible {
   outline: none;
   box-shadow: 0 0 0 4px var(--accent-soft);
 }
 
-/* ── The orb: a slow idle breath on the home, a guided one in /volver ── */
-.orb {
-  background:
-    radial-gradient(circle at 35% 30%, rgb(255 255 255 / 0.55), transparent 42%),
-    radial-gradient(circle at 50% 50%, var(--orb), color-mix(in oklab, var(--orb) 50%, #1a1030));
-  box-shadow: inset 0 -12px 30px rgb(0 0 0 / 0.18);
+a {
+  text-underline-offset: 0.25em;
 }
 
-/* The glow is a gradient that fades to nothing — a blurred shadow leaves a visible edge. */
+/* ── Type roles: one family, three voices ── */
+
+/* Display: heavy and tight, it stacks as a block. */
+.t-display {
+  font-weight: 800;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+  font-variation-settings: "opsz" 96;
+  text-wrap: balance;
+}
+
+/* Emphasis without italics (the family has none): narrower and in orchid. */
+.t-narrow {
+  font-stretch: 75%;
+  font-variation-settings: "opsz" 96, "wdth" 75;
+}
+
+/* Label: the museum-tag voice. */
+.t-label {
+  font-size: 0.6875rem;
+  font-weight: 560;
+  line-height: 1.2;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+/* ── Pressable: every button and tappable tile answers the finger ── */
+.press {
+  transition: transform 160ms var(--ease-out-strong), background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+}
+.press:active {
+  transform: scale(0.97);
+}
+
+/* ── The orb — the one glowing object, like a lone product in a dark room ── */
+.orb {
+  background:
+    radial-gradient(circle at 34% 28%, oklch(1 0 0 / 0.5), transparent 40%),
+    radial-gradient(circle at 50% 50%, var(--orb), var(--orb-deep));
+  box-shadow: inset 0 -14px 32px oklch(0.1 0.05 315 / 0.45);
+}
+
 .orb-halo {
-  background: radial-gradient(closest-side, color-mix(in oklab, var(--glow) 60%, transparent), color-mix(in oklab, var(--glow) 18%, transparent) 55%, transparent);
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--glow) 55%, transparent),
+    color-mix(in oklab, var(--glow) 16%, transparent) 55%,
+    transparent
+  );
 }
 
 @keyframes idle-breath {
-  0%, 100% { transform: scale(0.94); }
-  50% { transform: scale(1.04); }
+  0%, 100% { transform: scale(0.95); }
+  50% { transform: scale(1.03); }
 }
 
 .orb-idle {
   animation: idle-breath 7s ease-in-out infinite;
 }
 
+/* The grid behind the bento, like a cutting mat — barely there. */
+@utility mat {
+  background-image:
+    linear-gradient(color-mix(in oklab, var(--line) 35%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in oklab, var(--line) 35%, transparent) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
+}
+
+/* The reward moment: content that arrives after she comes back. */
 @keyframes rise {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; transform: translateY(6px); filter: blur(2px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
 }
 
 .rise {
-  animation: rise 500ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: rise 280ms var(--ease-out-strong) both;
 }
 
 @keyframes confetti-fall {
@@ -124,19 +186,21 @@ input:focus-visible {
   animation: confetti-fall 1800ms cubic-bezier(0.2, 0.6, 0.3, 1) both;
 }
 
-/* The viewer's own choice (ajustes) and the system's both switch motion off. */
-:root[data-motion="off"] *,
-:root[data-motion="off"] *::before,
-:root[data-motion="off"] *::after {
-  animation-duration: 0.01ms !important;
-  animation-iteration-count: 1 !important;
-  transition-duration: 0.01ms !important;
+/* Less motion means fewer and gentler — not none: fades stay, travel goes. */
+@keyframes fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+  .rise { animation-name: fade; animation-duration: 200ms; }
+  .orb-idle, .animate-ping { animation: none; }
+  .confetti { display: none; }
+  .press:active { transform: none; }
 }
+
+:root[data-motion="off"] .rise { animation-name: fade; animation-duration: 200ms; }
+:root[data-motion="off"] .orb-idle,
+:root[data-motion="off"] .animate-ping { animation: none; }
+:root[data-motion="off"] .confetti { display: none; }
+:root[data-motion="off"] .press:active { transform: none; }

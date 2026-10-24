@@ -32,7 +32,7 @@ export function Garden() {
     <div className="mt-8 space-y-10">
       <div className="rise rounded-[2rem] border border-line bg-surface p-6">
         <p className="text-sm text-ink-soft">
-          <strong className="font-display text-3xl font-normal text-ink">{list.length}</strong>{" "}
+          <strong className="t-display text-4xl text-ink">{list.length}</strong>{" "}
           {list.length === 1 ? "vez que volviste a ti" : "veces que volviste a ti"}
         </p>
         <div className="mt-5 grid grid-cols-6 gap-2">
@@ -43,7 +43,7 @@ export function Garden() {
       </div>
 
       <section>
-        <h2 className="text-xs font-medium uppercase tracking-[0.14em] text-accent">lo que hiciste al volver</h2>
+        <h2 className="t-label text-accent">lo que hiciste al volver</h2>
         <ul className="mt-3 divide-y divide-line">
           {recent.map((m) => (
             <li key={m.at} className="flex items-baseline justify-between gap-4 py-3">

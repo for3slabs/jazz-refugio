@@ -11,7 +11,7 @@ export function DailyLine() {
   // eslint-disable-next-line react-hooks/set-state-in-effect -- "today" is the viewer's day, not the server's
   useEffect(() => setLine(lineOfTheDay()), []);
   return (
-    <p className="min-h-14 text-balance text-center font-display text-xl leading-snug text-ink">
+    <p className="min-h-14 text-balance text-center text-xl font-medium leading-snug text-ink">
       {line && <span className="rise inline-block">«{line}»</span>}
     </p>
   );
@@ -41,7 +41,7 @@ export function RunningTimer() {
   return (
     <Link
       href="/volver?paso=3"
-      className="rise mx-auto flex items-center gap-3 rounded-full border border-line bg-surface px-4 py-2 text-sm shadow-sm"
+      className="rise mx-auto flex items-center gap-3 rounded-full border border-dashed border-line bg-surface px-4 py-2 text-sm"
     >
       <span className="size-2 animate-pulse rounded-full bg-accent" />
       <span className="tabular-nums text-ink">{label}</span>

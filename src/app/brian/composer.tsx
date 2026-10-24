@@ -14,7 +14,7 @@ export function Composer() {
 
   return (
     <form ref={form} action={action} className="mt-8 space-y-3 rounded-3xl border border-line bg-surface p-5">
-      <label htmlFor="texto" className="text-xs font-medium uppercase tracking-[0.14em] text-accent">
+      <label htmlFor="texto" className="t-label text-accent">
         una nota para Jazz
       </label>
       <textarea
@@ -24,7 +24,7 @@ export function Composer() {
         maxLength={2000}
         required
         placeholder="lo que quieras que encuentre al entrar…"
-        className="block w-full resize-y rounded-2xl border border-line bg-bg px-4 py-3 text-lg leading-relaxed text-ink placeholder:text-ink-soft/60 focus:border-accent focus:outline-none"
+        className="block w-full resize-y rounded-2xl border border-line bg-canvas px-4 py-3 text-lg leading-relaxed text-ink placeholder:text-ink-soft/60 focus:border-accent focus:outline-none"
       />
       <div className="flex items-center justify-between gap-3">
         <p aria-live="polite" className="text-sm text-ink-soft">

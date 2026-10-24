@@ -1,10 +1,11 @@
-import { Shell } from "@/components/shell";
+import { PageTitle, Shell } from "@/components/shell";
+import { Bloom } from "@/components/icons";
 import { Cards } from "./cards";
 
 export default function Superpoderes() {
   return (
     <Shell back>
-      <p className="mt-8 font-display text-lg text-ink-soft">tus superpoderes</p>
+      <PageTitle icon={<Bloom className="size-7" />}>tus superpoderes</PageTitle>
       <Cards />
     </Shell>
   );

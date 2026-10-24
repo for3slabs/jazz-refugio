@@ -1,16 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Fraunces, Inter } from "next/font/google";
+import { Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
-  subsets: ["latin"],
-  axes: ["SOFT", "opsz"],
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
+// One family, three voices (display · label · body) — see the t-* roles in globals.css.
+const bricolage = Bricolage_Grotesque({
+  variable: "--font-bricolage",
+  subsets: ["latin", "latin-ext"],
+  axes: ["opsz", "wdth"],
 });
 
 export const metadata: Metadata = {
@@ -21,22 +17,15 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#faf7ff" },
-    { media: "(prefers-color-scheme: dark)", color: "#14101f" },
-  ],
+  themeColor: "oklch(0.14 0.028 315)",
 };
 
 // Applies the saved theme and motion choice before the first paint, so nothing flashes.
-const prefsScript = `try{var t=localStorage.getItem("refugio:theme");if(t)document.documentElement.dataset.theme=t;var m=localStorage.getItem("refugio:motion");if(m)document.documentElement.dataset.motion=m}catch(e){}`;
+const prefsScript = `try{var t=localStorage.getItem("refugio:theme");if(t==="light")document.documentElement.dataset.theme=t;var m=localStorage.getItem("refugio:motion");if(m)document.documentElement.dataset.motion=m}catch(e){}`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="es"
-      className={`${fraunces.variable} ${inter.variable} h-full antialiased`}
-      suppressHydrationWarning
-    >
+    <html lang="es" className={`${bricolage.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: prefsScript }} />
       </head>

@@ -1,5 +1,5 @@
 // A short burst of purple — the reward has to arrive the moment she comes back.
-const colors = ["var(--accent)", "#c4b5fd", "#e9d5ff", "#a78bfa", "#fde68a"];
+const colors = ["var(--accent)", "var(--spark)", "var(--ink)", "var(--glow)", "oklch(0.9 0.11 95)"];
 
 export function Confetti() {
   const pieces = Array.from({ length: 28 }, (_, i) => {

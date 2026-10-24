@@ -63,13 +63,14 @@ export const prefs = {
   theme(): Theme {
     try {
       const t = localStorage.getItem(K.theme);
-      if (t === "light" || t === "dark") return t;
+      if (t === "light") return t;
     } catch {}
-    return matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    return "dark"; // Neon Noir is her default; light is the opt-in calm theme
   },
   setTheme(t: Theme) {
-    document.documentElement.dataset.theme = t;
-    write(K.theme, t);
+    if (t === "light") document.documentElement.dataset.theme = "light";
+    else delete document.documentElement.dataset.theme;
+    write(K.theme, t === "light" ? "light" : null);
   },
   motionOff(): boolean {
     return document.documentElement.dataset.motion === "off";
