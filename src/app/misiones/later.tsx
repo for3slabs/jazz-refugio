@@ -19,6 +19,7 @@ import { Confetti } from "@/components/confetti";
 import { Flower } from "@/components/flower";
 import { ArrowLeft, ArrowRight, Check, More } from "@/components/icons";
 import { MAX_TEXTO } from "@/lib/mision";
+import { PartirEnPasos } from "./ayudantes";
 import { type Idea, type Meta, MAX_METAS, MAX_PASOS, cuando, siguiente, terminada } from "@/lib/pendiente";
 
 type View = { mente: Idea[]; metas: Meta[] };
@@ -454,6 +455,8 @@ function Goal({ meta, hoyLleno, run, celebrate }: { meta: Meta; hoyLleno: boolea
           </button>
         </form>
       )}
+
+      {meta.pasos.length < MAX_PASOS && !done && <PartirEnPasos key={meta.pasos.length} metaId={meta.id} />}
 
       <div className="mt-10 border-t border-dashed border-line pt-5">
         {seguro ? (

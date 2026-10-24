@@ -6,7 +6,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { agregarAprendido, agregarLibro, agregarViaje, moverLibro, moverViaje, soltarDe } from "@/lib/coleccion";
 import { MAX_NOTA as MAX_NOTA_ESTANTE, MAX_TITULO as MAX_TITULO_ESTANTE } from "@/lib/estante";
-import { saveEstado } from "@/lib/estado";
+import { partirEnPasos, porDondeEmpiezo } from "@/lib/ayudantes";
+import { loadEstado, saveEstado } from "@/lib/estado";
 import { agregar as agregarAlTablero, borrarTablero, compartir, crearTablero, quitar } from "@/lib/lienzo";
 import { MAX_NOMBRE, MAX_NOTA, isHex } from "@/lib/tablero";
 import { MAX_RESPUESTA } from "@/lib/entre";
@@ -14,9 +15,11 @@ import { contestar, marcarPresente } from "@/lib/presente";
 import { type Abierto, MAX_REGALO, MAX_TITULO, MAX_TRAS } from "@/lib/regalo";
 import { abrir, borrar, crear, usar } from "@/lib/regalos";
 import { MAX_ABIERTAS, MAX_TEXTO } from "@/lib/mision";
+import { MAX_PASOS, siguiente, terminada } from "@/lib/pendiente";
 import { agregar, cumplir, florDePaso, loadMisiones, soltar } from "@/lib/misiones";
 import {
   anotarIdea,
+  loadPendientes,
   marcarPaso,
   nuevaMeta,
   nuevoPaso,
@@ -356,6 +359,43 @@ export const cambiarViaje = async (id: string, estado: string) => deJazz(() => m
 
 export const soltarDelEstante = async (lista: string, id: string) =>
   deJazz(() => soltarDe(lista === "aprendido" ? "aprendido" : lista === "viajes" ? "viajes" : "libros", id));
+
+// The helpers (block agentes). What they send is read here, on the server, from her own
+// stores — never taken from the browser — and only her session may call them.
+export async function proponerPasos(metaId: string): Promise<EstadoResult & { pasos: string[] }> {
+  if ((await currentRole()) !== "jazz") return { ok: false, error: "Esto es solo de Jazz.", pasos: [] };
+  const meta = (await loadPendientes()).metas.find((m) => m.id === metaId);
+  if (!meta) return { ok: false, error: "Esa meta ya no está.", pasos: [] };
+  const r = await partirEnPasos(meta.titulo, meta.pasos.map((p) => p.texto));
+  return r.ok ? { ok: true, error: null, pasos: r.data } : { ok: false, error: r.error, pasos: [] };
+}
+
+export const guardarPasos = async (metaId: string, pasos: string[]) =>
+  deJazz(async () => {
+    const meta = (await loadPendientes()).metas.find((m) => m.id === metaId);
+    if (!meta) return "Esa meta ya no está.";
+    const limpios = pasos.map((p) => String(p).trim().slice(0, MAX_TEXTO)).filter(Boolean).slice(0, MAX_PASOS - meta.pasos.length);
+    for (const p of limpios) {
+      const err = await nuevoPaso(metaId, p);
+      if (err) return err;
+    }
+  });
+
+export async function dondeEmpiezo(): Promise<EstadoResult & { empieza: string | null; porque: string | null }> {
+  const vacio = { empieza: null, porque: null };
+  if ((await currentRole()) !== "jazz") return { ok: false, error: "Esto es solo de Jazz.", ...vacio };
+  const [m, p, e] = await Promise.all([loadMisiones(), loadPendientes(), loadEstado().catch(() => null)]);
+  const opciones = [
+    ...m.abiertas.map((x) => x.texto),
+    ...p.metas
+      .filter((x) => !terminada(x))
+      .map((x) => ({ meta: x.titulo, paso: siguiente(x) }))
+      .filter((x) => x.paso && !x.paso.enHoy)
+      .map((x) => `${x.paso!.texto} (de tu meta «${x.meta}»)`),
+  ];
+  const r = await porDondeEmpiezo(opciones, e?.modo ?? null);
+  return r.ok ? { ok: true, error: null, ...r.data } : { ok: false, error: r.error, ...vacio };
+}
 
 export async function borrarNota(form: FormData) {
   if ((await currentRole()) !== "brian") return;

@@ -6,6 +6,7 @@ import { Confetti } from "@/components/confetti";
 import { Flower } from "@/components/flower";
 import { Check } from "@/components/icons";
 import { type Hecha, type Mision, MAX_ABIERTAS, MAX_TEXTO } from "@/lib/mision";
+import { PorDondeEmpiezo } from "./ayudantes";
 
 type View = { abiertas: Mision[]; hoy: Hecha[] };
 type Change = { kind: "add"; m: Mision } | { kind: "done"; id: string } | { kind: "drop"; id: string };
@@ -132,6 +133,8 @@ export function Board({ abiertas, hoy, total }: View & { total: number }) {
           </button>
         </form>
       )}
+
+      {view.abiertas.length > 0 && <PorDondeEmpiezo />}
 
       {view.hoy.length > 0 && (
         <section className="mt-10 border-t border-dashed border-line pt-6">
