@@ -3,7 +3,8 @@
 import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { marcarEstado } from "@/app/actions";
 import { type Estado, type ModoId, modos, vigente } from "@/lib/modos";
-import { Focus, Ideas, Linked, Rest, Sparkle, Waves } from "./icons";
+import { Focus, Ideas, Linked, Rest, Sparkle, Start, Waves } from "./icons";
+import { Orb } from "./orb";
 
 export const modoIcon: Record<ModoId, (p: { className?: string }) => React.ReactElement> = {
   hiperfoco: Focus,
@@ -11,6 +12,7 @@ export const modoIcon: Record<ModoId, (p: { className?: string }) => React.React
   "mil ideas": Ideas,
   saturada: Waves,
   recargando: Rest,
+  "no arranco": Start,
 };
 
 // Minutes since she marked it — refreshed while the page stays open, and the mode
@@ -35,9 +37,11 @@ export function since(at: number, now: number) {
 
 type Msg = { text: string; ok: boolean };
 
-// One tap: the chip opens the sheet, a mode closes it, and the chip has already changed
-// before the server answers. If saving fails the chip goes back and says so.
-export function EstadoChip({ initial }: { initial: Estado | null }) {
+// The home's orb is hers: it takes the colour of her mode, and the small chip inside it says
+// which one — no icon, no minutes, so the orb itself carries the news. One tap: the chip
+// opens the sheet, a mode closes it, and the orb has already changed before the server
+// answers. If saving fails it goes back and says so.
+export function EstadoOrb({ initial, className = "" }: { initial: Estado | null; className?: string }) {
   const [optimistic, setOptimistic] = useOptimistic(initial);
   const [, start] = useTransition();
   const [msg, setMsg] = useState<Msg | null>(null);
@@ -60,29 +64,19 @@ export function EstadoChip({ initial }: { initial: Estado | null }) {
     });
   }
 
-  const Icon = current ? modoIcon[current.modo] : null;
-
   return (
-    <div className="relative z-10 flex justify-center order-first">
+    <Orb modo={current?.modo ?? null} className={className}>
       <button
         type="button"
         aria-haspopup="dialog"
         onClick={() => sheet.current?.showModal()}
-        className="press inline-flex items-center gap-2.5 rounded-full border border-dashed border-line bg-surface px-4 py-2 text-sm hover:border-accent/60"
+        className="orb-chip press absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full px-3.5 py-1.5 text-sm font-semibold"
       >
-        {current && Icon ? (
-          <>
-            <Icon className="size-4 text-accent" />
-            <span className="font-semibold text-ink">{current.modo}</span>
-            {now && <span className="tabular-nums text-ink-soft">· {since(current.at, now)}</span>}
-          </>
-        ) : (
-          <span className="text-ink-soft">¿cómo estás?</span>
-        )}
+        {current ? current.modo : "¿cómo estás?"}
       </button>
 
-      {/* Below the chip, out of the flow: the confirmation never pushes the orb around. */}
-      <p role="status" className="absolute top-full mt-2 whitespace-nowrap text-sm text-ink-soft">
+      {/* Under the orb, out of the flow: the confirmation never pushes the button around. */}
+      <p role="status" className="absolute left-1/2 top-full mt-1 -translate-x-1/2 whitespace-nowrap text-sm text-ink-soft">
         {msg && (
           <span key={msg.text} className="rise inline-flex items-center gap-1.5">
             {msg.text}
@@ -151,6 +145,6 @@ export function EstadoChip({ initial }: { initial: Estado | null }) {
           </ul>
         </div>
       </dialog>
-    </div>
+    </Orb>
   );
 }

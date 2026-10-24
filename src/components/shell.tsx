@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { Suspense, type ReactNode } from "react";
-import { Greeting } from "./greeting";
+import type { ReactNode } from "react";
 import { ArrowLeft, Gear } from "./icons";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -23,12 +22,9 @@ export function Shell({ children, back = false, wide = false }: { children: Reac
             inicio
           </Link>
         ) : (
-          <p className="t-label text-ink-soft">
-            hola
-            <Suspense>
-              <Greeting />
-            </Suspense>
-          </p>
+          <h1 className="t-display text-2xl">
+            tu lienzo <span className="t-narrow text-accent">mental</span>
+          </h1>
         )}
         <div className="flex items-center gap-1">
           <ThemeToggle />

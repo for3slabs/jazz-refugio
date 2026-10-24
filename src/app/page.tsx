@@ -12,25 +12,24 @@ import { Sparkle } from "@/components/icons";
 
 // Phone: one column, the way Brian liked it. Wide screen: the same pieces as a bento —
 // the orb and its button own the left, three tiles carry what lives behind each door.
-// Her mode and the notes for her sit above the title on every screen, as on a phone.
+// The title lives in the top bar and her mode inside the orb, so the doors fit on a phone
+// without scrolling.
+const ORB = "orb-idle size-48 short:size-44 lg:size-56";
+
 export default function Home() {
   return (
     <Shell wide>
-      <div className="flex flex-1 flex-col gap-4 py-6 lg:grid lg:grid-cols-[1.4fr_1fr_0.85fr] lg:grid-rows-[1fr_auto] lg:py-8">
-        <section className="lg:mat flex flex-1 flex-col items-center justify-center gap-9 py-6 lg:gap-7 lg:row-span-2 lg:rounded-[1.75rem] lg:border lg:border-line lg:bg-surface lg:px-10 lg:py-14">
-          <h1 className="t-display text-center text-[2.75rem] lg:text-6xl">
-            tu lienzo <span className="t-narrow text-accent">mental</span>
-          </h1>
-          <Suspense>
-            <EstadoSlot />
-          </Suspense>
+      <div className="flex flex-1 flex-col gap-4 py-6 short:py-2 lg:grid lg:grid-cols-[1.4fr_1fr_0.85fr] lg:grid-rows-[1fr_auto] lg:py-8">
+        <section className="lg:mat flex flex-1 flex-col items-center justify-center gap-9 py-6 short:gap-6 short:py-1 lg:gap-7 lg:row-span-2 lg:rounded-[1.75rem] lg:border lg:border-line lg:bg-surface lg:px-10 lg:py-14">
           <Suspense>
             <PresenteSlot />
           </Suspense>
           <Suspense>
             <AvisoSlot />
           </Suspense>
-          <Orb className="orb-idle size-44 lg:size-48" />
+          <Suspense fallback={<Orb className={ORB} />}>
+            <EstadoSlot className={ORB} />
+          </Suspense>
           <Link
             href="/volver"
             className="press group inline-flex items-center gap-3 rounded-full bg-accent px-8 py-4 text-lg font-semibold text-accent-ink"

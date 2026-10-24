@@ -116,6 +116,15 @@ export const Rest = ({ className }: P) => (
   </svg>
 );
 
+// «no arranco»: a dot where she stands and the first stretch of a road out of it.
+export const Start = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <circle cx="5.5" cy="18.5" r="1.8" />
+    <path d="M8.5 16.5c2.5-1.5 3.5-4 5.5-6.5s3.5-3.5 5.5-4" />
+    <path d="M15.5 5.5 19.5 6l-.8 3.9" />
+  </svg>
+);
+
 // A mission: a diamond with its tick — and the tick alone, for the button that completes it.
 export const Diamond = ({ className }: P) => (
   <svg viewBox="0 0 24 24" className={className} {...base}>

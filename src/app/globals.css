@@ -4,6 +4,8 @@
    ⛔ Every chromatic value here sits at OKLCH hue 305–345° — purple → orchid → magenta,
    never the violet-blue band. `npm run check:palette` enforces it on every build. */
 @custom-variant light (&:where([data-theme="light"], [data-theme="light"] *));
+/* A phone with little height (a browser with its bars): the home tightens so the doors still fit. */
+@custom-variant short (@media (max-width: 1023px) and (max-height: 720px));
 
 :root {
   --canvas: oklch(0.14 0.028 315);
@@ -157,6 +159,56 @@ a {
   animation: idle-breath 7s ease-in-out infinite;
 }
 
+/* Her mode paints the orb. Registered as colours so the change glides instead of
+   jumping; with no mode the theme's purple stays. Pink stands where blue would — she
+   does not like blue in any shade. */
+@property --orb { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --orb-deep { syntax: "<color>"; inherits: true; initial-value: transparent; }
+@property --glow { syntax: "<color>"; inherits: true; initial-value: transparent; }
+
+.orb-tint {
+  transition: --orb 900ms ease, --orb-deep 900ms ease, --glow 900ms ease;
+}
+.orb-tint[data-modo="hiperfoco"] { --orb: oklch(0.5 0.26 304); --orb-deep: oklch(0.22 0.13 306); --glow: oklch(0.45 0.25 304); }
+.orb-tint[data-modo="conectada"] { --orb: oklch(0.72 0.18 150); --orb-deep: oklch(0.3 0.09 158); --glow: oklch(0.6 0.17 150); }
+.orb-tint[data-modo="mil ideas"] { --orb: oklch(0.76 0.17 58); --orb-deep: oklch(0.36 0.11 42); --glow: oklch(0.66 0.17 55); }
+.orb-tint[data-modo="saturada"] { --orb: oklch(0.63 0.22 26); --orb-deep: oklch(0.28 0.11 22); --glow: oklch(0.55 0.21 25); }
+.orb-tint[data-modo="recargando"] { --orb: oklch(0.7 0.012 315); --orb-deep: oklch(0.28 0.01 315); --glow: oklch(0.5 0.012 315); }
+.orb-tint[data-modo="no arranco"] { --orb: oklch(0.75 0.15 355); --orb-deep: oklch(0.33 0.1 355); --glow: oklch(0.64 0.17 355); }
+/* On the light theme the halo is a soft wash of the same colour, as the purple one is. */
+:root[data-theme="light"] .orb-tint[data-modo] { --glow: color-mix(in oklab, var(--orb) 45%, var(--canvas)); }
+
+/* The floating notices (components/notify.ts): Sileo's tones repainted from her palette —
+   its info and action tones are blue. The pill takes the text colour of the theme (light
+   on Neon Noir, dark on Calma), so the words take the canvas colour. */
+[data-sileo-viewport] {
+  --sileo-state-success: oklch(0.52 0.14 150);
+  --sileo-state-info: oklch(0.5 0.23 310);
+  --sileo-state-action: oklch(0.54 0.22 345);
+  --sileo-state-warning: oklch(0.56 0.14 60);
+  --sileo-state-error: oklch(0.53 0.2 25);
+  --sileo-state-loading: oklch(0.5 0.02 315);
+}
+:root[data-theme="light"] [data-sileo-viewport] {
+  --sileo-state-success: oklch(0.8 0.15 150);
+  --sileo-state-info: oklch(0.78 0.15 312);
+  --sileo-state-action: oklch(0.78 0.15 345);
+  --sileo-state-warning: oklch(0.82 0.14 70);
+  --sileo-state-error: oklch(0.75 0.16 25);
+  --sileo-state-loading: oklch(0.8 0.02 315);
+}
+[data-sileo-viewport] .notify-title.notify-title.notify-title,
+[data-sileo-viewport] .notify-text.notify-text.notify-text { text-transform: none; }
+[data-sileo-viewport] .notify-text.notify-text.notify-text { color: color-mix(in oklab, var(--canvas) 72%, transparent); }
+
+/* The chip inside the orb: dark glass, so it reads on every colour the orb can take. */
+.orb-chip {
+  color: oklch(0.98 0.008 320);
+  background: oklch(0.14 0.028 315 / 0.55);
+  border: 1px solid oklch(1 0 0 / 0.18);
+  backdrop-filter: blur(8px);
+}
+
 /* The grid behind the bento, like a cutting mat — barely there. */
 @utility mat {
   background-image:
@@ -227,12 +279,14 @@ a {
 @media (prefers-reduced-motion: reduce) {
   .rise { animation-name: fade; animation-duration: 200ms; }
   .orb-idle, .animate-ping { animation: none; }
+  .orb-tint { transition: none; }
   .confetti { display: none; }
   .press:active { transform: none; }
   .sheet, .sheet:not([open]) { transform: none; }
 }
 
 :root[data-motion="off"] .rise { animation-name: fade; animation-duration: 200ms; }
+:root[data-motion="off"] .orb-tint { transition: none; }
 :root[data-motion="off"] .orb-idle,
 :root[data-motion="off"] .animate-ping { animation: none; }
 :root[data-motion="off"] .confetti { display: none; }
