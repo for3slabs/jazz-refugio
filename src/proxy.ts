@@ -7,6 +7,9 @@ export async function proxy(request: NextRequest) {
   if (await verifyToken(request.cookies.get(COOKIE)?.value)) {
     return NextResponse.next();
   }
+  if (request.nextUrl.pathname.startsWith("/api/")) {
+    return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  }
   return NextResponse.redirect(new URL("/entrar", request.url));
 }
 

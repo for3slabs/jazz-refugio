@@ -1,0 +1,46 @@
+name: ci
+
+# Every PR is checked (lint + a real build). Every push to main is checked again and
+# then deployed to Vercel production (account fruterito101, project jazz-refugio).
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+
+  deploy:
+    needs: check
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      # Until the VERCEL_TOKEN secret exists, deploys are made by hand and this step says so.
+      - if: env.VERCEL_TOKEN == ''
+        run: echo "::notice::VERCEL_TOKEN is not set yet — skipping the automatic deploy"
+      # Vercel builds remotely, with the project's own (encrypted) variables.
+      - if: env.VERCEL_TOKEN != ''
+        run: npx --yes vercel@60.1.3 deploy --prod --yes
