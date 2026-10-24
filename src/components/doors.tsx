@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { notesSeen } from "@/lib/local";
-import { Bloom, Letter, Star } from "./icons";
+import { Bloom, Diamond, Letter, Star } from "./icons";
 
 const doors = [
   { href: "/superpoderes", label: "superpoderes", Icon: Bloom },
+  { href: "/misiones", label: "misiones", Icon: Diamond },
   { href: "/brian", label: "de Brian", Icon: Letter },
   { href: "/tu", label: "tú", Icon: Star },
 ];
@@ -33,7 +34,7 @@ function useUnreadNote() {
 export function Doors() {
   const unread = useUnreadNote();
   return (
-    <nav className="grid grid-cols-3 border-t border-dashed border-line pt-5">
+    <nav className="grid grid-cols-2 gap-y-3 border-t border-dashed border-line pt-5">
       {doors.map(({ href, label, Icon }) => {
         const glow = unread && href === "/brian";
         return (

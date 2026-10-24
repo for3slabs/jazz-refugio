@@ -5,6 +5,8 @@ import { refresh } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { saveEstado } from "@/lib/estado";
+import { MAX_TEXTO } from "@/lib/mision";
+import { agregar, cumplir, soltar } from "@/lib/misiones";
 import { isModo } from "@/lib/modos";
 import { MAX_NOTE, addNote, removeNote } from "@/lib/notes";
 import { currentRole } from "@/lib/session";
@@ -78,6 +80,43 @@ export async function marcarEstado(modo: string | null): Promise<EstadoResult> {
   if (modo !== null && !isModo(modo)) return { ok: false, error: "Ese modo no existe." };
   try {
     await saveEstado(modo);
+  } catch {
+    return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
+  }
+  refresh();
+  return { ok: true, error: null };
+}
+
+// Her missions are hers: only her session adds, completes or lets one go.
+export async function nuevaMision(texto: string): Promise<EstadoResult> {
+  if ((await currentRole()) !== "jazz") return { ok: false, error: "Las misiones son de Jazz." };
+  const t = texto.trim();
+  if (!t) return { ok: false, error: "Escribe la misión primero." };
+  if (t.length > MAX_TEXTO) return { ok: false, error: `Máximo ${MAX_TEXTO} caracteres.` };
+  try {
+    if (!(await agregar(t))) return { ok: false, error: "Ya tienes 3. Termina una primero." };
+  } catch {
+    return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
+  }
+  refresh();
+  return { ok: true, error: null };
+}
+
+export async function cumplirMision(id: string): Promise<EstadoResult> {
+  if ((await currentRole()) !== "jazz") return { ok: false, error: "Las misiones son de Jazz." };
+  try {
+    await cumplir(id);
+  } catch {
+    return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
+  }
+  refresh();
+  return { ok: true, error: null };
+}
+
+export async function soltarMision(id: string): Promise<EstadoResult> {
+  if ((await currentRole()) !== "jazz") return { ok: false, error: "Las misiones son de Jazz." };
+  try {
+    await soltar(id);
   } catch {
     return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
   }
