@@ -4,6 +4,7 @@ import { Orb } from "@/components/orb";
 import { Shell } from "@/components/shell";
 import { Doors } from "@/components/doors";
 import { DailyLine, RunningTimer } from "@/components/home-live";
+import { AvisoSlot } from "@/components/aviso-slot";
 import { EstadoSlot, WideTile } from "@/components/estado-slot";
 import { BrianTile, GardenTile, TileSkeleton } from "@/components/tiles";
 import { Sparkle } from "@/components/icons";
@@ -21,6 +22,9 @@ export default function Home() {
           </h1>
           <Suspense>
             <EstadoSlot />
+          </Suspense>
+          <Suspense>
+            <AvisoSlot />
           </Suspense>
           <Orb className="orb-idle size-44 lg:size-56" />
           <Link

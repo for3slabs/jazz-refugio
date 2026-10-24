@@ -11,6 +11,7 @@ const K = {
   theme: "refugio:theme",
   motion: "refugio:motion",
   notesSeen: "refugio:notes-seen",
+  avisoHoyNo: "refugio:aviso-hoy-no",
 } as const;
 
 function read<T>(key: string, fallback: T): T {
@@ -55,6 +56,12 @@ export const timer = {
 export const notesSeen = {
   get: (): number => read<number>(K.notesSeen, 0),
   set: (at: number) => write(K.notesSeen, at),
+};
+
+// «hoy no» on the home's soft note: the day she said it. The note comes back tomorrow.
+export const avisoHoyNo = {
+  get: (): string | null => read<string | null>(K.avisoHoyNo, null),
+  set: (dia: string) => write(K.avisoHoyNo, JSON.stringify(dia)),
 };
 
 export type Theme = "light" | "dark";

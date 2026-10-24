@@ -129,3 +129,11 @@ export const Check = ({ className }: P) => (
     <path d="m6.5 12.5 3.6 3.6 7.4-7.6" />
   </svg>
 );
+
+export const More = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <circle cx="6" cy="12" r="1.2" />
+    <circle cx="12" cy="12" r="1.2" />
+    <circle cx="18" cy="12" r="1.2" />
+  </svg>
+);
