@@ -201,7 +201,22 @@ a {
 [data-sileo-viewport] .notify-text.notify-text.notify-text { text-transform: none; }
 [data-sileo-viewport] .notify-text.notify-text.notify-text { color: color-mix(in oklab, var(--canvas) 72%, transparent); }
 
-/* The chip inside the orb: dark glass, so it reads on every colour the orb can take. */
+/* «me estoy desviando» wears her mode's colour too: the orb and the button are siblings, so
+   the section that holds both carries it. The text colour is chosen per mode — check-palette
+   measures every pair at ≥ 4.5:1. */
+.desvio {
+  background: var(--btn, var(--accent));
+  color: var(--btn-ink, var(--accent-ink));
+  transition: background-color 900ms ease, color 900ms ease;
+}
+:has(> .orb-tint[data-modo="hiperfoco"]) > .desvio { --btn: oklch(0.5 0.26 304); --btn-ink: oklch(0.98 0.008 320); }
+:has(> .orb-tint[data-modo="conectada"]) > .desvio { --btn: oklch(0.72 0.18 150); --btn-ink: oklch(0.17 0.045 315); }
+:has(> .orb-tint[data-modo="mil ideas"]) > .desvio { --btn: oklch(0.76 0.17 58); --btn-ink: oklch(0.17 0.045 315); }
+:has(> .orb-tint[data-modo="saturada"]) > .desvio { --btn: oklch(0.63 0.22 26); --btn-ink: oklch(0.17 0.045 315); }
+:has(> .orb-tint[data-modo="recargando"]) > .desvio { --btn: oklch(0.7 0.012 315); --btn-ink: oklch(0.17 0.045 315); }
+:has(> .orb-tint[data-modo="no arranco"]) > .desvio { --btn: oklch(0.75 0.15 355); --btn-ink: oklch(0.17 0.045 315); }
+
+/* The chip on the orb's upper right: dark glass, so it reads on every colour the orb can take. */
 .orb-chip {
   color: oklch(0.98 0.008 320);
   background: oklch(0.14 0.028 315 / 0.55);
@@ -279,14 +294,15 @@ a {
 @media (prefers-reduced-motion: reduce) {
   .rise { animation-name: fade; animation-duration: 200ms; }
   .orb-idle, .animate-ping { animation: none; }
-  .orb-tint { transition: none; }
+  .orb-tint, .desvio { transition: none; }
   .confetti { display: none; }
   .press:active { transform: none; }
   .sheet, .sheet:not([open]) { transform: none; }
 }
 
 :root[data-motion="off"] .rise { animation-name: fade; animation-duration: 200ms; }
-:root[data-motion="off"] .orb-tint { transition: none; }
+:root[data-motion="off"] .orb-tint,
+:root[data-motion="off"] .desvio { transition: none; }
 :root[data-motion="off"] .orb-idle,
 :root[data-motion="off"] .animate-ping { animation: none; }
 :root[data-motion="off"] .confetti { display: none; }

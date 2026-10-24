@@ -32,7 +32,7 @@ export default function Home() {
           </Suspense>
           <Link
             href="/volver"
-            className="press group inline-flex items-center gap-3 rounded-full bg-accent px-8 py-4 text-lg font-semibold text-accent-ink"
+            className="desvio press group inline-flex items-center gap-3 rounded-full px-8 py-4 text-lg font-semibold"
           >
             me estoy desviando
             <Sparkle className="size-5 transition-transform duration-500 ease-[var(--ease-out-strong)] group-hover:rotate-45" />
