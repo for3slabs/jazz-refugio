@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { notesSeen } from "@/lib/local";
-import { Bloom, Diamond, Letter, Palette, Star } from "./icons";
+import { Diamond, Letter, Palette, Star } from "./icons";
 
+// Her three places, then «tú» set apart: it is about her, not something she does (Brian, 2026-10-24).
+// «superpoderes» left the doors — on a wide screen its tile still opens it.
 const doors = [
-  { href: "/superpoderes", label: "superpoderes", Icon: Bloom },
   { href: "/misiones", label: "misiones", Icon: Diamond },
   { href: "/lienzo", label: "lienzo", Icon: Palette },
   { href: "/brian", label: "de Brian", Icon: Letter },
@@ -36,17 +37,15 @@ function useUnreadNote() {
 export function Doors() {
   const unread = useUnreadNote();
   return (
-    <nav className="grid grid-cols-6 gap-y-3 border-t border-dashed border-line pt-5 lg:grid-cols-5">
+    // one row on every screen: three doors, a quiet divider, then «tú»
+    <nav className="grid grid-cols-[1fr_1fr_1fr_auto_1fr] items-center gap-x-1 border-t border-dashed border-line pt-5 sm:gap-x-3">
       {doors.map(({ href, label, Icon }, i) => {
         const glow = unread && href === "/brian";
-        return (
+        const door = (
           <Link
             key={href}
             href={href}
-            // five doors: three on top and two centred below on a phone, one row on a wide screen
-            className={`press group t-label col-span-2 flex flex-col items-center gap-2.5 text-center rounded-2xl py-2 hover:text-ink lg:col-span-1 ${
-              i === 3 ? "col-start-2 lg:col-start-auto" : ""
-            } ${
+            className={`press group t-label flex min-w-0 flex-col items-center gap-2.5 rounded-2xl py-2 text-center whitespace-nowrap hover:text-ink ${
               glow ? "text-ink" : "text-ink-soft"
             }`}
           >
@@ -66,6 +65,14 @@ export function Doors() {
             {label}
             {glow && <span className="sr-only">(hay algo nuevo de Brian)</span>}
           </Link>
+        );
+        return i === doors.length - 1 ? (
+          <Fragment key={href}>
+            <span aria-hidden className="mx-1 h-9 w-px self-center bg-line sm:mx-3" />
+            {door}
+          </Fragment>
+        ) : (
+          door
         );
       })}
     </nav>
