@@ -247,6 +247,11 @@ a {
   box-shadow: 0 6px 20px oklch(0.1 0.03 315 / 0.35);
 }
 
+/* How a mission is going, as a dot beside its word — the colours of her modes: green like
+   «conectada», pink like «no arranco». Never text colour, so contrast stays the theme's. */
+.estado-haciendo { background: oklch(0.72 0.18 150); }
+.estado-atorada { background: oklch(0.75 0.15 355); }
+
 /* The grid behind the bento, like a cutting mat — barely there. */
 @utility mat {
   background-image:
@@ -332,3 +337,6 @@ a {
 :root[data-motion="off"] .press:active { transform: none; }
 :root[data-motion="off"] .sheet,
 :root[data-motion="off"] .sheet:not([open]) { transform: none; }
+
+/* The assistant's round button floats over the page: a soft, offset shadow lifts it off the list. */
+.asistente { box-shadow: 0 8px 24px oklch(0.1 0.03 315 / 0.45); }

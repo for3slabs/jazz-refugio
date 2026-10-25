@@ -26,9 +26,9 @@ import { type Abierto, MAX_REGALO, MAX_TITULO, MAX_TRAS } from "@/lib/regalo";
 import { abrir, borrar, crear, usar } from "@/lib/regalos";
 import { type ObjetoId, isObjeto, limpiarPuestos } from "@/lib/objeto";
 import { limpiarNombre, regalar, saveMascota } from "@/lib/mascota";
-import { MAX_TEXTO } from "@/lib/mision";
+import { ESTADOS_MISION, type EstadoMision, MAX_TEXTO } from "@/lib/mision";
 import { MAX_PASOS, siguiente, terminada } from "@/lib/pendiente";
-import { agregar, cumplir, florDePaso, loadMisiones, soltar } from "@/lib/misiones";
+import { agregar, cumplir, florDePaso, loadMisiones, marcarEstadoMision, soltar } from "@/lib/misiones";
 import {
   anotarIdea,
   loadPendientes,
@@ -203,6 +203,13 @@ export const soltarMision = async (id: string) =>
   deJazz(async () => {
     const m = await soltar(id);
     if (m?.origen) await marcarPaso(m.origen.meta, m.origen.paso, "espera");
+  });
+
+// How a mission is going — «haciendo», «atorada», or null to clear it. Hers only.
+export const estadoMision = async (id: string, estado: EstadoMision | null) =>
+  deJazz(async () => {
+    if (estado !== null && !ESTADOS_MISION.includes(estado)) return "Ese estado no existe.";
+    if (!(await marcarEstadoMision(id, estado))) return "Esa misión ya no está abierta.";
   });
 
 export const anotar = async (t: string) =>
@@ -520,6 +527,16 @@ export async function dondeEmpiezo(): Promise<EstadoResult & { empieza: string |
   ];
   const r = await porDondeEmpiezo(opciones, e?.modo ?? null);
   return r.ok ? { ok: true, error: null, ...r.data } : { ok: false, error: r.error, ...vacio };
+}
+
+// «Atorada»: the text of that one mission, split into small steps to get it moving — a proposal
+// she reads; nothing is saved. Sends only the mission's text, as the sheet says before the tap.
+export async function destrabarMision(id: string): Promise<EstadoResult & { pasos: string[] }> {
+  if ((await currentRole()) !== "jazz") return { ok: false, error: "Esto es solo de Jazz.", pasos: [] };
+  const m = (await loadMisiones()).abiertas.find((x) => x.id === id);
+  if (!m) return { ok: false, error: "Esa misión ya no está abierta.", pasos: [] };
+  const r = await partirEnPasos(m.texto, []);
+  return r.ok ? { ok: true, error: null, pasos: r.data } : { ok: false, error: r.error, pasos: [] };
 }
 
 export async function borrarNota(form: FormData) {

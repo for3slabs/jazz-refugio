@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { dondeEmpiezo, guardarPasos, proponerPasos } from "@/app/actions";
+import { guardarPasos, proponerPasos } from "@/app/actions";
 import { Sparkle } from "@/components/icons";
 import { MAX_TEXTO } from "@/lib/mision";
 
-// The two helpers (block agentes). Each says what it sends before she taps it, and each
+// «Pártelo en pasos» for a goal (block agentes); «¿por dónde empiezo?» lives in the assistant
+// (asistente.tsx). Each says what it sends before she taps it, and each
 // answer is only a proposal: steps are kept only if she ticks them.
 const boton =
   "press inline-flex items-center gap-2 rounded-full border border-accent/60 bg-surface px-4 py-2 text-sm font-semibold hover:bg-surface-2 disabled:opacity-50";
@@ -79,49 +80,6 @@ export function PartirEnPasos({ metaId }: { metaId: string }) {
             </button>
           </div>
         </div>
-      )}
-      {msg && <p role="status" className="mt-2 text-sm text-ink-soft">{msg}</p>}
-    </div>
-  );
-}
-
-export function PorDondeEmpiezo() {
-  const [pending, start] = useTransition();
-  const [r, setR] = useState<{ empieza: string; porque: string } | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
-
-  function pedir() {
-    setMsg(null);
-    start(async () => {
-      const x = await dondeEmpiezo();
-      if (x.ok && x.empieza) setR({ empieza: x.empieza, porque: x.porque ?? "" });
-      else setMsg(x.error);
-    });
-  }
-
-  return (
-    <div className="mt-6">
-      {r ? (
-        <div className="rise rounded-3xl border border-accent/60 bg-surface p-5">
-          <p className="t-label inline-flex items-center gap-2 text-accent">
-            <Sparkle className="size-3.5" /> empieza por
-          </p>
-          <p className="mt-2 text-pretty text-xl font-semibold leading-snug">{r.empieza}</p>
-          {r.porque && <p className="mt-2 text-pretty text-ink-soft">{r.porque}</p>}
-          <div className="mt-3 flex justify-end">
-            <button type="button" onClick={() => setR(null)} className="press t-label rounded-full px-3 py-2 text-ink-soft hover:text-ink">
-              listo
-            </button>
-          </div>
-        </div>
-      ) : (
-        <>
-          <button type="button" onClick={pedir} disabled={pending} className={boton}>
-            <Sparkle className="size-4 text-accent" />
-            {pending ? "pensando…" : "¿por dónde empiezo?"}
-          </button>
-          <p className="mt-2 text-xs text-ink-soft">Envía a Claude, la IA de Anthropic: tus misiones de hoy, lo siguiente de tus metas y tu modo.</p>
-        </>
       )}
       {msg && <p role="status" className="mt-2 text-sm text-ink-soft">{msg}</p>}
     </div>

@@ -1,5 +1,5 @@
 import { esId, frase, hayBase, ms, sql } from "./db";
-import { type Hecha, type Mision, type Misiones, diaDe } from "./mision";
+import { type EstadoMision, type Hecha, type Mision, type Misiones, diaDe } from "./mision";
 
 // Her missions: rows in Postgres, synced between her devices; only she reads or writes them.
 // No deadlines and nothing «overdue»: an open mission just waits. Every completed one is kept —
@@ -7,17 +7,28 @@ import { type Hecha, type Mision, type Misiones, diaDe } from "./mision";
 // (Brian, ESQUEMA.md element 2). `vueltas` are her «volver» flowers, counted apart.
 const EMPTY: Misiones = { abiertas: [], hechas: [], total: 0, mejorDia: 0, vueltas: 0 };
 
-type Fila = { id: string; texto: string; abierta_en: Date; hecha_en: Date | null; paso_id: string | null; meta_id: string | null };
+type Fila = {
+  id: string;
+  texto: string;
+  abierta_en: Date;
+  hecha_en: Date | null;
+  paso_id: string | null;
+  meta_id: string | null;
+  estado: EstadoMision | null;
+  empezada_en: Date | null;
+};
 
 const mision = (f: Fila): Mision => ({
   id: f.id,
   texto: f.texto,
   at: ms(f.abierta_en)!,
   ...(f.paso_id && f.meta_id && { origen: { meta: f.meta_id, paso: f.paso_id } }),
+  ...(f.estado && { estado: f.estado }),
+  ...(f.empezada_en && { empezada: ms(f.empezada_en)! }),
 });
 
 const COLUMNAS = (db: ReturnType<typeof sql>) =>
-  db`m.id, m.texto, m.abierta_en, m.hecha_en, m.paso_id, p.meta_id`;
+  db`m.id, m.texto, m.abierta_en, m.hecha_en, m.paso_id, p.meta_id, m.estado, m.empezada_en`;
 
 export async function loadMisiones(): Promise<Misiones> {
   if (!hayBase()) return EMPTY;
@@ -88,3 +99,16 @@ export async function florDePaso(texto: string) {
 
 // Letting it go hides it; the step it carried goes back to waiting on its own.
 export const soltar = (id: string) => cambiar(id, "soltada");
+
+// How an open mission is going; null clears it back to waiting. The first «haciendo» starts its
+// clock and later marks never move it. False when the mission is no longer open.
+export async function marcarEstadoMision(id: string, estado: EstadoMision | null): Promise<boolean> {
+  if (!esId(id)) return false;
+  const rows = await sql()`
+    update mision
+    set estado = ${estado},
+        empezada_en = case when ${estado}::text = 'haciendo' then coalesce(empezada_en, now()) else empezada_en end
+    where id = ${id} and hecha_en is null and soltada_en is null
+    returning id`;
+  return rows.length > 0;
+}
