@@ -65,7 +65,7 @@ export function BrianTileView({
 
   return (
     <>
-      <TileHead icon={<Letter className="size-4" />} title="de Brian" dot={unread} />
+      <TileHead icon={<Letter className="size-4" />} title="mensajes" dot={unread} />
       <p className="line-clamp-4 text-pretty text-xl font-medium leading-snug">
         {preview ? `«${preview}»` : isBrian ? "Cuando Jazz te deje una nota, aparecerá aquí." : "Aquí aparecerá lo que Brian te escriba."}
       </p>

@@ -4,7 +4,7 @@ import { hayNuevas } from "@/lib/notes";
 import { hayParaAbrir, loadRegalos } from "@/lib/regalos";
 import { currentRole } from "@/lib/session";
 
-// What makes the «de Brian» door glow, for whoever is looking: a note the other left that they
+// What makes the «mensajes» door glow, for whoever is looking: a note the other left that they
 // have not opened yet, or a gift ready to open. Read on the server, so it is the same on every
 // device. Never any text.
 export async function GET() {

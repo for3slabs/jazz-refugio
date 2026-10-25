@@ -22,7 +22,7 @@ type Search = Promise<{ v?: string }>;
 export default function DeBrian({ searchParams }: { searchParams: Search }) {
   return (
     <Shell back>
-      <PageTitle icon={<Letter className="size-7" />}>de Brian</PageTitle>
+      <PageTitle icon={<Letter className="size-7" />}>mensajes</PageTitle>
       <Suspense fallback={<NotesSkeleton />}>
         <Content searchParams={searchParams} />
       </Suspense>
@@ -41,7 +41,7 @@ async function Content({ searchParams }: { searchParams: Search }) {
   const total = role === "jazz" ? (m?.total ?? 0) : 0;
   const tabs = (
     <Tabs
-      label="de Brian"
+      label="mensajes"
       current={v === "regalos" || v === "presente" ? v : "notas"}
       items={[
         { key: "notas", href: "/brian", label: "notas" },
