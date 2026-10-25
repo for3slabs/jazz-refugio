@@ -2,7 +2,9 @@
 
 export type Idea = { id: string; texto: string; at: number };
 export type Paso = { id: string; texto: string; hecho: number | null; enHoy: boolean };
-export type Meta = { id: string; titulo: string; para: string | null; at: number; pasos: Paso[] };
+// `descripcion`: optional, one or two lines under the name (0009); null when she wrote none.
+export type Meta = { id: string; titulo: string; descripcion: string | null; para: string | null; at: number; pasos: Paso[] };
+export const MAX_DESCRIPCION_META = 160;
 export type Pendientes = { mente: Idea[]; metas: Meta[] };
 
 export const MAX_METAS = 5;

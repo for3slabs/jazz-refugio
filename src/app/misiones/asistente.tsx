@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useId, useRef, useState, useTransition } from "react";
 import { destrabarMision, dondeEmpiezo } from "@/app/actions";
 import { Close, Sparkle } from "@/components/icons";
 import type { Mision } from "@/lib/mision";
@@ -10,11 +10,12 @@ const boton =
 
 // Her assistant, out of the page's way: one round button on the right, over the doors (Brian,
 // 2026-10-25: «que sea un icono, como si fuera un asistente»). It opens a sheet with what it can
-// do now — first, help with a mission she marked «atorada» (it lights up for that), then «¿por
-// dónde empiezo?». Each button says what it sends before she taps it; every answer is a proposal.
-export function Asistente({ abiertas }: { abiertas: Mision[] }) {
+// do here; `alerta` lights it up when something waits for its help. Each helper inside says what
+// it sends before she taps it; every answer is a proposal.
+export function AsistenteBoton({ alerta = false, label, children }: { alerta?: boolean; label: string; children: React.ReactNode }) {
   const sheet = useRef<HTMLDialogElement>(null);
-  const atorada = abiertas.find((m) => m.estado === "atorada");
+  // its own id: «hoy» and an open goal each mount one, and a shared id would name both sheets
+  const titulo = useId();
   return (
     <>
       <div className="pointer-events-none fixed inset-x-0 bottom-24 z-30">
@@ -22,12 +23,12 @@ export function Asistente({ abiertas }: { abiertas: Mision[] }) {
           <button
             type="button"
             aria-haspopup="dialog"
-            aria-label={atorada ? "asistente: te ayuda con lo que está atorado" : "asistente"}
+            aria-label={label}
             onClick={() => sheet.current?.showModal()}
             className="asistente press pointer-events-auto relative grid size-14 place-items-center rounded-full bg-accent text-accent-ink"
           >
             <Sparkle className="size-6" />
-            {atorada && (
+            {alerta && (
               <span aria-hidden className="absolute -right-0.5 -top-0.5 grid size-3.5 place-items-center">
                 <span className="estado-atorada absolute size-3.5 animate-ping rounded-full opacity-60" />
                 <span className="estado-atorada size-3 rounded-full ring-2 ring-canvas" />
@@ -39,13 +40,13 @@ export function Asistente({ abiertas }: { abiertas: Mision[] }) {
 
       <dialog
         ref={sheet}
-        aria-labelledby="asistente-titulo"
+        aria-labelledby={titulo}
         onClick={(e) => e.target === e.currentTarget && e.currentTarget.close()}
         className="sheet m-0 mt-auto max-h-[88dvh] w-full max-w-none overflow-y-auto rounded-t-[1.75rem] border border-b-0 border-line bg-surface p-0 text-ink backdrop:bg-transparent sm:mx-auto sm:max-w-md lg:m-auto lg:rounded-[1.75rem] lg:border-b"
       >
         <div className="px-6 pb-8 pt-6">
           <div className="flex items-center justify-between gap-4">
-            <h2 id="asistente-titulo" className="flex items-center gap-2 text-lg font-semibold">
+            <h2 id={titulo} className="flex items-center gap-2 text-lg font-semibold">
               <Sparkle className="size-5 text-accent" />
               tu asistente
             </h2>
@@ -58,11 +59,22 @@ export function Asistente({ abiertas }: { abiertas: Mision[] }) {
               <Close className="size-5" />
             </button>
           </div>
-          {atorada && <Destrabar key={atorada.id} mision={atorada} />}
-          <Empezar />
+          {children}
         </div>
       </dialog>
     </>
+  );
+}
+
+// In «hoy»: help with a mission she marked «atorada» first (it lights up for that), then «¿por
+// dónde empiezo?».
+export function Asistente({ abiertas }: { abiertas: Mision[] }) {
+  const atorada = abiertas.find((m) => m.estado === "atorada");
+  return (
+    <AsistenteBoton alerta={!!atorada} label={atorada ? "asistente: te ayuda con lo que está atorado" : "asistente"}>
+      {atorada && <Destrabar key={atorada.id} mision={atorada} />}
+      <Empezar />
+    </AsistenteBoton>
   );
 }
 
