@@ -9,13 +9,13 @@ export async function PresenteSlot() {
   return (
     <Link
       href="/brian?v=presente"
-      className="press rise flex w-full max-w-sm items-center gap-3 rounded-3xl border border-line bg-surface px-5 py-4 text-left hover:border-accent/60 order-first"
+      className="press rise flex w-full max-w-sm items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3 text-left hover:border-accent/60 order-first"
     >
       <span className="relative grid size-3 shrink-0 place-items-center" aria-hidden>
         <span className="absolute size-3 animate-ping rounded-full bg-accent opacity-50" />
         <span className="size-2.5 rounded-full bg-accent" />
       </span>
-      <span className="flex-1 text-pretty text-lg leading-snug">
+      <span className="flex-1 text-pretty leading-snug">
         <span className="font-semibold">Brian</span> está presente ahora
       </span>
       <span className="t-label text-accent">escribirle</span>

@@ -3,6 +3,7 @@
 import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { marcarEstado } from "@/app/actions";
 import { type Estado, type ModoId, modos, vigente } from "@/lib/modos";
+import { ultimoModo } from "@/lib/local";
 import { Focus, Ideas, Linked, Rest, Sparkle, Start, Waves } from "./icons";
 import { Coleccion, type ColeccionData } from "./coleccion";
 import { Orb } from "./orb";
@@ -58,6 +59,9 @@ export function EstadoOrb({
   const now = useNow();
   const current = now ? vigente(optimistic, now) : optimistic;
 
+  // Her device remembers the mode the server says, so the next load is born in its colour.
+  useEffect(() => ultimoModo.set(current), [current]);
+
   useEffect(() => {
     if (!msg) return;
     const id = setTimeout(() => setMsg(null), 2600);
@@ -81,7 +85,7 @@ export function EstadoOrb({
         type="button"
         aria-haspopup="dialog"
         onClick={() => sheet.current?.showModal()}
-        className="orb-chip press absolute right-0 top-[6%] z-10 translate-x-1/4 rounded-full px-3.5 py-1.5 text-sm font-semibold"
+        className="orb-chip press absolute right-0 top-[6%] z-10 translate-x-1/4 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-semibold"
       >
         {current ? current.modo : "¿cómo estás?"}
       </button>
@@ -158,4 +162,10 @@ export function EstadoOrb({
       </dialog>
     </Orb>
   );
+}
+
+// Brian's screen: no chip, but the same memory, so his home is born in her colour too.
+export function ModoSync({ estado }: { estado: Estado | null }) {
+  useEffect(() => ultimoModo.set(estado), [estado]);
+  return null;
 }

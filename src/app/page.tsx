@@ -14,13 +14,15 @@ import { Sparkle } from "@/components/icons";
 // the orb and its button own the left, three tiles carry what lives behind each door.
 // The title lives in the top bar and her mode inside the orb, so the doors fit on a phone
 // without scrolling.
-const ORB = "orb-idle size-48 short:size-44 lg:size-56";
+// The orb is the piece that gives: up to 12rem (14 on a wide screen), shrinking to 6rem when
+// notes above it need the room. Its width follows its height (aspect-square).
+const ORB = "orb-idle aspect-square h-48 min-h-24 w-auto shrink lg:h-56";
 
 export default function Home() {
   return (
     <Shell wide>
-      <div className="flex flex-1 flex-col gap-4 py-6 short:py-2 lg:grid lg:grid-cols-[1.4fr_1fr_0.85fr] lg:grid-rows-[1fr_auto] lg:py-8">
-        <section className="lg:mat flex flex-1 flex-col items-center justify-center gap-9 py-6 short:gap-6 short:py-1 lg:gap-7 lg:row-span-2 lg:rounded-[1.75rem] lg:border lg:border-line lg:bg-surface lg:px-10 lg:py-14">
+      <div className="flex min-h-0 flex-1 flex-col gap-4 py-[clamp(0.25rem,2dvh,1.5rem)] lg:grid lg:grid-cols-[1.4fr_1fr_0.85fr] lg:grid-rows-[1fr_auto] lg:py-[clamp(1rem,3dvh,2rem)]">
+        <section className="lg:mat flex min-h-0 flex-1 flex-col items-center justify-center-safe gap-[clamp(0.75rem,3.5dvh,2.25rem)] py-[clamp(0.25rem,2dvh,1.5rem)] lg:gap-[clamp(1rem,3dvh,1.75rem)] lg:row-span-2 lg:rounded-[1.75rem] lg:border lg:border-line lg:bg-surface lg:px-10 lg:py-[clamp(1.5rem,5dvh,3.5rem)]">
           <Suspense>
             <PresenteSlot />
           </Suspense>
