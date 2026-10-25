@@ -12,12 +12,22 @@ export type Item = {
   color?: string; // color: «#rrggbb»
   texto?: string; // nota
 };
-export type Tablero = { id: string; nombre: string; at: number; compartido: boolean; items: Item[] };
+// `portada`: the image she chose as the board's cover; without one, the list shows its first four.
+export type Tablero = {
+  id: string;
+  nombre: string;
+  descripcion: string;
+  portada: string | null;
+  at: number;
+  compartido: boolean;
+  items: Item[];
+};
 
 export const MAX_TABLEROS = 12;
 export const MAX_ITEMS = 60;
 export const MAX_NOMBRE = 40;
 export const MAX_NOTA = 280;
+export const MAX_DESCRIPCION = 280;
 export const MAX_LADO = 1600;
 export const MAX_BYTES = 4 * 1024 * 1024;
 

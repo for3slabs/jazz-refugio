@@ -4,9 +4,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
-import { agregarColor, agregarNota, compartirTablero, quitarDelTablero, soltarTablero } from "@/app/actions";
-import { ArrowLeft, Close, Pencil } from "@/components/icons";
-import { type Item, type Tablero, MAX_LADO, MAX_NOTA, imgSrc } from "@/lib/tablero";
+import {
+  agregarColor,
+  agregarNota,
+  compartirTablero,
+  editarTablero,
+  moverEnTablero,
+  portadaDelTablero,
+  quitarDelTablero,
+  soltarTablero,
+} from "@/app/actions";
+import { ArrowLeft, ArrowRight, Close, Pencil, Star } from "@/components/icons";
+import { type Item, type Tablero, MAX_DESCRIPCION, MAX_LADO, MAX_NOMBRE, MAX_NOTA, imgSrc } from "@/lib/tablero";
 
 // Shrunk on her device before it travels: 1600 px on the long side, WebP where the browser
 // can encode it (Safari falls back to PNG, which the server also takes).
@@ -44,7 +53,21 @@ export const enPalabras = (e: unknown, otro: string) => (e instanceof Subida ? e
 // in), colours, notes and drawings; Brian, on a board she shared, only looks.
 export function Board({ tablero, isBrian }: { tablero: Tablero; isBrian: boolean }) {
   const router = useRouter();
-  const [items, remove] = useOptimistic(tablero.items, (l: Item[], id: string) => l.filter((i) => i.id !== id));
+  // what she sees changes at once; the server's answer follows
+  const [items, cambiar] = useOptimistic(tablero.items, (l: Item[], a: { quitar: string } | { mover: string; paso: -1 | 1 }) => {
+    if ("quitar" in a) return l.filter((i) => i.id !== a.quitar);
+    const i = l.findIndex((x) => x.id === a.mover);
+    const j = i + a.paso;
+    if (i < 0 || j < 0 || j >= l.length) return l;
+    const n = [...l];
+    [n[i], n[j]] = [n[j], n[i]];
+    return n;
+  });
+  const [portada, setPortada] = useOptimistic(tablero.portada);
+  const [editando, setEditando] = useState(false);
+  const [nombre, setNombre] = useState(tablero.nombre);
+  const [descripcion, setDescripcion] = useState(tablero.descripcion);
+  const [ordenando, setOrdenando] = useState(false);
   const [compartido, setCompartido] = useOptimistic(tablero.compartido);
   const [, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
@@ -106,7 +129,76 @@ export function Board({ tablero, isBrian }: { tablero: Tablero; isBrian: boolean
         <ArrowLeft className="size-4" />
         tableros
       </Link>
-      <h1 className="t-display mt-3 text-4xl">{tablero.nombre}</h1>
+      {editando ? (
+        <form
+          className="rise mt-3 space-y-3 rounded-3xl border border-line bg-surface p-4"
+          onSubmit={(e) => {
+            e.preventDefault();
+            run(() => editarTablero(tablero.id, nombre, descripcion), () => {
+              setEditando(false);
+              router.refresh();
+            });
+          }}
+        >
+          <label className="block">
+            <span className="t-label text-ink-soft">nombre</span>
+            <input
+              autoFocus
+              value={nombre}
+              onChange={(e) => setNombre(e.target.value)}
+              maxLength={MAX_NOMBRE}
+              className="mt-1 block w-full rounded-2xl border border-line bg-canvas px-4 py-2.5 text-lg focus:border-accent focus:outline-none"
+            />
+          </label>
+          <label className="block">
+            <span className="t-label text-ink-soft">descripción</span>
+            <textarea
+              rows={3}
+              value={descripcion}
+              onChange={(e) => setDescripcion(e.target.value)}
+              maxLength={MAX_DESCRIPCION}
+              placeholder="de qué va este tablero…"
+              className="mt-1 block w-full resize-y rounded-2xl border border-line bg-canvas px-4 py-3 placeholder:text-ink-soft/70 focus:border-accent focus:outline-none"
+            />
+          </label>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setNombre(tablero.nombre);
+                setDescripcion(tablero.descripcion);
+                setEditando(false);
+              }}
+              className="press t-label rounded-full px-4 py-2.5 text-ink-soft hover:text-ink"
+            >
+              cancelar
+            </button>
+            <button type="submit" disabled={!nombre.trim()} className="press rounded-full bg-accent px-5 py-2.5 font-semibold text-accent-ink disabled:opacity-50">
+              guardar
+            </button>
+          </div>
+        </form>
+      ) : (
+        <>
+          <div className="mt-3 flex items-start gap-3">
+            <h1 className="t-display min-w-0 flex-1 text-4xl [overflow-wrap:anywhere]">{tablero.nombre}</h1>
+            {!isBrian && (
+              <button type="button" onClick={() => setEditando(true)} aria-label="editar nombre y descripción" className="press mt-1 grid size-10 shrink-0 place-items-center rounded-full border border-line text-ink-soft hover:border-accent/60 hover:text-ink">
+                <Pencil className="size-4" />
+              </button>
+            )}
+          </div>
+          {tablero.descripcion ? (
+            <p className="mt-2 max-w-prose whitespace-pre-line text-pretty text-lg leading-relaxed text-ink-soft">{tablero.descripcion}</p>
+          ) : (
+            !isBrian && (
+              <button type="button" onClick={() => setEditando(true)} className="press t-label -ml-2 mt-1 rounded-full px-2 py-1.5 text-ink-soft hover:text-ink">
+                + añadir descripción
+              </button>
+            )
+          )}
+        </>
+      )}
       {isBrian && <p className="mt-2 text-ink-soft">Jazz lo compartió contigo. Solo puedes verlo.</p>}
 
       {!isBrian && (
@@ -124,6 +216,11 @@ export function Board({ tablero, isBrian }: { tablero: Tablero; isBrian: boolean
             <Pencil className="size-4 text-accent" />
             dibujar
           </Link>
+          {items.length > 1 && (
+            <button type="button" onClick={() => setOrdenando(!ordenando)} aria-pressed={ordenando} className={`${chip} ${ordenando ? "!border-accent bg-accent-soft" : ""}`}>
+              {ordenando ? "listo" : "ordenar"}
+            </button>
+          )}
           <input
             ref={file}
             type="file"
@@ -205,14 +302,53 @@ export function Board({ tablero, isBrian }: { tablero: Tablero; isBrian: boolean
         </p>
       ) : (
         <ul className="mt-2 columns-2 gap-3 sm:columns-3 lg:columns-4">
-          {items.map((it) => (
+          {items.map((it, i) => (
             <li key={it.id} className="group relative mb-3 break-inside-avoid">
               <Tile it={it} />
-              {!isBrian && (
+              {portada === it.id && !ordenando && (
+                <span className="absolute left-2 top-2 grid size-8 place-items-center rounded-full bg-accent text-accent-ink shadow-sm" title="portada" aria-label="portada">
+                  <Star className="size-4" />
+                </span>
+              )}
+              {!isBrian && ordenando && (
+                <div className="absolute inset-x-2 bottom-2 flex justify-between">
+                  {([-1, 1] as const).map((paso) => (
+                    <button
+                      key={paso}
+                      type="button"
+                      disabled={(paso === -1 && i === 0) || (paso === 1 && i === items.length - 1)}
+                      onClick={() => start(async () => {
+                        cambiar({ mover: it.id, paso });
+                        const r = await moverEnTablero(tablero.id, it.id, paso);
+                        if (!r.ok) setMsg(r.error);
+                      })}
+                      aria-label={paso === -1 ? "mover antes" : "mover después"}
+                      className="press grid size-9 place-items-center rounded-full bg-canvas/90 text-ink shadow-sm disabled:opacity-30"
+                    >
+                      {paso === -1 ? <ArrowLeft className="size-4" /> : <ArrowRight className="size-4" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {!isBrian && !ordenando && (it.tipo === "imagen" || it.tipo === "dibujo") && portada !== it.id && (
                 <button
                   type="button"
                   onClick={() => start(async () => {
-                    remove(it.id);
+                    setPortada(it.id);
+                    const r = await portadaDelTablero(tablero.id, it.id);
+                    setMsg(r.ok ? "listo, es la portada" : r.error);
+                  })}
+                  aria-label="usar como portada"
+                  className="press absolute left-2 top-2 grid size-8 place-items-center rounded-full bg-canvas/85 text-ink-soft opacity-100 hover:text-accent sm:opacity-0 sm:group-hover:opacity-100 sm:focus-visible:opacity-100"
+                >
+                  <Star className="size-4" />
+                </button>
+              )}
+              {!isBrian && !ordenando && (
+                <button
+                  type="button"
+                  onClick={() => start(async () => {
+                    cambiar({ quitar: it.id });
                     const r = await quitarDelTablero(tablero.id, it.id);
                     if (!r.ok) setMsg(r.error);
                   })}
@@ -247,10 +383,10 @@ export function Board({ tablero, isBrian }: { tablero: Tablero; isBrian: boolean
           </label>
           {seguro ? (
             <p className="flex items-center gap-3 text-ink-soft">
-              ¿Lo borras con todo?
+              ¿Lo borras? Podrás deshacerlo.
               <button
                 type="button"
-                onClick={() => run(() => soltarTablero(tablero.id), () => router.push("/lienzo"))}
+                onClick={() => run(() => soltarTablero(tablero.id), () => router.push(`/lienzo?soltado=${tablero.id}`))}
                 className="press t-label rounded-full border border-line px-3 py-1.5 text-ink hover:border-accent/60"
               >
                 sí, borrar

@@ -8,8 +8,18 @@ import { agregarAprendido, agregarLibro, agregarViaje, moverLibro, moverViaje, s
 import { MAX_NOTA as MAX_NOTA_ESTANTE, MAX_TITULO as MAX_TITULO_ESTANTE } from "@/lib/estante";
 import { partirEnPasos, porDondeEmpiezo } from "@/lib/ayudantes";
 import { loadEstado, saveEstado } from "@/lib/estado";
-import { agregar as agregarAlTablero, borrarTablero, compartir, crearTablero, quitar } from "@/lib/lienzo";
-import { MAX_NOMBRE, MAX_NOTA, isHex } from "@/lib/tablero";
+import {
+  agregar as agregarAlTablero,
+  borrarTablero,
+  compartir,
+  crearTablero,
+  editarTablero as guardarTablero,
+  elegirPortada,
+  moverItem,
+  quitar,
+  restaurarTablero,
+} from "@/lib/lienzo";
+import { MAX_DESCRIPCION, MAX_NOMBRE, MAX_NOTA, isHex } from "@/lib/tablero";
 import { MAX_RESPUESTA } from "@/lib/entre";
 import { contestar, marcarPresente } from "@/lib/presente";
 import { type Abierto, MAX_REGALO, MAX_TITULO, MAX_TRAS } from "@/lib/regalo";
@@ -358,6 +368,22 @@ export const agregarNota = async (tablero: string, t: string) =>
   });
 
 export const quitarDelTablero = async (tablero: string, item: string) => deJazz(() => quitar(tablero, item));
+
+export const editarTablero = async (id: string, n: string, d: string) =>
+  deJazz(async () => {
+    const nombre = texto(n, MAX_NOMBRE);
+    if (typeof nombre !== "string") return nombre.error;
+    const descripcion = d.trim();
+    if (descripcion.length > MAX_DESCRIPCION) return `Máximo ${MAX_DESCRIPCION} caracteres.`;
+    return guardarTablero(id, nombre, descripcion);
+  });
+
+export const portadaDelTablero = async (id: string, item: string | null) => deJazz(() => elegirPortada(id, item));
+
+export const moverEnTablero = async (id: string, item: string, paso: -1 | 1) =>
+  deJazz(() => moverItem(id, item, paso === -1 ? -1 : 1));
+
+export const deshacerTablero = async (id: string) => deJazz(() => restaurarTablero(id));
 
 // Her shelf and trips: only she writes them. Optional fields may be empty; the rest are short.
 function opcional(t: string, max: number): string | { error: string } {
