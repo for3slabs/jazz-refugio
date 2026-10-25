@@ -177,12 +177,19 @@ function texto(t: string, max = MAX_TEXTO): string | { error: string } {
 
 const LLENO = "Ya tienes 3 para hoy. Termina una primero.";
 
-export const nuevaMision = async (t: string) =>
-  deJazz(async () => {
+// Returns the mission's real id: the board shows it at once under a temporary one, and a tap that
+// comes before this answer waits for it instead of sending the temporary id.
+export async function nuevaMision(t: string): Promise<EstadoResult & { id?: string }> {
+  let id: string | undefined;
+  const r = await deJazz(async () => {
     const v = texto(t);
     if (typeof v !== "string") return v.error;
-    if (!(await agregar(v))) return LLENO;
+    const nueva = await agregar(v);
+    if (!nueva) return LLENO;
+    id = nueva;
   });
+  return { ...r, ...(id && { id }) };
+}
 
 // Completing a mission born from a goal step marks that step done too.
 export const cumplirMision = async (id: string) =>
