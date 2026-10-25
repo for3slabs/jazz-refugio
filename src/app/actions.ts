@@ -322,6 +322,8 @@ export async function dejarRegalo(_: RegaloState, form: FormData): Promise<Regal
   const titulo = String(form.get("titulo") ?? "").trim();
   const cuerpo = String(form.get("texto") ?? "").trim();
   if (!titulo) return { ok: false, error: "Ponle un título." };
+  // the base asks for both (0001 · regalo.texto 1-600): an empty one used to fail as «no se pudo guardar»
+  if (!cuerpo) return { ok: false, error: "Escríbele algo con él." };
   if (titulo.length > MAX_TITULO) return { ok: false, error: `El título, máximo ${MAX_TITULO} caracteres.` };
   if (cuerpo.length > MAX_REGALO) return { ok: false, error: `El texto, máximo ${MAX_REGALO} caracteres.` };
   // only her gifts can wait for missions: Brian has no garden
