@@ -212,7 +212,8 @@ export function Board({ tablero, isBrian }: { tablero: Tablero; isBrian: boolean
           <button type="button" onClick={() => setPanel(panel === "nota" ? null : "nota")} aria-expanded={panel === "nota"} className={chip}>
             + nota
           </button>
-          <Link href={`/lienzo/${tablero.id}/dibujar`} className={`${chip} inline-flex items-center gap-2 !border-accent/60`}>
+          {/* no prefetch: it fired two extra function calls the moment a board appeared (measured) */}
+          <Link href={`/lienzo/${tablero.id}/dibujar`} prefetch={false} className={`${chip} inline-flex items-center gap-2 !border-accent/60`}>
             <Pencil className="size-4 text-accent" />
             dibujar
           </Link>

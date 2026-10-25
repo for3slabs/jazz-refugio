@@ -35,6 +35,14 @@ export function frase(e: unknown): string | null {
   return err?.code === "23514" && err.message ? err.message : null;
 }
 
+// A one-row read that wakes Neon's sleeping compute ahead of a write the user is about to make.
+export async function despertarBase() {
+  if (!hayBase()) return;
+  try {
+    await sql()`select 1`;
+  } catch {}
+}
+
 export const ms = (d: Date | null) => (d ? d.getTime() : null);
 
 // The board shows a new mission at once under a temporary id (`nueva-…`) until the server's comes
