@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Fragment, useEffect, useState } from "react";
-import { notesSeen } from "@/lib/local";
 import { Diamond, Letter, Palette, Star } from "./icons";
 
 // Her three places, then «tú» set apart: it is about her, not something she does (Brian, 2026-10-24).
@@ -23,8 +22,8 @@ function useUnreadNote() {
     let alive = true;
     fetch("/api/ultima", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: { at: number | null; regalo?: boolean } | null) => {
-        if (alive && d) setUnread(!!d.regalo || (!!d.at && d.at > notesSeen.get()));
+      .then((d: { nuevo?: boolean; regalo?: boolean } | null) => {
+        if (alive && d) setUnread(!!d.regalo || !!d.nuevo);
       })
       .catch(() => {});
     return () => {

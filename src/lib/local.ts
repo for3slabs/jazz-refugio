@@ -10,7 +10,6 @@ const K = {
   timer: "refugio:timer",
   theme: "refugio:theme",
   motion: "refugio:motion",
-  notesSeen: "refugio:notes-seen",
   avisoHoyNo: "refugio:aviso-hoy-no",
   modo: "refugio:modo",
   vueltasSubidas: "refugio:vueltas-subidas",
@@ -61,11 +60,6 @@ export const timer = {
   clear: () => write(K.timer, null),
 };
 
-// The time of the newest note she has opened — the home's «de Brian» door glows past it.
-export const notesSeen = {
-  get: (): number => read<number>(K.notesSeen, 0),
-  set: (at: number) => write(K.notesSeen, at),
-};
 
 // «hoy no» on the home's soft note: the day she said it. The note comes back tomorrow.
 export const avisoHoyNo = {

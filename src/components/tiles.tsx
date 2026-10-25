@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { loadMisiones } from "@/lib/misiones";
 import { loadVueltas } from "@/lib/vueltas";
-import { loadNotes } from "@/lib/notes";
+import { hayNuevas, loadNotes } from "@/lib/notes";
 import { hayParaAbrir, loadRegalos } from "@/lib/regalos";
 import { currentRole } from "@/lib/session";
 import type { Estado } from "@/lib/modos";
@@ -10,21 +10,23 @@ import { BrianTileView, GardenTileView, JazzTileView, PowerTileView } from "./ti
 const tile =
   "press group flex-col gap-6 rounded-[1.75rem] border border-line bg-surface p-6 hover:border-accent/60 hover:bg-surface-2";
 
-// What the newest note says, read on the server; whether she has seen it is hers (browser).
+// The newest note the other left for whoever is looking, and whether it is new — both read on
+// the server, the same on every device. A gift ready to open lights the tile too.
 export async function BrianTile({ className = "" }: { className?: string }) {
   const role = await currentRole();
-  const [newest] = role ? await loadNotes() : [];
-  // a gift ready to open lights the tile too — for her only
+  const [newest] = role ? await loadNotes(role).catch(() => []) : [];
+  const nuevo = role ? await hayNuevas(role).catch(() => false) : false;
   const regalo =
-    role === "jazz" &&
-    (await Promise.all([loadRegalos(), loadMisiones()])
-      .then(([list, m]) => hayParaAbrir(list, m.total))
+    !!role &&
+    (await Promise.all([loadRegalos(role), role === "jazz" ? loadMisiones() : null])
+      .then(([list, m]) => hayParaAbrir(list, m?.total ?? 0))
       .catch(() => false));
   return (
     <Link href="/brian" className={`${tile} ${className}`}>
       <BrianTileView
         isBrian={role === "brian"}
         regalo={regalo}
+        nuevo={nuevo}
         at={newest?.at ?? null}
         preview={newest ? newest.texto.slice(0, 180) : null}
       />

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { powerOfTheDay } from "@/lib/content";
-import { notesSeen } from "@/lib/local";
 import { type Estado, modoOf, vigente } from "@/lib/modos";
 import { modoIcon, since, useNow } from "./estado";
 import { Flower } from "./flower";
@@ -48,25 +47,27 @@ export function BrianTileView({
   at,
   preview,
   regalo = false,
+  nuevo = false,
 }: {
   isBrian: boolean;
   at: number | null;
   preview: string | null;
   regalo?: boolean;
+  nuevo?: boolean;
 }) {
   const [unread, setUnread] = useState(false);
   const [when, setWhen] = useState("");
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- what she has seen lives in her browser
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- «hace 2 h» is measured on her clock
     if (at) setWhen(ago(at));
-    if (!isBrian) setUnread(regalo || (!!at && at > notesSeen.get()));
-  }, [at, isBrian, regalo]);
+    setUnread(regalo || nuevo);
+  }, [at, regalo, nuevo]);
 
   return (
     <>
       <TileHead icon={<Letter className="size-4" />} title="de Brian" dot={unread} />
       <p className="line-clamp-4 text-pretty text-xl font-medium leading-snug">
-        {preview ? `«${preview}»` : isBrian ? "Todavía no le dejas una nota." : "Aquí aparecerá lo que Brian te escriba."}
+        {preview ? `«${preview}»` : isBrian ? "Cuando Jazz te deje una nota, aparecerá aquí." : "Aquí aparecerá lo que Brian te escriba."}
       </p>
       <div className="mt-auto flex items-center justify-between text-sm text-ink-soft">
         <span>{when}</span>

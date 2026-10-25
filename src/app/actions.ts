@@ -43,7 +43,7 @@ import {
   soltarPaso,
 } from "@/lib/pendientes";
 import { isModo } from "@/lib/modos";
-import { MAX_NOTE, addNote, removeNote } from "@/lib/notes";
+import { MAX_NOTE, addNote, marcarVistas, removeNote } from "@/lib/notes";
 import { currentRole } from "@/lib/session";
 import type { Moment } from "@/lib/local";
 import { anotarVuelta, subirVueltas } from "@/lib/vueltas";
@@ -96,13 +96,15 @@ export async function salir() {
 
 export type NotaState = { ok: boolean; error: string | null };
 
+// Notes go both ways: each one leaves notes for the other (never a thread).
 export async function dejarNota(_: NotaState, form: FormData): Promise<NotaState> {
-  if ((await currentRole()) !== "brian") return { ok: false, error: "Solo Brian puede dejar notas aquí." };
+  const role = await currentRole();
+  if (!role) return { ok: false, error: "Entra primero." };
   const texto = String(form.get("texto") ?? "").trim();
   if (!texto) return { ok: false, error: "Escribe algo primero." };
   if (texto.length > MAX_NOTE) return { ok: false, error: `Máximo ${MAX_NOTE} caracteres.` };
   try {
-    await addNote(texto);
+    await addNote(role, texto);
   } catch {
     return { ok: false, error: "No se pudo guardar. Inténtalo de nuevo en un momento." };
   }
@@ -253,22 +255,35 @@ export const cumplirPaso = async (metaId: string, pasoId: string) =>
     return marcarPaso(metaId, pasoId, "hecho");
   });
 
-// Gifts: Brian leaves and deletes them; she opens and uses them.
+// Opening «notas» is what reading means — the same on every device.
+export async function marcarNotasVistas() {
+  const role = await currentRole();
+  if (!role) return;
+  try {
+    await marcarVistas(role);
+  } catch {
+    /* seen is a nicety: never an error on her screen */
+  }
+}
+
+// Gifts go both ways: each one leaves and lets go their own; the other opens and uses them.
 export type RegaloState = { ok: boolean; error: string | null };
 
 export async function dejarRegalo(_: RegaloState, form: FormData): Promise<RegaloState> {
-  if ((await currentRole()) !== "brian") return { ok: false, error: "Solo Brian deja regalos aquí." };
+  const role = await currentRole();
+  if (!role) return { ok: false, error: "Entra primero." };
   const tipo = form.get("tipo") === "carta" ? "carta" : "cupon";
   const titulo = String(form.get("titulo") ?? "").trim();
   const cuerpo = String(form.get("texto") ?? "").trim();
   if (!titulo) return { ok: false, error: "Ponle un título." };
   if (titulo.length > MAX_TITULO) return { ok: false, error: `El título, máximo ${MAX_TITULO} caracteres.` };
   if (cuerpo.length > MAX_REGALO) return { ok: false, error: `El texto, máximo ${MAX_REGALO} caracteres.` };
-  const tras = form.get("abre") === "tras" ? Math.min(MAX_TRAS, Math.max(1, Math.floor(Number(form.get("n")) || 1))) : 0;
+  // only her gifts can wait for missions: Brian has no garden
+  const tras = role === "brian" && form.get("abre") === "tras" ? Math.min(MAX_TRAS, Math.max(1, Math.floor(Number(form.get("n")) || 1))) : 0;
   try {
     // «tras N misiones» counts from her total right now.
     const desde = tras ? (await loadMisiones()).total + tras : 0;
-    await crear(tipo, titulo, cuerpo, desde);
+    await crear(role, tipo, titulo, cuerpo, desde);
   } catch {
     return { ok: false, error: "No se pudo guardar. Inténtalo de nuevo en un momento." };
   }
@@ -302,17 +317,20 @@ export async function guardarMascota(nombre: string, puestos: Partial<Record<str
 }
 
 export async function borrarRegalo(form: FormData) {
-  if ((await currentRole()) !== "brian") return;
+  const role = await currentRole();
+  if (!role) return;
   const id = String(form.get("id") ?? "");
-  if (id) await borrar(id);
+  if (id) await borrar(role, id);
   refresh();
 }
 
-// The only way a gift's content reaches her browser: she opens it, and its missions are done.
+// The only way a gift's content reaches a browser: the one it is for opens it (hers, once its
+// missions are done; his, right away).
 export async function abrirRegalo(id: string): Promise<EstadoResult & { regalo: Abierto | null }> {
-  if ((await currentRole()) !== "jazz") return { ok: false, error: "Esto es solo de Jazz.", regalo: null };
+  const role = await currentRole();
+  if (!role) return { ok: false, error: "Entra primero.", regalo: null };
   try {
-    const regalo = await abrir(id, (await loadMisiones()).total);
+    const regalo = await abrir(role, id, role === "jazz" ? (await loadMisiones()).total : 0);
     if (!regalo) return { ok: false, error: "Este todavía no se abre.", regalo: null };
     refresh();
     return { ok: true, error: null, regalo };
@@ -321,7 +339,17 @@ export async function abrirRegalo(id: string): Promise<EstadoResult & { regalo: 
   }
 }
 
-export const usarCupon = async (id: string) => deJazz(() => usar(id));
+export async function usarCupon(id: string): Promise<EstadoResult> {
+  const role = await currentRole();
+  if (!role) return { ok: false, error: "Entra primero." };
+  try {
+    await usar(role, id);
+  } catch {
+    return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
+  }
+  refresh();
+  return { ok: true, error: null };
+}
 
 // «Entre los dos»: either of them answers the question of the day; only Brian marks «aquí estoy».
 export async function contestarPregunta(t: string): Promise<EstadoResult> {
@@ -470,8 +498,9 @@ export async function dondeEmpiezo(): Promise<EstadoResult & { empieza: string |
 }
 
 export async function borrarNota(form: FormData) {
-  if ((await currentRole()) !== "brian") return;
+  const role = await currentRole();
+  if (!role) return;
   const id = String(form.get("id") ?? "");
-  if (id) await removeNote(id);
+  if (id) await removeNote(role, id);
   refresh();
 }
