@@ -1,93 +1,58 @@
-import { get, put } from "@vercel/blob";
 import { preguntaDe } from "./content";
+import { hayBase, ms, sql } from "./db";
 import type { Vista } from "./entre";
 import { diaDe } from "./mision";
 import type { Role } from "./token";
 
-// «Entre los dos»: the answers to the question of the day and Brian's «aquí estoy».
-// Personal, so they live in the private Blob store, never in the repo. The other one's
-// answer leaves the server only after you answered yours, and an answer is final once sent.
-const PATH = process.env.VERCEL_ENV === "production" ? "presente/presente.json" : "presente/dev.json";
-const DIAS = 60;
+// «Entre los dos»: the answers to the question of the day and Brian's «aquí estoy». Rows in
+// Postgres, never in the repo. The other one's answer leaves the server only after you answered
+// yours; one answer per person per day, which the DB enforces. The album is kept forever (Brian,
+// ESQUEMA.md element 6).
 
-type Respuesta = { texto: string; at: number };
-type Dia = Partial<Record<Role, Respuesta>>;
-type Presente = { hasta: number | null; respuestas: Record<string, Dia> };
-
-const isResp = (r: unknown): r is Respuesta =>
-  typeof (r as Respuesta)?.texto === "string" && typeof (r as Respuesta)?.at === "number";
-
-function parse(raw: string): Presente {
-  try {
-    const d = JSON.parse(raw);
-    const respuestas: Record<string, Dia> = {};
-    for (const [dia, v] of Object.entries(d?.respuestas ?? {})) {
-      if (!/^\d{4}-\d{2}-\d{2}$/.test(dia)) continue;
-      const r = v as Dia;
-      respuestas[dia] = { ...(isResp(r.jazz) && { jazz: r.jazz }), ...(isResp(r.brian) && { brian: r.brian }) };
-    }
-    return { hasta: typeof d?.hasta === "number" ? d.hasta : null, respuestas };
-  } catch (cause) {
-    throw new Error(`${PATH} is unreadable: refusing to treat it as empty`, { cause });
-  }
-}
-
-async function load(): Promise<Presente> {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return { hasta: null, respuestas: {} };
-  const res = await get(PATH, { access: "private", useCache: false });
-  if (!res?.stream) return { hasta: null, respuestas: {} };
-  return parse(await new Response(res.stream).text());
-}
-
-async function save(p: Presente) {
-  await put(PATH, JSON.stringify(p), {
-    access: "private",
-    allowOverwrite: true,
-    addRandomSuffix: false,
-    contentType: "application/json",
-  });
-}
+type Fila = { dia: string; persona: Role; texto: string };
 
 const otro = (role: Role): Role => (role === "jazz" ? "brian" : "jazz");
+
+async function respuestas(): Promise<Fila[]> {
+  if (!hayBase()) return [];
+  return sql()<Fila[]>`select to_char(dia, 'YYYY-MM-DD') as dia, persona, texto from respuesta order by dia desc`;
+}
+
+async function hasta(): Promise<number | null> {
+  if (!hayBase()) return null;
+  const [p] = await sql()<{ hasta: Date }[]>`select hasta from presencia where persona = 'brian' and hasta > now()`;
+  return p ? ms(p.hasta) : null;
+}
 
 // What one of them may see: today's question, their own answer, the other's only once
 // they answered; the album holds only the days both answered.
 export async function vistaDe(role: Role, now = Date.now()): Promise<Vista> {
-  const p = await load();
+  const [filas, h] = await Promise.all([respuestas(), hasta()]);
   const dia = diaDe(now);
-  const r = p.respuestas[dia] ?? {};
-  const mia = r[role]?.texto ?? null;
-  const album = Object.entries(p.respuestas)
-    .filter(([d, v]) => d !== dia && v.jazz && v.brian)
-    .sort(([a], [b]) => (a < b ? 1 : -1))
-    .map(([d, v]) => ({ dia: d, pregunta: preguntaDe(d), jazz: v.jazz!.texto, brian: v.brian!.texto }));
+  const de = (d: string, r: Role) => filas.find((f) => f.dia === d && f.persona === r)?.texto ?? null;
+  const mia = de(dia, role);
+  const dias = [...new Set(filas.map((f) => f.dia))].filter((d) => d !== dia && de(d, "jazz") && de(d, "brian"));
   return {
-    hoy: { pregunta: preguntaDe(dia), mia, suya: mia ? r[otro(role)]?.texto ?? null : null, otroContesto: !!r[otro(role)] },
-    album,
-    hasta: p.hasta && p.hasta > now ? p.hasta : null,
+    hoy: { pregunta: preguntaDe(dia), mia, suya: mia ? de(dia, otro(role)) : null, otroContesto: !!de(dia, otro(role)) },
+    album: dias.map((d) => ({ dia: d, pregunta: preguntaDe(d), jazz: de(d, "jazz")!, brian: de(d, "brian")! })),
+    hasta: h && h > now ? h : null,
   };
 }
 
 export async function brianPresente(now = Date.now()): Promise<boolean> {
-  const { hasta } = await load();
-  return !!hasta && hasta > now;
+  const h = await hasta();
+  return !!h && h > now;
 }
 
 export async function contestar(role: Role, texto: string): Promise<string | void> {
-  const p = await load();
-  const now = Date.now();
-  const dia = diaDe(now);
-  const r = (p.respuestas[dia] ??= {});
-  if (r[role]) return "Ya contestaste la de hoy.";
-  r[role] = { texto, at: now };
-  // keep the last 60 days: an album, not an archive
-  const keep = Object.keys(p.respuestas).sort().slice(-DIAS);
-  p.respuestas = Object.fromEntries(keep.map((d) => [d, p.respuestas[d]]));
-  await save(p);
+  const r = await sql()`
+    insert into respuesta (dia, persona, texto) values (${diaDe(Date.now())}, ${role}, ${texto})
+    on conflict (dia, persona) do nothing`;
+  if (r.count === 0) return "Ya contestaste la de hoy.";
 }
 
 export async function marcarPresente(horas: number) {
-  const p = await load();
-  p.hasta = horas > 0 ? Date.now() + horas * 3_600_000 : null;
-  await save(p);
+  await sql()`
+    insert into presencia (persona, hasta) values ('brian', now() + make_interval(hours => ${horas}))
+    on conflict (persona) do update set hasta = excluded.hasta`;
 }

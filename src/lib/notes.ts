@@ -1,53 +1,28 @@
-import { get, put } from "@vercel/blob";
+import { hayBase, ms, sql } from "./db";
 
 export type Note = { id: string; texto: string; at: number };
 
-// Brian's notes are personal, so they never live in the repo: one private JSON file in
-// the project's Vercel Blob store (BLOB_READ_WRITE_TOKEN). Only Brian writes, so a
-// read-modify-write of the whole list is enough — there is no second writer to race.
-// Production and everything else (local runs, previews) never share a file.
-const PATH = process.env.VERCEL_ENV === "production" ? "notas/notas.json" : "notas/dev.json";
+// Brian's notes for her: rows in Postgres, never in the repo. Removing one hides it
+// (`soltada_en`), so a slip of the finger is never the end of a note.
 export const MAX_NOTE = 2000;
 
-function parse(raw: string): Note[] {
-  try {
-    const list = JSON.parse(raw);
-    if (!Array.isArray(list)) throw new Error("not a list");
-    return list.filter(
-      (n): n is Note =>
-        typeof n?.id === "string" && typeof n?.texto === "string" && typeof n?.at === "number" && n.texto.trim() !== "",
-    );
-  } catch (cause) {
-    throw new Error(`${PATH} is unreadable: refusing to treat it as empty`, { cause });
-  }
-}
-
 export async function loadNotes(): Promise<Note[]> {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return [];
-  // useCache: false — a note Brian just wrote must show at once, not after the CDN expires.
-  const res = await get(PATH, { access: "private", useCache: false });
-  if (!res?.stream) return [];
-  const list = parse(await new Response(res.stream).text());
-  return list.sort((a, b) => b.at - a.at);
-}
-
-async function save(list: Note[]) {
-  await put(PATH, JSON.stringify(list), {
-    access: "private",
-    allowOverwrite: true,
-    addRandomSuffix: false,
-    contentType: "application/json",
-  });
+  if (!hayBase()) return [];
+  const rows = await sql()<{ id: string; texto: string; creada: Date }[]>`
+    select id, texto, creada from nota
+    where de = 'brian' and para = 'jazz' and soltada_en is null
+    order by creada desc`;
+  return rows.map((n) => ({ id: n.id, texto: n.texto, at: ms(n.creada)! }));
 }
 
 export async function addNote(texto: string): Promise<Note> {
-  const note = { id: crypto.randomUUID(), texto, at: Date.now() };
-  await save([note, ...(await loadNotes())]);
-  return note;
+  const [n] = await sql()<{ id: string; creada: Date }[]>`
+    insert into nota (de, para, texto) values ('brian', 'jazz', ${texto}) returning id, creada`;
+  return { id: n.id, texto, at: ms(n.creada)! };
 }
 
 export async function removeNote(id: string) {
-  await save((await loadNotes()).filter((n) => n.id !== id));
+  await sql()`update nota set soltada_en = now() where id = ${id} and soltada_en is null`;
 }
 
 const fmt = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "long", timeZone: "America/Mexico_City" });

@@ -29,5 +29,5 @@ async function Content() {
     loadMisiones().catch(() => null),
     loadEstado().catch(() => null),
   ]);
-  return <Personalizador mascota={mascota} regalados={regalados} misiones={m?.total ?? 0} modo={estado?.modo ?? null} />;
+  return <Personalizador mascota={mascota} regalados={regalados} misiones={(m?.total ?? 0) + (m?.vueltas ?? 0)} modo={estado?.modo ?? null} />;
 }

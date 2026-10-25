@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { powerOfTheDay } from "@/lib/content";
-import { moments, notesSeen } from "@/lib/local";
+import { notesSeen } from "@/lib/local";
 import { type Estado, modoOf, vigente } from "@/lib/modos";
 import { modoIcon, since, useNow } from "./estado";
 import { Flower } from "./flower";
@@ -77,10 +77,10 @@ export function BrianTileView({
 }
 
 // Her flowers: the times she came back (her browser) + the missions she completed (synced).
-export function GardenTileView({ misiones = 0, abiertas = 0 }: { misiones?: number; abiertas?: number }) {
+export function GardenTileView({ misiones = 0, vueltas = 0, abiertas = 0 }: { misiones?: number; vueltas?: number; abiertas?: number }) {
   const [n, setN] = useState<number | null>(null);
   // eslint-disable-next-line react-hooks/set-state-in-effect -- the garden lives in her browser
-  useEffect(() => setN(moments.all().length + misiones), [misiones]);
+  useEffect(() => setN(vueltas + misiones), [vueltas, misiones]);
   const shown = Math.min(n ?? 0, 12);
 
   return (

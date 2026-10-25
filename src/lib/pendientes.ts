@@ -1,115 +1,120 @@
-import { get, put } from "@vercel/blob";
-import { type Idea, type Meta, type Paso, type Pendientes, MAX_MENTE, MAX_METAS, MAX_PASOS, terminada } from "./pendiente";
+import { frase, hayBase, ms, sql } from "./db";
+import { MAX_TEXTO } from "./mision";
+import type { Idea, Meta, Paso, Pendientes } from "./pendiente";
 
-// What does not fit in today: her captured thoughts and her goals. Personal, so it lives in
-// the private Blob store, synced between her devices; only she reads or writes it.
-// Every operation returns an error sentence for her, or nothing when it worked.
-const PATH = process.env.VERCEL_ENV === "production" ? "pendientes/pendientes.json" : "pendientes/dev.json";
+// What does not fit in today: her captured thoughts and her goals. Rows in Postgres, synced
+// between her devices; only she reads or writes them. Every operation returns an error sentence
+// for her, or nothing when it worked — the limits' sentences come from the DB, which counts
+// them under a lock. A step is «en hoy» when an open mission carries it: that is read, never
+// stored twice (ESQUEMA.md element 2).
 const EMPTY: Pendientes = { mente: [], metas: [] };
 
-const str = (v: unknown): v is string => typeof v === "string";
-const isIdea = (i: Idea) => str(i?.id) && str(i?.texto) && typeof i?.at === "number";
-const isPaso = (p: Paso) => str(p?.id) && str(p?.texto) && (p.hecho === null || typeof p.hecho === "number");
-
-function parse(raw: string): Pendientes {
+async function con(op: () => Promise<unknown>): Promise<string | void> {
   try {
-    const d = JSON.parse(raw);
-    return {
-      mente: Array.isArray(d?.mente) ? d.mente.filter(isIdea) : [],
-      metas: Array.isArray(d?.metas)
-        ? d.metas
-            .filter((m: Meta) => str(m?.id) && str(m?.titulo) && Array.isArray(m?.pasos))
-            .map((m: Meta) => ({
-              ...m,
-              para: str(m.para) ? m.para : null,
-              pasos: m.pasos.filter(isPaso).map((p) => ({ ...p, enHoy: p.enHoy === true })),
-            }))
-        : [],
-    };
-  } catch (cause) {
-    throw new Error(`${PATH} is unreadable: refusing to treat it as empty`, { cause });
+    await op();
+  } catch (e) {
+    const f = frase(e);
+    if (f) return f;
+    throw e;
   }
 }
 
 export async function loadPendientes(): Promise<Pendientes> {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return EMPTY;
-  const res = await get(PATH, { access: "private", useCache: false });
-  if (!res?.stream) return EMPTY;
-  return parse(await new Response(res.stream).text());
+  if (!hayBase()) return EMPTY;
+  const db = sql();
+  const [ideas, metas, pasos] = await Promise.all([
+    db<{ id: string; texto: string; anotada_en: Date }[]>`
+      select id, texto, anotada_en from idea where soltada_en is null and paso_a is null order by anotada_en desc`,
+    db<{ id: string; titulo: string; para: string | null; creada_en: Date }[]>`
+      select id, titulo, to_char(para, 'YYYY-MM-DD') as para, creada_en from meta
+      where soltada_en is null order by creada_en desc`,
+    db<{ id: string; meta_id: string; texto: string; hecho_en: Date | null; en_hoy: boolean }[]>`
+      select p.id, p.meta_id, p.texto, p.hecho_en,
+             exists (select 1 from mision m where m.paso_id = p.id and m.hecha_en is null and m.soltada_en is null) as en_hoy
+      from paso p where p.soltado_en is null order by p.orden, p.id`,
+  ]);
+  return {
+    mente: ideas.map((i): Idea => ({ id: i.id, texto: i.texto, at: ms(i.anotada_en)! })),
+    metas: metas.map(
+      (m): Meta => ({
+        id: m.id,
+        titulo: m.titulo,
+        para: m.para,
+        at: ms(m.creada_en)!,
+        pasos: pasos
+          .filter((p) => p.meta_id === m.id)
+          .map((p): Paso => ({ id: p.id, texto: p.texto, hecho: ms(p.hecho_en), enHoy: p.en_hoy })),
+      }),
+    ),
+  };
 }
 
-async function save(p: Pendientes) {
-  await put(PATH, JSON.stringify(p), {
-    access: "private",
-    allowOverwrite: true,
-    addRandomSuffix: false,
-    contentType: "application/json",
-  });
-}
+export const anotarIdea = (texto: string) => con(() => sql()`insert into idea (texto) values (${texto})`);
 
-// Read, change, write — only she writes, so there is no second writer to race.
-async function change(fn: (p: Pendientes) => string | void): Promise<string | void> {
-  const p = await loadPendientes();
-  const err = fn(p);
-  if (err) return err;
-  await save(p);
-}
-
-const activas = (p: Pendientes) => p.metas.filter((m) => !terminada(m)).length;
-const meta = (p: Pendientes, id: string) => p.metas.find((m) => m.id === id);
-const nuevo = () => crypto.randomUUID();
-
-export const anotarIdea = (texto: string) =>
-  change((p) => {
-    if (p.mente.length >= MAX_MENTE) return `Ya hay ${MAX_MENTE} cosas en tu mente. Suelta alguna primero.`;
-    p.mente.unshift({ id: nuevo(), texto, at: Date.now() });
-  });
-
-// Returns the thought it removed, so the caller can turn it into a mission or a goal.
+// Returns the thought it let go — hidden, not deleted.
 export async function sacarIdea(id: string): Promise<Idea | null> {
-  let sacada: Idea | null = null;
-  await change((p) => {
-    sacada = p.mente.find((i) => i.id === id) ?? null;
-    p.mente = p.mente.filter((i) => i.id !== id);
-  });
-  return sacada;
+  const [i] = await sql()<{ id: string; texto: string; anotada_en: Date }[]>`
+    update idea set soltada_en = now() where id = ${id} and soltada_en is null and paso_a is null
+    returning id, texto, anotada_en`;
+  return i ? { id: i.id, texto: i.texto, at: ms(i.anotada_en)! } : null;
 }
+
+// A thought becomes a mission or a goal in ONE transaction: if today or the goals are full,
+// nothing moves and the thought stays where it was (in Blob it was deleted first, then created).
+export const pasarIdeaAHoy = (id: string) =>
+  con(() =>
+    sql().begin(async (tx) => {
+      const [i] = await tx<{ texto: string }[]>`
+        update idea set paso_a = 'mision' where id = ${id} and soltada_en is null and paso_a is null returning texto`;
+      if (i) await tx`insert into mision (texto) values (${i.texto.slice(0, MAX_TEXTO)})`;
+    }),
+  );
+
+export const pasarIdeaAMeta = (id: string) =>
+  con(() =>
+    sql().begin(async (tx) => {
+      const [i] = await tx<{ texto: string }[]>`
+        update idea set paso_a = 'meta' where id = ${id} and soltada_en is null and paso_a is null returning texto`;
+      if (i) await tx`insert into meta (titulo) values (${i.texto.slice(0, MAX_TEXTO)})`;
+    }),
+  );
 
 export const nuevaMeta = (titulo: string, para: string | null) =>
-  change((p) => {
-    if (activas(p) >= MAX_METAS) return `Ya tienes ${MAX_METAS} metas. Termina o suelta una primero.`;
-    p.metas.unshift({ id: nuevo(), titulo, para, at: Date.now(), pasos: [] });
-  });
+  con(() => sql()`insert into meta (titulo, para) values (${titulo}, ${para})`);
 
-export const soltarMeta = (id: string) =>
-  change((p) => {
-    p.metas = p.metas.filter((m) => m.id !== id);
-  });
+export async function soltarMeta(id: string): Promise<string | void> {
+  await sql()`update meta set soltada_en = now() where id = ${id} and soltada_en is null`;
+}
 
-export const nuevoPaso = (metaId: string, texto: string) =>
-  change((p) => {
-    const m = meta(p, metaId);
-    if (!m) return "Esa meta ya no está.";
-    if (m.pasos.length >= MAX_PASOS) return `Una meta tiene hasta ${MAX_PASOS} pasos.`;
-    m.pasos.push({ id: nuevo(), texto, hecho: null, enHoy: false });
-  });
+const metaViva = async (metaId: string) =>
+  (await sql()`select 1 from meta where id = ${metaId} and soltada_en is null`).length > 0;
 
-export const soltarPaso = (metaId: string, pasoId: string) =>
-  change((p) => {
-    const m = meta(p, metaId);
-    if (m) m.pasos = m.pasos.filter((x) => x.id !== pasoId);
-  });
+export async function nuevoPaso(metaId: string, texto: string): Promise<string | void> {
+  if (!(await metaViva(metaId))) return "Esa meta ya no está.";
+  return con(
+    () => sql()`
+      insert into paso (meta_id, texto, orden)
+      values (${metaId}, ${texto}, (select coalesce(max(orden) + 1, 0) from paso where meta_id = ${metaId}))`,
+  );
+}
 
-// A step's life: waiting → «en hoy» (a mission carries it) → done. Letting the mission go
-// brings the step back to waiting; completing it — here or as a mission — marks it done.
-export const marcarPaso = (metaId: string, pasoId: string, estado: "hecho" | "enHoy" | "espera") =>
-  change((p) => {
-    const paso = meta(p, metaId)?.pasos.find((x) => x.id === pasoId);
-    if (!paso) return "Ese paso ya no está.";
-    paso.hecho = estado === "hecho" ? Date.now() : null;
-    paso.enHoy = estado === "enHoy";
-  });
+export async function soltarPaso(metaId: string, pasoId: string): Promise<string | void> {
+  await sql()`update paso set soltado_en = now() where id = ${pasoId} and meta_id = ${metaId} and soltado_en is null`;
+}
+
+// A step's life: waiting → «en hoy» (a mission carries it) → done. «en hoy» lives in the
+// mission, so here only done or not done is written.
+export async function marcarPaso(metaId: string, pasoId: string, estado: "hecho" | "enHoy" | "espera"): Promise<string | void> {
+  const r = await sql()`
+    update paso set hecho_en = ${estado === "hecho" ? sql()`coalesce(hecho_en, now())` : null}
+    where id = ${pasoId} and meta_id = ${metaId} and soltado_en is null`;
+  if (r.count === 0) return "Ese paso ya no está.";
+}
 
 export async function pasoDe(metaId: string, pasoId: string): Promise<Paso | null> {
-  return meta(await loadPendientes(), metaId)?.pasos.find((x) => x.id === pasoId) ?? null;
+  const [p] = await sql()<{ id: string; texto: string; hecho_en: Date | null; en_hoy: boolean }[]>`
+    select p.id, p.texto, p.hecho_en,
+           exists (select 1 from mision m where m.paso_id = p.id and m.hecha_en is null and m.soltada_en is null) as en_hoy
+    from paso p where p.id = ${pasoId} and p.meta_id = ${metaId} and p.soltado_en is null`;
+  return p ? { id: p.id, texto: p.texto, hecho: ms(p.hecho_en), enHoy: p.en_hoy } : null;
 }

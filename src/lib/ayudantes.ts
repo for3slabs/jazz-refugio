@@ -1,15 +1,12 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { zodOutputFormat } from "@anthropic-ai/sdk/helpers/zod";
-import { get, put } from "@vercel/blob";
 import { z } from "zod";
-import { diaDe } from "./mision";
+import { frase, sql } from "./db";
 
 // Her two helpers. They run only when she taps them, see only what that button says it sends,
 // and answer with a proposal — nothing is kept unless she accepts it. The model call lives here
 // alone, so moving to For3s OS later (block agentes, D-2) touches this file and nothing else.
 const MODEL = "claude-haiku-5-5"; // Brian's choice: small and cheap (block agentes, D-3)
-const POR_DIA = 20;
-const USO = process.env.VERCEL_ENV === "production" ? "agentes/uso.json" : "agentes/dev.json";
 
 const SYSTEM = `Ayudas a una diseñadora gráfica creativa, curiosa y de mente rápida a organizar su día.
 Hablas en español de México, cálido y breve, como una amiga que la admira.
@@ -21,22 +18,17 @@ export type Resultado<T> = { ok: true; data: T } | { ok: false; error: string };
 
 const NO_LISTO = "Los ayudantes todavía no están listos. Avísale a Brian.";
 
-// The daily count — the only thing this block stores. Counted before the call, so a burst of
-// taps cannot slip past the cap.
+// The daily count — the only thing this block stores: one row per use, never what she asked.
+// Counted before the call, and the DB caps it at 20 a day under a lock, so a burst of taps
+// cannot slip past.
 async function contar(): Promise<boolean> {
-  const hoy = diaDe(Date.now());
-  let uso = { dia: hoy, n: 0 };
-  const res = await get(USO, { access: "private", useCache: false }).catch(() => null);
-  if (res?.stream) {
-    try {
-      const u = JSON.parse(await new Response(res.stream).text());
-      if (u?.dia === hoy && Number.isInteger(u?.n)) uso = u;
-    } catch {}
+  try {
+    await sql()`insert into uso_ayudante (persona) values ('jazz')`;
+    return true;
+  } catch (e) {
+    if (frase(e)) return false;
+    throw e;
   }
-  if (uso.n >= POR_DIA) return false;
-  uso.n += 1;
-  await put(USO, JSON.stringify(uso), { access: "private", allowOverwrite: true, addRandomSuffix: false, contentType: "application/json" });
-  return true;
 }
 
 async function pedir<S extends z.ZodType>(esquema: S, prompt: string): Promise<Resultado<z.infer<S>>> {

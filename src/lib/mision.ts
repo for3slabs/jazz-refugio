@@ -3,7 +3,8 @@
 // `origen`: the goal step this mission came from (block pendientes), if any.
 export type Mision = { id: string; texto: string; at: number; origen?: { meta: string; paso: string } };
 export type Hecha = Mision & { hecha: number };
-export type Misiones = { abiertas: Mision[]; hechas: Hecha[]; total: number; mejorDia: number };
+// `vueltas`: her «volver» flowers — the garden is `total` + `vueltas`.
+export type Misiones = { abiertas: Mision[]; hechas: Hecha[]; total: number; mejorDia: number; vueltas: number };
 
 export const MAX_ABIERTAS = 3;
 export const MAX_TEXTO = 80;

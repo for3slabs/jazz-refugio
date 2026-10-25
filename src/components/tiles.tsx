@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { loadMisiones } from "@/lib/misiones";
+import { loadVueltas } from "@/lib/vueltas";
 import { loadNotes } from "@/lib/notes";
 import { hayParaAbrir, loadRegalos } from "@/lib/regalos";
 import { currentRole } from "@/lib/session";
@@ -31,12 +32,14 @@ export async function BrianTile({ className = "" }: { className?: string }) {
   );
 }
 
-// Her missions are read only for her session; on Brian's screen the tile counts his browser.
+// Her missions are read only for her session; on Brian's screen the tile counts his own returns.
 export async function GardenTile({ className = "" }: { className?: string }) {
-  const m = (await currentRole()) === "jazz" ? await loadMisiones().catch(() => null) : null;
+  const role = await currentRole();
+  const m = role === "jazz" ? await loadMisiones().catch(() => null) : null;
+  const vueltas = role === "jazz" ? (m?.vueltas ?? 0) : role ? (await loadVueltas(role).catch(() => [])).length : 0;
   return (
     <Link href="/tu" className={`${tile} ${className}`}>
-      <GardenTileView misiones={m?.total ?? 0} abiertas={m?.abiertas.length ?? 0} />
+      <GardenTileView misiones={m?.total ?? 0} vueltas={vueltas} abiertas={m?.abiertas.length ?? 0} />
     </Link>
   );
 }
