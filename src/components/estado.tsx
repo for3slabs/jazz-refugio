@@ -87,10 +87,10 @@ export function EstadoOrb({
         type="button"
         aria-haspopup="dialog"
         onClick={() => sheet.current?.showModal()}
-        className="pensamiento press absolute bottom-full left-[52%] z-10 mb-5 whitespace-nowrap rounded-[1.4rem] px-4 py-2 text-sm font-semibold"
+        className="pensamiento press absolute bottom-full left-[52%] z-10 mb-2 whitespace-nowrap rounded-[1.4rem] px-4 py-2 text-sm font-semibold"
       >
-        <span aria-hidden className="pensamiento absolute left-2.5 top-full mt-1 size-3 rounded-full" />
-        <span aria-hidden className="pensamiento absolute -left-0.5 top-full mt-5 size-2 rounded-full" />
+        <span aria-hidden className="pensamiento absolute left-3 top-full mt-0.5 size-2.5 rounded-full" />
+        <span aria-hidden className="pensamiento absolute left-0.5 top-full mt-4 size-1.5 rounded-full" />
         {current ? current.modo : "¿cómo estás?"}
       </button>
 

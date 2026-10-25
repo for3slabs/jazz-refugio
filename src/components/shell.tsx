@@ -8,9 +8,10 @@ import { ThemeToggle } from "./theme-toggle";
 export function Shell({ children, back = false, wide = false }: { children: ReactNode; back?: boolean; wide?: boolean }) {
   return (
     <div
-      className={`mx-auto flex w-full flex-col px-5 pb-8 pt-5 sm:px-8 ${
-        // The home is exactly one screen tall, so its orb can give room to the notes above it.
-        wide ? "h-dvh max-w-md pb-4 lg:max-w-6xl lg:pb-8" : "min-h-dvh max-w-md lg:max-w-xl lg:pt-10"
+      className={`mx-auto flex w-full flex-col px-5 pt-5 sm:px-8 ${
+        // The home is exactly one screen tall, so its orb can give room to the notes above it; on a
+        // phone its tab bar closes the screen, so the frame adds no bottom padding.
+        wide ? "h-dvh max-w-md lg:max-w-6xl lg:pb-8" : "min-h-dvh max-w-md pb-8 lg:max-w-xl lg:pt-10"
       }`}
     >
       <header className="flex h-10 items-center justify-between">
