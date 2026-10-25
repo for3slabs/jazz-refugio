@@ -22,7 +22,7 @@ const Escena = dynamic(() => import("@/components/mascota/escena"), { ssr: false
 
 // Her pet's wardrobe, like dressing a character in a game: the cat turns under her finger, its
 // name is hers to write, and every object shows — the ones she has to try on at once, the ones
-// still coming with how they arrive. Nothing is kept until she taps «guardar».
+// still coming with how they arrive. Nothing is kept until she taps «guardar» (top right).
 export function Personalizador({
   mascota,
   regalados,
@@ -72,13 +72,33 @@ export function Personalizador({
   }, [msg]);
 
   return (
-    <div className="mt-4 flex flex-col gap-5 pb-24">
+    <div className="mt-4 flex flex-col gap-5">
       <div
         className="orb-tint carta-arte relative mx-auto aspect-square w-[min(100%,24rem,42dvh)] overflow-hidden rounded-[1.75rem]"
         data-modo={modo ?? undefined}
       >
         <Escena modo={modo} puestos={puestos} className="absolute inset-0" />
+        {/* top right of the stage, as in the sketch: only there when something changed */}
+        {dirty && (
+          <button
+            type="button"
+            onClick={guardar}
+            disabled={pending || !nombre.trim()}
+            className="press rise absolute right-3 top-3 rounded-full bg-accent px-5 py-2.5 font-semibold text-accent-ink shadow-lg disabled:opacity-60"
+          >
+            {pending ? "guardando…" : "guardar"}
+          </button>
+        )}
       </div>
+
+      <p role="status" className="-my-3 h-5 text-center text-sm text-ink-soft">
+        {msg && (
+          <span key={msg.text} className="rise inline-flex items-center gap-1.5">
+            {msg.text}
+            {msg.ok && <Sparkle className="size-3.5 text-accent" />}
+          </span>
+        )}
+      </p>
 
       <label className="group mx-auto flex items-center gap-2">
         <span className="sr-only">su nombre</span>
@@ -128,27 +148,6 @@ export function Personalizador({
         </ul>
       )}
 
-      {/* Out of the flow at the bottom: only there when something changed. */}
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 flex flex-col items-center gap-2 px-5 pb-6">
-        <p role="status" className="text-sm text-ink-soft">
-          {msg && (
-            <span key={msg.text} className="rise inline-flex items-center gap-1.5">
-              {msg.text}
-              {msg.ok && <Sparkle className="size-3.5 text-accent" />}
-            </span>
-          )}
-        </p>
-        {dirty && (
-          <button
-            type="button"
-            onClick={guardar}
-            disabled={pending || !nombre.trim()}
-            className="press rise pointer-events-auto w-full max-w-sm rounded-full bg-accent px-8 py-4 text-lg font-semibold text-accent-ink disabled:opacity-60"
-          >
-            {pending ? "guardando…" : "guardar"}
-          </button>
-        )}
-      </div>
     </div>
   );
 }
