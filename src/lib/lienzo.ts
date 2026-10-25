@@ -65,7 +65,15 @@ async function con(op: () => Promise<unknown>): Promise<string | void> {
   }
 }
 
-export const crearTablero = (nombre: string) => con(() => sql()`insert into tablero (nombre) values (${nombre})`);
+// Its id comes back so she lands inside the new board right away, ready to fill it.
+export async function crearTablero(nombre: string): Promise<{ id: string } | string> {
+  let id = "";
+  const err = await con(async () => {
+    const [t] = await sql()<{ id: string }[]>`insert into tablero (nombre) values (${nombre}) returning id`;
+    id = t.id;
+  });
+  return err ?? { id };
+}
 
 export async function borrarTablero(id: string): Promise<string | void> {
   await sql()`update tablero set soltado_en = now() where id = ${id} and soltado_en is null`;

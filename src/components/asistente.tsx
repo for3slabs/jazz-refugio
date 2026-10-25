@@ -78,6 +78,18 @@ export function Asistente({ abiertas }: { abiertas: Mision[] }) {
   );
 }
 
+// Everywhere else: the same button, always in the same place, so she learns where her help lives
+// (Brian, 2026-10-25: «fijo en todas las partes… aunque no esté disponible»). What it can do on
+// every page today is «¿por dónde empiezo?»; the rest arrives section by section.
+export function AsistenteGeneral() {
+  return (
+    <AsistenteBoton label="asistente">
+      <Empezar />
+      <p className="mt-6 text-pretty text-sm text-ink-soft">Pronto también podré ayudarte con lo que ves en esta página.</p>
+    </AsistenteBoton>
+  );
+}
+
 function Destrabar({ mision }: { mision: Mision }) {
   const [pending, start] = useTransition();
   const [pasos, setPasos] = useState<string[] | null>(null);

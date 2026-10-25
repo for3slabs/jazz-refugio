@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
+import { AsistenteGeneral } from "./asistente";
 import { CurrentDoors, Doors } from "./doors";
 import { ArrowLeft, Gear } from "./icons";
 import { ThemeToggle } from "./theme-toggle";
@@ -7,20 +8,24 @@ import { ThemeToggle } from "./theme-toggle";
 // The frame every screen shares: a quiet top bar, then one readable column — or, `wide`, the
 // whole width on a wide screen (the home's bento, a board). Every inner page carries the doors
 // fixed at the bottom unless it says `menu={false}` — the focus flow, where a menu invites her
-// to wander off (Brian, 2026-10-25).
+// to wander off (Brian, 2026-10-25). With the doors comes her assistant's button, fixed in the
+// same corner of every section; a page with its own (misiones) says `asistente={false}`.
 export function Shell({
   children,
   back = false,
   wide = false,
   menu = true,
+  asistente = true,
 }: {
   children: ReactNode;
   back?: boolean;
   wide?: boolean;
   menu?: boolean;
+  asistente?: boolean;
 }) {
   const home = !back;
   const bar = back && menu;
+  const ayuda = bar && asistente;
   return (
     <div
       className={`mx-auto flex w-full flex-col px-5 pt-5 sm:px-8 ${
@@ -29,8 +34,9 @@ export function Shell({
         home
           ? "h-dvh max-w-md lg:max-w-6xl lg:pb-8"
           : `min-h-dvh max-w-md ${wide ? "lg:max-w-6xl" : "lg:max-w-xl lg:pt-10"} ${
-              // room under the last line for the fixed doors (~80 px) plus the usual 2 rem
-              bar ? "pb-32" : "pb-8"
+              // room under the last line for the fixed doors (~80 px) plus the usual 2 rem — and,
+              // with the assistant above them, its button too
+              ayuda ? "pb-44" : bar ? "pb-32" : "pb-8"
             }`
       }`}
     >
@@ -65,6 +71,7 @@ export function Shell({
           <CurrentDoors />
         </Suspense>
       )}
+      {ayuda && <AsistenteGeneral />}
     </div>
   );
 }

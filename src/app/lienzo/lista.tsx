@@ -33,7 +33,9 @@ export function Lista({
     if (!n) return;
     start(async () => {
       const r = await nuevoTablero(n);
-      if (r.ok) {
+      // straight into the new board, to fill it
+      if (r.ok && r.id) router.push(`/lienzo/${r.id}`);
+      else if (r.ok) {
         setNombre("");
         setCreando(false);
       } else setError(r.error);

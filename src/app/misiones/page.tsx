@@ -15,7 +15,7 @@ type Search = Promise<{ v?: string; meta?: string }>;
 
 export default function Misiones({ searchParams }: { searchParams: Search }) {
   return (
-    <Shell back>
+    <Shell back asistente={false}>
       <Suspense fallback={<BoardSkeleton />}>
         <Missions searchParams={searchParams} />
       </Suspense>

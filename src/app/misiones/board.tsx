@@ -9,7 +9,7 @@ import { LoSoltado } from "@/components/soltado";
 import { Check, Chevron, More } from "@/components/icons";
 import { type EstadoMision, type Hecha, type Mision, MAX_ABIERTAS, MAX_TEXTO } from "@/lib/mision";
 import type { Soltado } from "@/lib/soltado";
-import { Asistente } from "./asistente";
+import { Asistente } from "@/components/asistente";
 
 type View = { abiertas: Mision[]; hoy: Hecha[] };
 type Change =
@@ -258,7 +258,8 @@ export function Board({ abiertas, hoy, total, soltado }: View & { total: number;
 
       {(view.hoy.length > 0 || soltado.length > 0) && <Historial hoy={view.hoy} total={total} soltado={soltado} />}
 
-      {view.abiertas.length > 0 && <Asistente abiertas={view.abiertas} />}
+      {/* always in its corner, like on every page (Brian, 2026-10-25) */}
+      <Asistente abiertas={view.abiertas} />
     </div>
   );
 }
