@@ -10,8 +10,9 @@ import {
   agregarLiga,
   agregarNota,
   compartirTablero,
+  editarNotaDelTablero,
   editarTablero,
-  moverEnTablero,
+  ordenarTablero,
   portadaDelTablero,
   quitarDelTablero,
   registrarDoc,
@@ -58,15 +59,20 @@ export const enPalabras = (e: unknown, otro: string) => (e instanceof Subida ? e
 export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tablero; isBrian: boolean; docs: string }) {
   const router = useRouter();
   // what she sees changes at once; the server's answer follows
-  const [items, cambiar] = useOptimistic(tablero.items, (l: Item[], a: { quitar: string } | { mover: string; paso: -1 | 1 }) => {
+  const [items, cambiar] = useOptimistic(
+    tablero.items,
+    (l: Item[], a: { quitar: string } | { mover: string; paso: -1 | 1 } | { orden: string[] } | { nota: string; texto: string }) => {
     if ("quitar" in a) return l.filter((i) => i.id !== a.quitar);
+    if ("orden" in a) return a.orden.map((id) => l.find((x) => x.id === id)).filter((x): x is Item => !!x);
+    if ("nota" in a) return l.map((x) => (x.id === a.nota ? { ...x, texto: a.texto } : x));
     const i = l.findIndex((x) => x.id === a.mover);
     const j = i + a.paso;
     if (i < 0 || j < 0 || j >= l.length) return l;
     const n = [...l];
     [n[i], n[j]] = [n[j], n[i]];
     return n;
-  });
+    },
+  );
   const [portada, setPortada] = useOptimistic(tablero.portada);
   const [editando, setEditando] = useState(false);
   const [nombre, setNombre] = useState(tablero.nombre);
@@ -448,49 +454,34 @@ export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tabler
               </button>
             )}
           </div>
-          {/* nothing on top of the things: a tap opens one big, and its actions live there */}
-          <ul className="mt-2 columns-2 gap-3 sm:columns-3 lg:columns-4">
-            {items.map((it, i) => (
-              <li key={it.id} className="relative mb-3 break-inside-avoid">
-                <button
-                  type="button"
-                  disabled={ordenando}
-                  onClick={() => setAbierto(it.id)}
-                  aria-label={`abrir ${etiqueta(it)}`}
-                  className="press block w-full text-left disabled:cursor-default"
-                >
-                  <Tile it={it} />
-                </button>
-                {portada === it.id && !ordenando && (
-                  <span className="pointer-events-none absolute left-2 top-2 grid size-7 place-items-center rounded-full bg-accent text-accent-ink shadow-sm" aria-label="portada">
-                    <Star className="size-3.5" />
-                  </span>
-                )}
-                {!isBrian && ordenando && (
-                  <div className="absolute inset-x-2 bottom-2 flex justify-between">
-                    {([-1, 1] as const).map((paso) => (
-                      <button
-                        key={paso}
-                        type="button"
-                        disabled={(paso === -1 && i === 0) || (paso === 1 && i === items.length - 1)}
-                        onClick={() =>
-                          start(async () => {
-                            cambiar({ mover: it.id, paso });
-                            const r = await moverEnTablero(tablero.id, it.id, paso);
-                            if (!r.ok) setMsg(r.error);
-                          })
-                        }
-                        aria-label={paso === -1 ? "mover antes" : "mover después"}
-                        className="press grid size-9 place-items-center rounded-full bg-canvas/90 text-ink shadow-sm disabled:opacity-30"
-                      >
-                        {paso === -1 ? <ArrowLeft className="size-4" /> : <ArrowRight className="size-4" />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </li>
-            ))}
-          </ul>
+          {ordenando && !isBrian ? (
+            <Ordenar
+              items={items}
+              guardar={(ids) =>
+                start(async () => {
+                  cambiar({ orden: ids });
+                  const r = await ordenarTablero(tablero.id, ids);
+                  if (!r.ok) setMsg(r.error);
+                })
+              }
+            />
+          ) : (
+            /* nothing on top of the things: a tap opens one big, and its actions live there */
+            <ul className="mt-2 columns-2 gap-3 sm:columns-3 lg:columns-4">
+              {items.map((it) => (
+                <li key={it.id} className="relative mb-3 break-inside-avoid">
+                  <button type="button" onClick={() => setAbierto(it.id)} aria-label={`abrir ${etiqueta(it)}`} className="press block w-full text-left">
+                    <Tile it={it} />
+                  </button>
+                  {portada === it.id && (
+                    <span className="pointer-events-none absolute left-2 top-2 grid size-7 place-items-center rounded-full bg-accent text-accent-ink shadow-sm" aria-label="portada">
+                      <Star className="size-3.5" />
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
         </>
       )}
 
@@ -535,6 +526,13 @@ export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tabler
           esPortada={portada === actual.id}
           isBrian={isBrian}
           cerrar={() => setAbierto(null)}
+          editarNota={(t) =>
+            start(async () => {
+              cambiar({ nota: actual.id, texto: t });
+              const r = await editarNotaDelTablero(tablero.id, actual.id, t);
+              setMsg(r.ok ? "listo, nota guardada" : r.error);
+            })
+          }
           portada={() => {
             const nueva = portada === actual.id ? null : actual.id;
             start(async () => {
@@ -557,6 +555,108 @@ export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tabler
   );
 }
 
+// «ordenar» on a phone: one row per thing, each with a handle to drag it where she wants (Brian,
+// 2026-10-25: «es más fácil arrastrarlo… que ir con la flecha»). The rows move as the finger
+// passes their middle; letting go saves the whole order at once.
+function Ordenar({ items, guardar }: { items: Item[]; guardar: (ids: string[]) => void }) {
+  const [orden, setOrden] = useState(() => items.map((i) => i.id));
+  const [tomado, setTomado] = useState<string | null>(null);
+  const filas = useRef(new Map<string, HTMLLIElement>());
+  const vivo = useRef(orden); // the order as it is right now, for the window listeners
+  const porId = new Map(items.map((i) => [i.id, i]));
+
+  // The finger is followed on the whole window, not on the handle: when a row changes place the
+  // browser moves its element and can drop the handle's pointer capture (measured: a drag to the
+  // top stopped one row short).
+  function tomar(id: string) {
+    const inicial = vivo.current;
+    setTomado(id);
+    const mover = (e: PointerEvent) => {
+      const actual = vivo.current;
+      const sobre = actual.find((x) => {
+        const r = filas.current.get(x)?.getBoundingClientRect();
+        return r && e.clientY >= r.top && e.clientY <= r.bottom;
+      });
+      if (!sobre || sobre === id) return;
+      const de = actual.indexOf(id);
+      const a = actual.indexOf(sobre);
+      const r = filas.current.get(sobre)!.getBoundingClientRect();
+      // cross the middle of the row before it gives way, so it does not flicker under the finger
+      if ((a > de && e.clientY < r.top + r.height / 2) || (a < de && e.clientY > r.top + r.height / 2)) return;
+      const n = actual.filter((x) => x !== id);
+      n.splice(a, 0, id);
+      vivo.current = n;
+      setOrden(n);
+    };
+    const soltar = () => {
+      window.removeEventListener("pointermove", mover);
+      window.removeEventListener("pointerup", soltar);
+      window.removeEventListener("pointercancel", soltar);
+      setTomado(null);
+      if (vivo.current.join() !== inicial.join()) guardar(vivo.current);
+    };
+    window.addEventListener("pointermove", mover);
+    window.addEventListener("pointerup", soltar);
+    window.addEventListener("pointercancel", soltar);
+  }
+
+  return (
+    <ul className="mt-2 divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
+      {orden.map((id) => {
+        const it = porId.get(id);
+        if (!it) return null;
+        return (
+          <li
+            key={id}
+            ref={(el) => {
+              if (el) filas.current.set(id, el);
+              else filas.current.delete(id);
+            }}
+            className={`flex items-center gap-3 px-3 py-2 transition-colors ${tomado === id ? "relative z-10 bg-accent-soft" : ""}`}
+          >
+            <span className="size-11 shrink-0 overflow-hidden rounded-lg">
+              <Miniatura it={it} />
+            </span>
+            <span className="min-w-0 flex-1 truncate text-sm">{etiqueta(it)}</span>
+            <button
+              type="button"
+              aria-label={`arrastrar ${etiqueta(it)}`}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                tomar(id);
+              }}
+              className="grid size-11 shrink-0 cursor-grab touch-none place-items-center rounded-full text-ink-soft active:cursor-grabbing"
+            >
+              <Agarradera className="size-5" />
+            </button>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+function Miniatura({ it }: { it: Item }) {
+  if (it.tipo === "color") return <span className="block size-full" style={{ background: it.color }} />;
+  if (it.tipo === "imagen" || it.tipo === "dibujo")
+    return <Image src={imgSrc(it)} alt="" width={88} height={88} unoptimized className="size-full bg-surface-2 object-cover" />;
+  if (it.tipo === "enlace" && it.enlace?.imagen)
+    // eslint-disable-next-line @next/next/no-img-element -- any site's image; next/image would need every host listed
+    return <img src={it.enlace.imagen} alt="" referrerPolicy="no-referrer" className="size-full object-cover" />;
+  return (
+    <span className="grid size-full place-items-center bg-accent-soft text-[0.5625rem] font-bold text-accent">
+      {it.tipo === "doc" ? extension(it.nombre) : it.tipo === "nota" ? "NOTA" : "LIGA"}
+    </span>
+  );
+}
+
+// six dots: the drawn sign for «hold here and drag»
+const Agarradera = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor" aria-hidden>
+    {[7, 12, 17].flatMap((y) => [9, 15].map((x) => <circle key={`${x}-${y}`} cx={x} cy={y} r="1.5" />))}
+  </svg>
+);
+
 const etiqueta = (it: Item) =>
   it.tipo === "nota" ? "la nota" : it.tipo === "color" ? `el color ${it.color}` : it.tipo === "doc" ? `«${it.nombre}»` : it.tipo === "enlace" ? `la liga ${it.enlace?.sitio ?? ""}` : it.tipo === "dibujo" ? "el dibujo" : "la imagen";
 
@@ -573,6 +673,7 @@ function Visor({
   cerrar,
   portada,
   quitar,
+  editarNota,
 }: {
   it: Item;
   esPortada: boolean;
@@ -580,8 +681,11 @@ function Visor({
   cerrar: () => void;
   portada: () => void;
   quitar: () => void;
+  editarNota: (texto: string) => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const [editando, setEditando] = useState(false);
+  const [texto, setTexto] = useState(it.texto ?? "");
   useEffect(() => {
     ref.current?.showModal();
   }, []);
@@ -612,7 +716,38 @@ function Visor({
               className={`max-h-full w-auto max-w-full rounded-2xl object-contain ${it.tipo === "dibujo" ? "bg-[#fbf7fc]" : ""}`}
             />
           )}
-          {it.tipo === "nota" && <p className="max-w-prose whitespace-pre-line text-pretty text-2xl leading-relaxed">«{it.texto}»</p>}
+          {it.tipo === "nota" &&
+            (editando ? (
+              <form
+                className="w-full max-w-prose"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!texto.trim()) return;
+                  editarNota(texto);
+                  setEditando(false);
+                }}
+              >
+                <textarea
+                  autoFocus
+                  rows={5}
+                  value={texto}
+                  onChange={(e) => setTexto(e.target.value)}
+                  maxLength={MAX_NOTA}
+                  aria-label="la nota"
+                  className="block w-full resize-none rounded-2xl border border-line bg-surface px-4 py-3 text-xl leading-relaxed focus:border-accent focus:outline-none"
+                />
+                <div className="mt-3 flex justify-end gap-2">
+                  <button type="button" onClick={() => { setTexto(it.texto ?? ""); setEditando(false); }} className="press rounded-full px-3 py-2 text-sm text-ink-soft hover:text-ink">
+                    cancelar
+                  </button>
+                  <button type="submit" disabled={!texto.trim()} className="press rounded-full bg-accent px-5 py-2 text-sm font-semibold text-accent-ink disabled:opacity-50">
+                    guardar
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <p className="max-w-prose whitespace-pre-line text-pretty text-2xl leading-relaxed">«{it.texto}»</p>
+            ))}
           {it.tipo === "color" && (
             <div className="w-full max-w-sm">
               <div className="aspect-square w-full rounded-3xl border border-line" style={{ background: it.color }} />
@@ -654,6 +789,12 @@ function Visor({
               >
                 <Star className="size-4" />
                 {esPortada ? "es la portada" : "usar de portada"}
+              </button>
+            )}
+            {it.tipo === "nota" && !editando && (
+              <button type="button" onClick={() => setEditando(true)} className="press inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2.5 text-sm font-semibold hover:border-accent/60">
+                <Pencil className="size-4" />
+                editar
               </button>
             )}
             <button type="button" onClick={quitar} className="press inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2.5 text-sm font-semibold hover:border-accent/60">
