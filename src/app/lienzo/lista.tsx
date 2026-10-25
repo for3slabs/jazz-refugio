@@ -119,10 +119,28 @@ function Portada({ t }: { t: Tablero }) {
   );
 }
 
+// Each kind in a cover cell: images and drawings from her store, a liga by its page's own image
+// (or its site), a doc by its type — never through the image route, which only serves images
+// (a doc or liga there answered 404 and showed a broken image).
 function Cosa({ it }: { it: Item }) {
   if (it.tipo === "color") return <span className="block size-full" style={{ background: it.color }} />;
   if (it.tipo === "nota")
     return <span className="block size-full overflow-hidden bg-surface-2 p-2 text-[0.6875rem] leading-tight text-ink-soft">{it.texto}</span>;
+  if (it.tipo === "enlace")
+    return it.enlace?.imagen ? (
+      // eslint-disable-next-line @next/next/no-img-element -- any site's image; next/image would need every host listed
+      <img src={it.enlace.imagen} alt="" loading="lazy" referrerPolicy="no-referrer" className="size-full object-cover" />
+    ) : (
+      <span className="grid size-full place-items-center bg-surface-2 p-2 text-center text-[0.6875rem] text-ink-soft">{it.enlace?.sitio ?? "liga"}</span>
+    );
+  if (it.tipo === "doc")
+    return (
+      <span className="grid size-full place-items-center bg-surface-2">
+        <span className="rounded-lg bg-accent-soft px-2 py-1 text-[0.625rem] font-bold text-accent">
+          {it.nombre?.includes(".") ? it.nombre.split(".").pop()!.slice(0, 5).toUpperCase() : "DOC"}
+        </span>
+      </span>
+    );
   return <Image src={imgSrc(it)} alt="" width={400} height={400} unoptimized className="size-full object-cover" />;
 }
 

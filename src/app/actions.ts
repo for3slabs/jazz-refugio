@@ -15,7 +15,9 @@ import {
   crearTablero,
   editarTablero as guardarTablero,
   elegirPortada,
+  editarNota as guardarNota,
   moverItem,
+  ordenarItems,
   quitar,
   restaurarTablero,
   PREFIX,
@@ -491,6 +493,17 @@ export const agregarLiga = async (tablero: string, url: string) =>
     if (typeof e === "string") return e;
     return agregarAlTablero(tablero, { tipo: "enlace", enlace: e });
   });
+
+// A note's words, from the viewer's «editar».
+export const editarNotaDelTablero = async (tablero: string, item: string, t: string) =>
+  deJazz(async () => {
+    const v = texto(t, MAX_NOTA);
+    if (typeof v !== "string") return v.error;
+    if (!(await guardarNota(tablero, item, v))) return "Esa nota ya no está.";
+  });
+
+// The order she dragged, saved whole.
+export const ordenarTablero = async (tablero: string, ids: string[]) => deJazz(() => ordenarItems(tablero, ids));
 
 export const quitarDelTablero = async (tablero: string, item: string) => deJazz(() => quitar(tablero, item));
 

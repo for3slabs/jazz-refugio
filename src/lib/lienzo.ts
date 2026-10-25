@@ -143,6 +143,30 @@ export async function elegirPortada(id: string, itemId: string | null): Promise<
   }
 }
 
+// A note's words, changed from the viewer. False when it is no longer on that board.
+export async function editarNota(tableroId: string, itemId: string, texto: string): Promise<boolean> {
+  if (!esId(itemId)) return false;
+  const rows = await sql()`
+    update item set texto = ${texto}
+    where id = ${itemId} and tablero_id = ${tableroId} and tipo = 'nota' and soltado_en is null returning id`;
+  return rows.length > 0;
+}
+
+// The whole order at once, as she left it after dragging: only the board's own things, each once.
+export async function ordenarItems(tableroId: string, ids: string[]): Promise<string | void> {
+  if (!ids.length || ids.some((i) => !esId(i)) || new Set(ids).size !== ids.length) return "Ese orden no se pudo leer.";
+  await sql().begin(async (tx) => {
+    const filas = await tx<{ id: string }[]>`select id from item where tablero_id = ${tableroId} and soltado_en is null`;
+    const suyos = new Set(filas.map((f) => f.id));
+    // things added meanwhile keep their place at the end of what she ordered
+    const orden = [...ids.filter((i) => suyos.has(i)), ...filas.map((f) => f.id).filter((i) => !ids.includes(i))];
+    await tx`
+      update item set orden = n.orden
+      from (select unnest(${orden}::uuid[]) as id, generate_series(0, ${orden.length - 1}) as orden) n
+      where item.id = n.id and item.tablero_id = ${tableroId}`;
+  });
+}
+
 // One step earlier (-1) or later (+1) in her order; the whole board is renumbered in one go.
 export async function moverItem(id: string, itemId: string, paso: -1 | 1): Promise<string | void> {
   await sql().begin(async (tx) => {
