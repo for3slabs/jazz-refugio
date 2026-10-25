@@ -93,6 +93,11 @@ textarea:focus-visible {
   box-shadow: 0 0 0 4px var(--accent-soft);
 }
 
+/* The pet's name reads as a title: its underline is the focus, no ring around it. */
+.nombre-mascota:focus-visible {
+  box-shadow: none;
+}
+
 a {
   text-underline-offset: 0.25em;
 }
