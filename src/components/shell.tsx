@@ -69,12 +69,17 @@ export function Shell({
   );
 }
 
-// A page title with its drawn icon — the heading speaks for itself, no label above it.
-export function PageTitle({ icon, children }: { icon: ReactNode; children: ReactNode }) {
+// A page title with its drawn icon — the heading speaks for itself, no label above it. `aside`
+// sits on the same line, at the right (the views of a page), so the page starts one row shorter;
+// on a phone too narrow for both it drops under the title instead of touching it.
+export function PageTitle({ icon, children, aside }: { icon: ReactNode; children: ReactNode; aside?: ReactNode }) {
   return (
-    <div className="mt-8 flex items-center gap-3">
-      <span className="text-accent">{icon}</span>
-      <h1 className="t-display text-4xl">{children}</h1>
+    <div className={`mt-8 flex items-center justify-between gap-3 ${aside ? "flex-wrap gap-y-4" : ""}`}>
+      <div className={`flex min-w-0 items-center ${aside ? "gap-2.5" : "gap-3"}`}>
+        <span className="text-accent">{icon}</span>
+        <h1 className="t-display text-4xl">{children}</h1>
+      </div>
+      {aside}
     </div>
   );
 }
