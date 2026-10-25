@@ -14,6 +14,10 @@ const doors = [
   { href: "/tu", label: "colecciones", Icon: Star },
 ];
 
+// The doors and the header sit on every page: prefetching their six links on every mount fired a
+// dozen function calls each time (measured after creating a board); the pages are dynamic, so a
+// tap fetches them anyway.
+
 // «If I don't see it, it doesn't exist»: a note she has not read, or a gift ready to open,
 // makes its door glow —
 // warm, no number, no "you have unread messages".
@@ -54,7 +58,7 @@ export function Doors({ bar = false, path = null }: { bar?: boolean; path?: stri
         const glow = unread && href === "/brian";
         const here = !!path && (path === href || path.startsWith(`${href}/`));
         return (
-          <Link
+          <Link prefetch={false}
             key={href}
             href={href}
             aria-current={here ? "page" : undefined}

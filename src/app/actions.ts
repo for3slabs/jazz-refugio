@@ -1,7 +1,7 @@
 "use server";
 
 import { createHash, timingSafeEqual } from "node:crypto";
-import { refresh } from "next/cache";
+import { refresh, revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { RedirectType, redirect } from "next/navigation";
 import { agregarAprendido, agregarLibro, agregarViaje, marcarRegalado, moverLibro, moverViaje, soltarDe } from "@/lib/coleccion";
@@ -438,10 +438,21 @@ export async function nuevoTablero(t: string): Promise<EstadoResult & { id?: str
 // The create screen's one call: on success the server answers with the new board itself (a redirect
 // resolved in the same request — one trip, and «atrás» returns to the list); otherwise the sentence.
 // Outside deJazz on purpose: a redirect is thrown, and deJazz would turn it into «No se pudo guardar».
+// It does NOT refresh the screen it leaves (deJazz would re-render «nuevo tablero» only to throw it
+// away): it marks the list stale and goes straight to the board (measured: two trips stacked).
 export async function crearYAbrirTablero(t: string): Promise<EstadoResult> {
-  const r = await nuevoTablero(t);
-  if (r.ok && r.id) redirect(`/lienzo/${r.id}`, RedirectType.replace);
-  return { ok: r.ok, error: r.error };
+  if ((await currentRole()) !== "jazz") return { ok: false, error: "Esto es solo de Jazz." };
+  const v = texto(t, MAX_NOMBRE);
+  if (typeof v !== "string") return { ok: false, error: v.error };
+  let c: { id: string } | string;
+  try {
+    c = await crearTablero(v);
+  } catch {
+    return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
+  }
+  if (typeof c === "string") return { ok: false, error: c };
+  revalidatePath("/lienzo");
+  redirect(`/lienzo/${c.id}`, RedirectType.replace);
 }
 
 export const soltarTablero = async (id: string) => deJazz(() => borrarTablero(id));

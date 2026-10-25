@@ -42,7 +42,7 @@ export function Shell({
     >
       <header className="flex h-10 items-center justify-between">
         {back ? (
-          <Link
+          <Link prefetch={false}
             href="/"
             className="press t-label -ml-2 inline-flex items-center gap-2 rounded-full px-2 py-2 text-ink-soft hover:text-ink"
           >
@@ -56,7 +56,7 @@ export function Shell({
         )}
         <div className="flex items-center gap-1">
           <ThemeToggle />
-          <Link
+          <Link prefetch={false}
             href="/ajustes"
             aria-label="ajustes"
             className="press grid size-10 place-items-center rounded-full text-ink-soft hover:bg-surface-2 hover:text-ink"
