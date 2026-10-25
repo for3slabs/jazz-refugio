@@ -1,6 +1,39 @@
-import { Chevron, Plus } from "@/components/icons";
+import Link from "next/link";
+import { Chevron } from "@/components/icons";
 
-// One quiet line with its count — «las que dejaste · 2» — folded, like «historial» in misiones:
+export type Apartado = { key: string; href: string; label: string; dot?: boolean };
+
+// The three parts of «mensajes» as underlined words, the way «tus metas · en tu mente» switch in
+// misiones — the tab IS the section's title, and the line under it says what that part does.
+export function Apartados({ items, current, sub }: { items: Apartado[]; current: string; sub: string }) {
+  return (
+    <>
+      <nav aria-label="mensajes" className="mt-8 flex items-end gap-6">
+        {items.map((t) => (
+          <Link
+            key={t.key}
+            href={t.href}
+            aria-current={current === t.key ? "page" : undefined}
+            className={`press relative -mb-px border-b-2 pb-1 text-lg font-semibold transition-colors ${
+              current === t.key ? "border-accent text-ink" : "border-transparent text-ink-soft hover:text-ink"
+            }`}
+          >
+            {t.label}
+            {t.dot && (
+              <>
+                <span aria-hidden className="absolute -right-2.5 top-0.5 size-2 rounded-full bg-accent" />
+                <span className="sr-only"> (hay algo nuevo)</span>
+              </>
+            )}
+          </Link>
+        ))}
+      </nav>
+      <p className="mt-2 text-pretty text-sm text-ink-soft">{sub}</p>
+    </>
+  );
+}
+
+// One quiet line with its count — «los que diste · 2» — folded, like «historial» in misiones:
 // the page stays light and she knows there is more inside (Brian, 2026-10-25).
 export function Plegado({ titulo, n, children }: { titulo: string; n: number; children: React.ReactNode }) {
   return (
@@ -15,26 +48,5 @@ export function Plegado({ titulo, n, children }: { titulo: string; n: number; ch
   );
 }
 
-// The title of what is FOR whoever is looking, the way misiones titles «tus 3 misiones de hoy».
-export function Encabezado({ titulo, sub }: { titulo: string; sub: string }) {
-  return (
-    <>
-      <h2 className="mt-8 text-lg font-semibold">{titulo}</h2>
-      <p className="mt-0.5 text-pretty text-sm text-ink-soft">{sub}</p>
-    </>
-  );
-}
-
-// «＋ dejarle una nota a Brian»: writing is one tap away, not a form that greets her on arrival.
-export function Abrir({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="press mt-8 flex min-h-14 w-full items-center gap-3 rounded-2xl border border-dashed border-line px-4 text-left text-ink-soft hover:border-accent/60 hover:text-ink"
-    >
-      <Plus className="size-5 shrink-0 text-accent" />
-      {children}
-    </button>
-  );
-}
+// The list as misiones draws it: one box, rows split by a line.
+export const caja = "divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface";

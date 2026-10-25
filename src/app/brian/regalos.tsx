@@ -1,33 +1,57 @@
 "use client";
 
-import { useEffect, useOptimistic, useState, useTransition } from "react";
+import { useCallback, useEffect, useOptimistic, useState, useTransition } from "react";
 import { abrirRegalo, usarCupon } from "../actions";
 import { Confetti } from "@/components/confetti";
-import { Gift } from "@/components/icons";
-import { type Abierto, type Envuelto, misionesWord } from "@/lib/regalo";
-import { Plegado } from "./plegado";
+import { Gift, Plus } from "@/components/icons";
+import type { Regalado } from "@/lib/objeto";
+import { type Abierto, type Envuelto, type Regalo, misionesWord } from "@/lib/regalo";
+import { LosQueDiste, RegaloNuevo } from "./regalo-form";
 
 const when = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "long", timeZone: "America/Mexico_City" });
 
-// Her gifts: wrapped ones show only how many missions are left — their content is still on
-// the server. Opening one asks the server for it and bursts into flowers; the ones already
-// opened wait folded under «abiertos · N».
+// «regalos» as cards, the way inspiración shows its boards: the first card makes one («＋ envolver
+// uno», like «＋ nuevo tablero»), then the wrapped ones — their content is still on the server, they
+// only say how many missions are left — then the opened ones, each a small card. Opening asks the
+// server and bursts into flowers; an opened card shows big on top when tapped. What you gave folds
+// under «los que diste».
 // `de`: who left them — Brian on her screen, Jazz on his.
-export function Regalos({ envueltos, abiertos, de = "Brian" }: { envueltos: Envuelto[]; abiertos: Abierto[]; de?: string }) {
+export function Regalos({
+  envueltos,
+  abiertos,
+  de = "Brian",
+  dados,
+  total,
+  regalados = null,
+}: {
+  envueltos: Envuelto[];
+  abiertos: Abierto[];
+  de?: string;
+  dados: Regalo[];
+  total: number;
+  regalados?: Regalado[] | null;
+}) {
   const [list, markUsed] = useOptimistic(abiertos, (l: Abierto[], id: string) =>
     l.map((r) => (r.id === id ? { ...r, usado: Date.now() } : r)),
   );
   const [, start] = useTransition();
   const [opening, setOpening] = useState<string | null>(null);
-  const [reveal, setReveal] = useState<Abierto | null>(null);
+  const [grande, setGrande] = useState<string | null>(null);
+  const [nuevo, setNuevo] = useState(false);
   const [party, setParty] = useState(0);
   const [msg, setMsg] = useState<string | null>(null);
+  const [recien, setRecien] = useState<Abierto | null>(null);
 
   useEffect(() => {
     if (!msg) return;
     const id = setTimeout(() => setMsg(null), 2800);
     return () => clearTimeout(id);
   }, [msg]);
+
+  const cerrar = useCallback((aviso: string | null) => {
+    setNuevo(false);
+    if (aviso) setMsg(aviso);
+  }, []);
 
   function open(id: string) {
     setOpening(id);
@@ -36,7 +60,8 @@ export function Regalos({ envueltos, abiertos, de = "Brian" }: { envueltos: Envu
       setOpening(null);
       if (r.ok && r.regalo) {
         setParty((p) => p + 1);
-        setReveal(r.regalo);
+        setRecien(r.regalo);
+        setGrande(r.regalo.id);
       } else setMsg(r.error);
     });
   }
@@ -49,12 +74,14 @@ export function Regalos({ envueltos, abiertos, de = "Brian" }: { envueltos: Envu
     });
   }
 
-  const shown = reveal ? list.find((r) => r.id === reveal.id) ?? reveal : null;
+  // the one just opened is not in the list until the server refreshes it
+  const todos = recien && !list.some((r) => r.id === recien.id) ? [recien, ...list] : list;
+  const shown = grande ? todos.find((r) => r.id === grande) ?? null : null;
 
   return (
     <div className="relative">
       {party > 0 && <Confetti key={party} />}
-      {/* only when there is something to say — an empty line here pushed the gifts down */}
+
       {msg && (
         <p role="status" className="mt-3 text-sm text-ink-soft">
           <span key={msg} className="rise inline-block">
@@ -63,81 +90,103 @@ export function Regalos({ envueltos, abiertos, de = "Brian" }: { envueltos: Envu
         </p>
       )}
 
+      {nuevo && <RegaloNuevo para={de} regalados={regalados} onClose={cerrar} />}
+
       {shown && (
         <div className="rise mt-4">
-          <p className="text-sm font-semibold text-accent">acabas de abrir</p>
-          <div className="mt-3">
-            <Card r={shown} onUse={use} de={de} big />
-          </div>
+          <Card r={shown} onUse={use} de={de} big onClose={() => setGrande(null)} />
         </div>
       )}
 
-      {envueltos.length === 0 && list.length === 0 && !shown && (
-        <p className="rise mt-4 text-pretty text-lg leading-relaxed text-ink-soft">
-          Cuando {de} te deje un regalo, aparece aquí.
-        </p>
-      )}
+      <ul className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-3">
+        {!nuevo && (
+          <li>
+            <button
+              type="button"
+              onClick={() => setNuevo(true)}
+              className="press flex h-full min-h-44 w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-line text-ink-soft hover:border-accent/60 hover:text-ink"
+            >
+              <Plus className="size-7 text-accent" />
+              <span className="text-sm font-medium">envolver uno</span>
+            </button>
+          </li>
+        )}
 
-      {/* nothing new, but there are opened ones below: say so, or the title sits over nothing */}
-      {envueltos.length === 0 && list.length > 0 && !shown && (
-        <p className="rise mt-4 text-pretty text-ink-soft">Nada nuevo por ahora.</p>
-      )}
+        {envueltos.map((g, i) => {
+          const listo = g.faltan === 0;
+          return (
+            <li key={g.id} className="rise" style={{ animationDelay: `${Math.min(i, 5) * 40}ms` }}>
+              <button
+                type="button"
+                disabled={!listo || opening !== null}
+                onClick={() => open(g.id)}
+                className={`press flex h-full min-h-44 w-full flex-col items-center justify-center gap-2 rounded-2xl border p-4 text-center ${
+                  listo ? "border-accent/60 bg-surface hover:bg-surface-2" : "border-line bg-surface/60"
+                }`}
+              >
+                <Gift className={`size-11 text-accent ${opening === g.id ? "animate-bounce" : ""} ${listo ? "" : "opacity-50"}`} />
+                <span className="text-pretty text-sm font-semibold">de {de}</span>
+                <span className={`text-sm ${listo ? "font-semibold text-accent" : "text-ink-soft"}`}>
+                  {opening === g.id ? "abriendo…" : listo ? "abrir" : `se abre en ${misionesWord(g.faltan)}`}
+                </span>
+              </button>
+            </li>
+          );
+        })}
 
-      {envueltos.length > 0 && (
-        <ul className="mt-4 grid grid-cols-2 gap-3">
-          {envueltos.map((g, i) => {
-            const listo = g.faltan === 0;
-            return (
-              <li key={g.id} className="rise" style={{ animationDelay: `${Math.min(i, 5) * 60}ms` }}>
-                <button
-                  type="button"
-                  disabled={!listo || opening !== null}
-                  onClick={() => open(g.id)}
-                  className={`press flex h-full w-full flex-col items-center gap-3 rounded-3xl border p-5 text-center ${
-                    listo ? "border-accent/60 bg-surface hover:bg-surface-2" : "border-dashed border-line bg-surface/60"
-                  }`}
-                >
-                  <Gift
-                    className={`size-12 text-accent ${opening === g.id ? "animate-bounce" : ""} ${listo ? "" : "opacity-50"}`}
-                  />
-                  <span className="text-pretty font-semibold">un regalo para ti</span>
-                  <span className={`text-sm ${listo ? "t-label text-accent" : "text-ink-soft"}`}>
-                    {opening === g.id ? "abriendo…" : listo ? "abrir" : `se abre después de ${misionesWord(g.faltan)}`}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      )}
+        {todos
+          .filter((r) => r.id !== shown?.id)
+          .map((r) => (
+            <li key={r.id}>
+              <button
+                type="button"
+                onClick={() => setGrande(r.id)}
+                className="press flex h-full min-h-44 w-full flex-col rounded-2xl border border-line bg-surface p-4 text-left hover:border-accent/60"
+              >
+                <span className="text-xs font-semibold text-accent">{r.tipo === "cupon" ? "cupón" : "carta"}</span>
+                <span className="mt-1.5 line-clamp-3 text-pretty font-semibold leading-snug">{r.titulo}</span>
+                <span className="mt-auto pt-3 text-xs text-ink-soft">
+                  {r.tipo === "cupon" ? (r.usado ? `usado el ${when.format(r.usado)}` : "sin usar · tócalo") : "léela"}
+                </span>
+              </button>
+            </li>
+          ))}
+      </ul>
 
-      {list.filter((r) => r.id !== shown?.id).length > 0 && (
-        <Plegado titulo="abiertos" n={list.filter((r) => r.id !== shown?.id).length}>
-          <ul className="space-y-3">
-            {list
-              .filter((r) => r.id !== shown?.id)
-              .map((r) => (
-                <li key={r.id}>
-                  <Card r={r} onUse={use} de={de} />
-                </li>
-              ))}
-          </ul>
-        </Plegado>
-      )}
+      <LosQueDiste regalos={dados} total={total} />
     </div>
   );
 }
 
-function Card({ r, onUse, de, big = false }: { r: Abierto; onUse: (id: string) => void; de: string; big?: boolean }) {
+function Card({
+  r,
+  onUse,
+  de,
+  big = false,
+  onClose,
+}: {
+  r: Abierto;
+  onUse: (id: string) => void;
+  de: string;
+  big?: boolean;
+  onClose?: () => void;
+}) {
   return (
     <article className={`rounded-3xl border bg-surface p-6 ${big ? "border-accent/60" : "border-line"}`}>
-      <p className="t-label text-accent">{r.tipo === "cupon" ? "cupón" : "carta"}</p>
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-sm font-semibold text-accent">{r.tipo === "cupon" ? "cupón" : "carta"} de {de}</p>
+        {onClose && (
+          <button type="button" onClick={onClose} className="press text-sm font-medium text-ink-soft hover:text-ink">
+            cerrar
+          </button>
+        )}
+      </div>
       <h3 className={`mt-2 text-pretty font-semibold leading-snug ${big ? "t-display text-3xl" : "text-xl"}`}>{r.titulo}</h3>
       {r.texto && <p className="mt-3 whitespace-pre-line text-pretty text-lg leading-relaxed text-ink-soft">{r.texto}</p>}
       {r.tipo === "cupon" && (
         <div className="mt-5 flex justify-end">
           {r.usado ? (
-            <span className="t-label text-ink-soft">usado el {when.format(r.usado)}</span>
+            <span className="text-sm font-semibold text-ink-soft">usado el {when.format(r.usado)}</span>
           ) : (
             <button
               type="button"
