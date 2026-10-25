@@ -6,6 +6,8 @@ import { MAX_ABIERTAS } from "@/lib/mision";
 import { deHoy, loadMisiones } from "@/lib/misiones";
 import { loadPendientes } from "@/lib/pendientes";
 import { currentRole } from "@/lib/session";
+import { loadSoltado } from "@/lib/soltado";
+import { LoSoltado } from "@/components/soltado";
 import { Board } from "./board";
 import { Later } from "./later";
 import { Tabs } from "./tabs";
@@ -33,21 +35,23 @@ async function Missions({ searchParams }: { searchParams: Search }) {
   const { v, meta } = await searchParams;
 
   if (v === "despues") {
-    const [p, m] = await Promise.all([loadPendientes(), loadMisiones()]);
+    const [p, m, soltado] = await Promise.all([loadPendientes(), loadMisiones(), loadSoltado("despues").catch(() => [])]);
     return (
       <>
         <Tabs vista="despues" />
         <Later mente={p.mente} metas={p.metas} abierta={meta ?? null} hoyLleno={m.abiertas.length >= MAX_ABIERTAS} />
+        <LoSoltado items={soltado} />
       </>
     );
   }
 
-  const m = await loadMisiones();
+  const [m, soltado] = await Promise.all([loadMisiones(), loadSoltado("hoy").catch(() => [])]);
   return (
     <>
       <Tabs vista="hoy" />
       <p className="mt-5 text-pretty text-lg text-ink-soft">Máximo 3 a la vez. Cada una que cumplas es una flor.</p>
       <Board abiertas={m.abiertas} hoy={deHoy(m.hechas)} total={m.total} />
+      <LoSoltado items={soltado} />
     </>
   );
 }
