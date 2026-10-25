@@ -3,7 +3,7 @@ import { loadMisiones } from "@/lib/misiones";
 import { loadRegalados } from "@/lib/personajes";
 import type { Estado } from "@/lib/modos";
 import { currentRole } from "@/lib/session";
-import { EstadoOrb } from "./estado";
+import { EstadoOrb, ModoSync } from "./estado";
 import { Orb } from "./orb";
 import { JazzTile, PowerTile } from "./tiles";
 
@@ -30,6 +30,7 @@ export async function EstadoSlot({ className = "" }: { className?: string }) {
     <>
       <JazzTile estado={estado} failed={failed} className="flex w-full max-lg:order-first lg:hidden" />
       <Orb modo={estado?.modo ?? null} className={className} />
+      <ModoSync estado={estado} />
     </>
   );
 }

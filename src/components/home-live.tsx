@@ -11,7 +11,7 @@ export function DailyLine() {
   // eslint-disable-next-line react-hooks/set-state-in-effect -- "today" is the viewer's day, not the server's
   useEffect(() => setLine(lineOfTheDay()), []);
   return (
-    <p className="min-h-14 text-balance text-center text-xl font-medium leading-snug text-ink">
+    <p className="home-quote min-h-14 text-balance text-center text-xl font-medium leading-snug text-ink">
       {line && <span className="rise inline-block">«{line}»</span>}
     </p>
   );

@@ -20,11 +20,12 @@ export function AvisoView({ id, titulo, para }: { id: string; titulo: string; pa
   if (!show) return null;
 
   return (
-    <aside className="rise w-full max-w-sm rounded-3xl border border-line bg-surface p-5 text-left order-first">
-      <p className="text-pretty text-lg leading-snug">
+    // One row, so it never pushes the doors off a phone screen.
+    <aside className="rise flex w-full max-w-sm items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3 text-left order-first">
+      <p className="min-w-0 flex-1 text-pretty leading-snug">
         <span className="font-semibold">{titulo}</span> es {when}. ¿Un paso hoy?
       </p>
-      <div className="mt-3 flex items-center gap-4">
+      <div className="flex shrink-0 items-center gap-3">
         <Link href={`/misiones?v=despues&meta=${id}`} className="press t-label text-accent">
           ver
         </Link>

@@ -12,6 +12,7 @@ const K = {
   motion: "refugio:motion",
   notesSeen: "refugio:notes-seen",
   avisoHoyNo: "refugio:aviso-hoy-no",
+  modo: "refugio:modo",
 } as const;
 
 function read<T>(key: string, fallback: T): T {
@@ -86,5 +87,17 @@ export const prefs = {
     if (off) document.documentElement.dataset.motion = "off";
     else delete document.documentElement.dataset.motion;
     write(K.motion, off ? "off" : null);
+  },
+};
+
+// Her last mode, so the next load paints the orb in her colour before the server answers
+// (read by the script in layout.tsx). The server stays the truth: every load writes it back.
+export const ultimoModo = {
+  set(e: { modo: string; at: number } | null) {
+    write(K.modo, e);
+    try {
+      if (e) document.documentElement.dataset.modo = e.modo;
+      else delete document.documentElement.dataset.modo;
+    } catch {}
   },
 };

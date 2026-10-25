@@ -8,8 +8,9 @@ import { ThemeToggle } from "./theme-toggle";
 export function Shell({ children, back = false, wide = false }: { children: ReactNode; back?: boolean; wide?: boolean }) {
   return (
     <div
-      className={`mx-auto flex min-h-dvh w-full flex-col px-5 pb-8 pt-5 sm:px-8 ${
-        wide ? "max-w-md lg:max-w-6xl" : "max-w-md lg:max-w-xl lg:pt-10"
+      className={`mx-auto flex w-full flex-col px-5 pb-8 pt-5 sm:px-8 ${
+        // The home is exactly one screen tall, so its orb can give room to the notes above it.
+        wide ? "h-dvh max-w-md pb-4 lg:max-w-6xl lg:pb-8" : "min-h-dvh max-w-md lg:max-w-xl lg:pt-10"
       }`}
     >
       <header className="flex h-10 items-center justify-between">
@@ -37,7 +38,7 @@ export function Shell({ children, back = false, wide = false }: { children: Reac
           </Link>
         </div>
       </header>
-      <main className="flex flex-1 flex-col">{children}</main>
+      <main className="flex min-h-0 flex-1 flex-col">{children}</main>
     </div>
   );
 }
