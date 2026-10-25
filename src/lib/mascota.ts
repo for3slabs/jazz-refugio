@@ -26,8 +26,8 @@ async function read(path: string): Promise<unknown> {
   if (!res?.stream) return null;
   try {
     return JSON.parse(await new Response(res.stream).text());
-  } catch {
-    return null;
+  } catch (cause) {
+    throw new Error(`${PATH} is unreadable: refusing to treat it as empty`, { cause });
   }
 }
 

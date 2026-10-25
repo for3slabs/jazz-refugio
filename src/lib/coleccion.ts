@@ -32,8 +32,8 @@ function parse(raw: string): Coleccion {
         estado: v.estado === "fui" ? "fui" : "quiero",
       })),
     };
-  } catch {
-    return EMPTY;
+  } catch (cause) {
+    throw new Error(`${PATH} is unreadable: refusing to treat it as empty`, { cause });
   }
 }
 

@@ -26,8 +26,8 @@ function parse(raw: string): Pendientes {
             }))
         : [],
     };
-  } catch {
-    return EMPTY;
+  } catch (cause) {
+    throw new Error(`${PATH} is unreadable: refusing to treat it as empty`, { cause });
   }
 }
 

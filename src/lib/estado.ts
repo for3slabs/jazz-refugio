@@ -10,8 +10,8 @@ function parse(raw: string): Estado | null {
   try {
     const e = JSON.parse(raw);
     return isModo(e?.modo) && typeof e?.at === "number" ? { modo: e.modo, at: e.at } : null;
-  } catch {
-    return null;
+  } catch (cause) {
+    throw new Error(`${PATH} is unreadable: refusing to treat it as empty`, { cause });
   }
 }
 

@@ -20,7 +20,7 @@ function parseItem(i: Item): Item | null {
 function parse(raw: string): Tablero[] {
   try {
     const list = JSON.parse(raw);
-    if (!Array.isArray(list)) return [];
+    if (!Array.isArray(list)) throw new Error("not a list");
     return list
       .filter((t: Tablero) => str(t?.id) && str(t?.nombre) && Array.isArray(t?.items))
       .map((t: Tablero) => ({
@@ -28,8 +28,8 @@ function parse(raw: string): Tablero[] {
         compartido: t.compartido === true,
         items: t.items.map(parseItem).filter((i): i is Item => i !== null),
       }));
-  } catch {
-    return [];
+  } catch (cause) {
+    throw new Error(`${INDEX} is unreadable: refusing to treat it as empty`, { cause });
   }
 }
 
