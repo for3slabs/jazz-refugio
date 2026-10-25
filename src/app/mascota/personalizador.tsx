@@ -74,7 +74,7 @@ export function Personalizador({
   return (
     <div className="mt-4 flex flex-col gap-5 pb-24">
       <div
-        className="orb-tint carta-arte relative mx-auto aspect-square w-full max-w-sm overflow-hidden rounded-[1.75rem]"
+        className="orb-tint carta-arte relative mx-auto aspect-square w-[min(100%,24rem,42dvh)] overflow-hidden rounded-[1.75rem]"
         data-modo={modo ?? undefined}
       >
         <Escena modo={modo} puestos={puestos} className="absolute inset-0" />
@@ -86,7 +86,7 @@ export function Personalizador({
           value={nombre}
           maxLength={MAX_NOMBRE_MASCOTA}
           onChange={(e) => setNombre(e.target.value)}
-          className="t-display w-[11ch] border-b-2 border-transparent bg-transparent text-center text-3xl outline-none focus:border-accent"
+          className="nombre-mascota t-display w-[11ch] border-b-2 border-transparent bg-transparent text-center text-3xl outline-none focus:border-accent"
         />
         <Pencil className="size-5 text-ink-soft group-focus-within:text-accent" />
       </label>
