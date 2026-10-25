@@ -51,11 +51,13 @@ export async function loadMisiones(): Promise<Misiones> {
 // What she completed on her today — the reward list of the board.
 export const deHoy = (hechas: Hecha[], now = Date.now()) => hechas.filter((h) => diaDe(h.hecha) === diaDe(now));
 
-// The DB keeps the 3 open under a lock: a full day comes back as `false`.
-export async function agregar(texto: string, origen?: Mision["origen"]) {
+// The DB keeps the 3 open under a lock: a full day comes back as `false`; otherwise its real id,
+// which the board needs when she taps a mission before the server's answer arrived.
+export async function agregar(texto: string, origen?: Mision["origen"]): Promise<string | false> {
   try {
-    await sql()`insert into mision (texto, paso_id) values (${texto}, ${origen?.paso ?? null})`;
-    return true;
+    const [m] = await sql()<{ id: string }[]>`
+      insert into mision (texto, paso_id) values (${texto}, ${origen?.paso ?? null}) returning id`;
+    return m.id;
   } catch (e) {
     if (frase(e)) return false;
     throw e;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useOptimistic, useState, useTransition } from "react";
+import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { cumplirMision, nuevaMision, recuperarSoltado, soltarMision } from "@/app/actions";
 import { Confetti } from "@/components/confetti";
 import { Flower } from "@/components/flower";
@@ -36,14 +36,23 @@ export function Board({ abiertas, hoy, total }: View & { total: number }) {
     return () => clearTimeout(id);
   }, [msg]);
 
+  // A new mission shows at once under a temporary id; this maps it to the server's answer, so a tap
+  // that comes first (complete, let go) waits for the real id instead of losing her flower.
+  const reales = useRef(new Map<string, Promise<string | null>>());
+  const seq = useRef(0);
+  const real = async (id: string) => (id.startsWith("nueva-") ? ((await reales.current.get(id)) ?? null) : id);
+
   function add(e: React.FormEvent) {
     e.preventDefault();
     const t = texto.trim();
     if (!t || full) return;
     setTexto("");
+    const tmp = `nueva-${++seq.current}`;
+    const guardada = nuevaMision(t);
+    reales.current.set(tmp, guardada.then((r) => r.id ?? null).catch(() => null));
     start(async () => {
-      change({ kind: "add", m: { id: `nueva-${Date.now()}`, texto: t, at: Date.now() } });
-      const r = await nuevaMision(t);
+      change({ kind: "add", m: { id: tmp, texto: t, at: Date.now() } });
+      const r = await guardada;
       if (!r.ok) {
         setTexto(t);
         setMsg({ text: r.error ?? "", ok: false });
@@ -56,7 +65,9 @@ export function Board({ abiertas, hoy, total }: View & { total: number }) {
     setMsg({ text: "una flor más en tu jardín", ok: true });
     start(async () => {
       change({ kind: "done", id });
-      const r = await cumplirMision(id);
+      const de = await real(id);
+      if (!de) return; // it never got saved — the add already said so
+      const r = await cumplirMision(de);
       if (!r.ok) setMsg({ text: r.error ?? "", ok: false });
     });
   }
@@ -65,8 +76,10 @@ export function Board({ abiertas, hoy, total }: View & { total: number }) {
     const texto = view.abiertas.find((m) => m.id === id)?.texto ?? "";
     start(async () => {
       change({ kind: "drop", id });
-      const r = await soltarMision(id);
-      setMsg(r.ok ? { text: `«${texto}» se soltó`, ok: true, undo: id } : { text: r.error ?? "", ok: false });
+      const de = await real(id);
+      if (!de) return;
+      const r = await soltarMision(de);
+      setMsg(r.ok ? { text: `«${texto}» se soltó`, ok: true, undo: de } : { text: r.error ?? "", ok: false });
     });
   }
 
