@@ -4,13 +4,12 @@ import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import * as THREE from "three";
 import type { ModoId } from "@/lib/modos";
+import type { Puestos } from "@/lib/objeto";
 
 // Her pet: one cat, the drawing she liked made 3D — cream fur, the peach patch over the left
 // ear, cel shading and a dark outline like the ink line of the 2D sheets. Its face follows her
 // mode; what it wears is a separate piece, so a new object never means drawing the cat again.
 // Units: the head is about 2 wide.
-
-export type Accesorio = "sombrero" | null;
 
 const C = {
   fur: "#fbf3e8",
@@ -23,6 +22,9 @@ const C = {
   tongue: "#f59aa8",
   gold: "#f0c14e",
   hat: "#7044aa",
+  bow: "#e8679a",
+  apron: "#cdb0ec",
+  chef: "#ffffff",
 };
 
 // Cel shading in three steps, like a flat-coloured drawing with one shadow.
@@ -211,7 +213,7 @@ function Ear({ side, droop, geo }: { side: 1 | -1; droop: boolean; geo: THREE.Bu
   const outer = useMemo(() => toon(side === -1 ? C.peach : C.fur), [side]);
   const inner = useMemo(() => toon(C.innerEar), []);
   return (
-    <group position={[0.56 * side, 2.2, -0.02]} rotation={[0, 0, (droop ? -1.1 : -0.3) * side]}>
+    <group position={[0.58 * side, 2.24, -0.02]} rotation={[0, 0, (droop ? -1.1 : -0.3) * side]}>
       <Part geo={geo} mat={outer} scale={[1, 1, 0.62]} />
       <Part geo={geo} mat={inner} line={0} position={[0, -0.03, 0.12]} scale={[0.6, 0.66, 0.3]} />
     </group>
@@ -225,14 +227,55 @@ function Sombrero() {
   return (
     <group position={[0, 2.18, 0.02]} rotation={[0.16, 0, -0.07]}>
       <Part geo={geo} mat={hat} line={0.025} />
-      <mesh position={[0, 0.16, 0]} rotation={[Math.PI / 2, 0, 0]} material={gold}>
-        <torusGeometry args={[0.6, 0.045, 10, 56]} />
+      <mesh position={[0, 0.2, 0]} rotation={[Math.PI / 2, 0, 0]} material={gold}>
+        <torusGeometry args={[0.62, 0.055, 10, 56]} />
       </mesh>
       <mesh position={[0, 0.17, 0]} rotation={[Math.PI / 2, 0, 0]} material={gold}>
-        <torusGeometry args={[1.28, 0.022, 8, 72]} />
+        <torusGeometry args={[1.3, 0.035, 8, 72]} />
       </mesh>
     </group>
   );
+}
+
+function GorroChef() {
+  const ball = useMemo(() => new THREE.SphereGeometry(1, 32, 24), []);
+  const band = useMemo(() => new THREE.CylinderGeometry(0.62, 0.66, 0.34, 40), []);
+  const white = useMemo(() => toon(C.chef), []);
+  return (
+    <group position={[0, 2.34, -0.02]} rotation={[0.1, 0, 0.06]}>
+      <Part geo={band} mat={white} position={[0, 0, 0]} />
+      {/* the puffed top: a cluster of soft balls */}
+      {[
+        [0, 0.48, 0, 0.5],
+        [-0.42, 0.36, 0.05, 0.36],
+        [0.42, 0.36, 0.05, 0.36],
+        [0, 0.38, 0.38, 0.36],
+        [0, 0.36, -0.36, 0.34],
+      ].map(([x, y, z, r], i) => (
+        <Part key={i} geo={ball} mat={white} position={[x, y, z]} scale={[r, r * 0.92, r]} />
+      ))}
+    </group>
+  );
+}
+
+function Mono() {
+  const cone = useMemo(() => new THREE.ConeGeometry(0.14, 0.26, 24), []);
+  const ball = useMemo(() => new THREE.SphereGeometry(1, 20, 14), []);
+  const pink = useMemo(() => toon(C.bow), []);
+  return (
+    <group position={[0, 0.98, 0.56]} rotation={[-0.25, 0, 0]}>
+      <Part geo={cone} mat={pink} position={[-0.15, 0, 0]} rotation={[0, 0, Math.PI / 2]} scale={[1, 1, 0.55]} />
+      <Part geo={cone} mat={pink} position={[0.15, 0, 0]} rotation={[0, 0, -Math.PI / 2]} scale={[1, 1, 0.55]} />
+      <Part geo={ball} mat={pink} scale={[0.07, 0.07, 0.06]} />
+    </group>
+  );
+}
+
+// The apron: a lilac panel over the front of the body, the same curve as the belly.
+function Mandil() {
+  const geo = useMemo(() => new THREE.SphereGeometry(1.03, 40, 24, Math.PI * 0.18, Math.PI * 0.64, Math.PI * 0.42, Math.PI * 0.5), []);
+  const lila = useMemo(() => new THREE.MeshToonMaterial({ color: C.apron, gradientMap: ramp, side: THREE.DoubleSide }), []);
+  return <Part geo={geo} mat={lila} line={0.012} position={[0, 0.62, 0]} scale={[0.66, 0.7, 0.6]} />;
 }
 
 function Aura({ modo }: { modo: ModoId | null }) {
@@ -268,7 +311,7 @@ function Aura({ modo }: { modo: ModoId | null }) {
   );
 }
 
-export function Gato({ modo, accesorio }: { modo: ModoId | null; accesorio: Accesorio }) {
+export function Gato({ modo, puestos }: { modo: ModoId | null; puestos: Puestos }) {
   const root = useRef<THREE.Group>(null);
   const head = useRef<THREE.Group>(null);
   const eyes = useRef<THREE.Group>(null);
@@ -279,16 +322,16 @@ export function Gato({ modo, accesorio }: { modo: ModoId | null; accesorio: Acce
       head: headGeometry(),
       ball: new THREE.SphereGeometry(1, 48, 32),
       limb: new THREE.CapsuleGeometry(1, 1, 8, 20),
-      ear: new THREE.ConeGeometry(0.36, 0.62, 32),
+      ear: new THREE.ConeGeometry(0.4, 0.74, 32),
       tail: new THREE.TubeGeometry(
         new THREE.CatmullRomCurve3([
           new THREE.Vector3(0, 0.3, -0.5),
-          new THREE.Vector3(0.4, 0.35, -0.8),
-          new THREE.Vector3(0.7, 0.8, -0.75),
-          new THREE.Vector3(0.62, 1.15, -0.55),
+          new THREE.Vector3(0.5, 0.32, -0.75),
+          new THREE.Vector3(0.88, 0.75, -0.55),
+          new THREE.Vector3(0.86, 1.18, -0.3),
         ]),
         48,
-        0.11,
+        0.14,
         14,
         false,
       ),
@@ -321,12 +364,12 @@ export function Gato({ modo, accesorio }: { modo: ModoId | null; accesorio: Acce
       {/* left paw resting in front */}
       <Part geo={g.limb} mat={m.fur} position={[-0.5, 0.62, 0.38]} rotation={[0.3, 0, 0.35]} scale={[0.14, 0.16, 0.14]} />
       {/* right arm: waves hello, or rests on the cheek when she cannot start */}
-      <group ref={wave} position={[0.5, 0.86, 0.3]}>
+      <group ref={wave} position={[0.58, 0.9, 0.42]}>
         <Part geo={g.limb} mat={m.fur} position={[0, -0.24, 0]} scale={[0.14, 0.16, 0.14]} />
       </group>
       {/* tail with a peach tip */}
       <Part geo={g.tail} mat={m.fur} />
-      <Part geo={g.ball} mat={m.peach} position={[0.62, 1.15, -0.55]} scale={[0.13, 0.13, 0.13]} />
+      <Part geo={g.ball} mat={m.peach} position={[0.86, 1.18, -0.3]} scale={[0.16, 0.16, 0.16]} />
 
       <group ref={head}>
         <Ear side={-1} droop={modo === "saturada"} geo={g.ear} />
@@ -346,8 +389,11 @@ export function Gato({ modo, accesorio }: { modo: ModoId | null; accesorio: Acce
             <meshBasicMaterial color={C.blush} transparent opacity={modo === "saturada" ? 0.3 : 0.75} />
           </mesh>
         ))}
-        {accesorio === "sombrero" && <Sombrero />}
+        {puestos.cabeza === "sombrero" && <Sombrero />}
+        {puestos.cabeza === "gorro-chef" && <GorroChef />}
       </group>
+      {puestos.cuerpo === "mandil" && <Mandil />}
+      {puestos.cuello === "mono" && <Mono />}
       <Aura modo={modo} />
     </group>
   );

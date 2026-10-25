@@ -1,16 +1,17 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState, useSyncExternalStore } from "react";
 import * as THREE from "three";
 import type { ModoId } from "@/lib/modos";
-import { type Accesorio, Gato } from "./gato";
+import type { Puestos } from "@/lib/objeto";
+import { Gato } from "./gato";
 
-// The stage: transparent, so the card behind it gives the colour of her mode. A drag turns the
-// cat; let go and it keeps facing where she left it, swaying a little.
+// The stage: transparent, so what sits behind it gives the colour of her mode. A drag turns the
+// cat; let go and it keeps facing where she left it, swaying a little. With motion turned off
+// (her setting or the system's), the cat is drawn once and stays still.
 
 function Sombra() {
-  // a soft round shadow on the floor, drawn once
   const tex = useMemo(() => {
     const c = document.createElement("canvas");
     c.width = c.height = 128;
@@ -37,39 +38,61 @@ function Giro({ angle, children }: { angle: React.RefObject<number>; children: R
     const target = angle.current + Math.sin(clock.elapsedTime * 0.5) * 0.08;
     ref.current.rotation.y += (target - ref.current.rotation.y) * 0.12;
   });
-  return <group ref={ref}>{children}</group>;
+  return (
+    <group ref={ref} rotation={[0, -0.25, 0]}>
+      {children}
+    </group>
+  );
 }
+
+function motionOff() {
+  return (
+    document.documentElement.dataset.motion === "off" || window.matchMedia("(prefers-reduced-motion: reduce)").matches
+  );
+}
+const subscribe = () => () => {};
 
 export default function Escena({
   modo,
-  accesorio,
+  puestos,
   className = "",
   interactive = true,
 }: {
   modo: ModoId | null;
-  accesorio: Accesorio;
+  puestos: Puestos;
   className?: string;
   interactive?: boolean;
 }) {
   const angle = useRef(-0.25);
   const drag = useRef<{ x: number; a: number } | null>(null);
+  const still = useSyncExternalStore(subscribe, motionOff, () => false);
+  // still: drawn on demand — but it follows her finger while she turns it
+  const [turning, setTurning] = useState(false);
 
   return (
     <div
-      className={`touch-pan-y ${className}`}
+      className={`${interactive ? "touch-pan-y cursor-grab active:cursor-grabbing" : "pointer-events-none"} ${className}`}
       onPointerDown={(e) => {
         if (!interactive) return;
         drag.current = { x: e.clientX, a: angle.current };
+        setTurning(true);
         e.currentTarget.setPointerCapture(e.pointerId);
       }}
       onPointerMove={(e) => {
         if (drag.current) angle.current = drag.current.a + (e.clientX - drag.current.x) * 0.012;
       }}
-      onPointerUp={() => (drag.current = null)}
-      onPointerCancel={() => (drag.current = null)}
+      onPointerUp={() => {
+        drag.current = null;
+        setTurning(false);
+      }}
+      onPointerCancel={() => {
+        drag.current = null;
+        setTurning(false);
+      }}
     >
       <Canvas
         dpr={[1, 2]}
+        frameloop={still && !turning ? "demand" : "always"}
         camera={{ position: [0, 1.6, 7.6], fov: 30 }}
         gl={{ alpha: true, antialias: true }}
         onCreated={({ camera }) => camera.lookAt(0, 1.35, 0)}
@@ -78,7 +101,7 @@ export default function Escena({
         <directionalLight position={[3, 5, 6]} intensity={1.6} color="#fff3e8" />
         <directionalLight position={[-4, 3, -5]} intensity={0.9} color="#f6d9ff" />
         <Giro angle={angle}>
-          <Gato modo={modo} accesorio={accesorio} />
+          <Gato modo={modo} puestos={puestos} />
         </Giro>
         <Sombra />
       </Canvas>

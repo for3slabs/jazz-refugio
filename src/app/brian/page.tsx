@@ -13,8 +13,8 @@ import { Composer, MarkSeen } from "./composer";
 import { EntreLosDos } from "./presente";
 import { RegaloForm } from "./regalo-form";
 import { Regalos } from "./regalos";
-import { PersonajesBrian } from "./personajes";
-import { loadRegalados } from "@/lib/personajes";
+import { ObjetosBrian } from "./objetos";
+import { loadRegalados } from "@/lib/mascota";
 
 type Search = Promise<{ v?: string }>;
 
@@ -77,7 +77,7 @@ async function Content({ searchParams }: { searchParams: Search }) {
         {role === "brian" ? (
           <>
             <RegaloForm regalos={regalos} total={total} />
-            <PersonajesBrian regalados={await loadRegalados().catch(() => [])} />
+            <ObjetosBrian regalados={await loadRegalados().catch(() => [])} />
           </>
         ) : (
           <Regalos {...vistaDeJazz(regalos, total)} />

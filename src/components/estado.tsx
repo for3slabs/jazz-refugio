@@ -5,7 +5,8 @@ import { marcarEstado } from "@/app/actions";
 import { type Estado, type ModoId, modos, vigente } from "@/lib/modos";
 import { ultimoModo } from "@/lib/local";
 import { Focus, Ideas, Linked, Rest, Sparkle, Start, Waves } from "./icons";
-import { Coleccion, type ColeccionData } from "./coleccion";
+import type { Puestos } from "@/lib/objeto";
+import { GatoEnEsfera } from "./mascota/en-esfera";
 import { Orb } from "./orb";
 
 export const modoIcon: Record<ModoId, (p: { className?: string }) => React.ReactElement> = {
@@ -39,17 +40,17 @@ export function since(at: number, now: number) {
 
 type Msg = { text: string; ok: boolean };
 
-// The home's orb is hers: it takes the colour of her mode, and the small chip on its upper
+// The home's orb is hers: her pet on the colour of her mode, and the small chip on its upper
 // right says which one — no icon, no minutes, so the orb itself carries the news. One tap: the chip
 // opens the sheet, a mode closes it, and the orb has already changed before the server
 // answers. If saving fails it goes back and says so.
 export function EstadoOrb({
   initial,
-  coleccion,
+  puestos,
   className = "",
 }: {
   initial: Estado | null;
-  coleccion: ColeccionData;
+  puestos: Puestos;
   className?: string;
 }) {
   const [optimistic, setOptimistic] = useOptimistic(initial);
@@ -79,8 +80,8 @@ export function EstadoOrb({
 
   return (
     <Orb modo={current?.modo ?? null} className={className}>
-      {/* The orb's body opens her characters; the chip on its edge, her mode. */}
-      <Coleccion data={coleccion} modo={current?.modo ?? null} />
+      {/* Her pet lives in the orb: its body opens the wardrobe; the chip on its edge, her mode. */}
+      <GatoEnEsfera modo={current?.modo ?? null} puestos={puestos} href="/mascota" />
       <button
         type="button"
         aria-haspopup="dialog"

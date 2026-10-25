@@ -1,9 +1,9 @@
 import { loadEstado } from "@/lib/estado";
-import { loadMisiones } from "@/lib/misiones";
-import { loadRegalados } from "@/lib/personajes";
+import { loadMascota } from "@/lib/mascota";
 import type { Estado } from "@/lib/modos";
 import { currentRole } from "@/lib/session";
 import { EstadoOrb, ModoSync } from "./estado";
+import { GatoEnEsfera } from "./mascota/en-esfera";
 import { Orb } from "./orb";
 import { JazzTile, PowerTile } from "./tiles";
 
@@ -21,15 +21,15 @@ export async function EstadoSlot({ className = "" }: { className?: string }) {
   const role = await currentRole();
   if (!role) return <Orb className={className} />;
   const { estado, failed } = await read();
-  if (role === "jazz") {
-    // A failed read leaves her collection with what her browser knows — never an error card.
-    const [m, regalados] = await Promise.all([loadMisiones(), loadRegalados()]).catch(() => [null, []] as const);
-    return <EstadoOrb initial={estado} coleccion={{ misiones: m?.total ?? 0, regalados: [...regalados] }} className={className} />;
-  }
+  // A failed read still shows the pet — as it starts, never an error in the orb.
+  const { puestos } = await loadMascota().catch(() => ({ puestos: { cuello: "mono" as const } }));
+  if (role === "jazz") return <EstadoOrb initial={estado} puestos={puestos} className={className} />;
   return (
     <>
       <JazzTile estado={estado} failed={failed} className="flex w-full max-lg:order-first lg:hidden" />
-      <Orb modo={estado?.modo ?? null} className={className} />
+      <Orb modo={estado?.modo ?? null} className={className}>
+        <GatoEnEsfera modo={estado?.modo ?? null} puestos={puestos} />
+      </Orb>
       <ModoSync estado={estado} />
     </>
   );

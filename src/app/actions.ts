@@ -14,8 +14,8 @@ import { MAX_RESPUESTA } from "@/lib/entre";
 import { contestar, marcarPresente } from "@/lib/presente";
 import { type Abierto, MAX_REGALO, MAX_TITULO, MAX_TRAS } from "@/lib/regalo";
 import { abrir, borrar, crear, usar } from "@/lib/regalos";
-import { isPersonaje } from "@/lib/personaje";
-import { regalar } from "@/lib/personajes";
+import { type ObjetoId, isObjeto, limpiarPuestos } from "@/lib/objeto";
+import { limpiarNombre, regalar, saveMascota } from "@/lib/mascota";
 import { MAX_ABIERTAS, MAX_TEXTO } from "@/lib/mision";
 import { MAX_PASOS, siguiente, terminada } from "@/lib/pendiente";
 import { agregar, cumplir, florDePaso, loadMisiones, soltar } from "@/lib/misiones";
@@ -247,13 +247,29 @@ export async function dejarRegalo(_: RegaloState, form: FormData): Promise<Regal
   return { ok: true, error: null };
 }
 
-// A character from Brian: it joins her collection at once, whatever her garden says.
-export async function regalarPersonaje(form: FormData) {
+// An object from Brian for her pet: it is hers at once, whatever her garden says.
+export async function regalarObjeto(form: FormData) {
   if ((await currentRole()) !== "brian") return;
   const id = form.get("id");
-  if (!isPersonaje(id)) return;
+  if (!isObjeto(id)) return;
   await regalar(id);
   refresh();
+}
+
+// Her pet's name and what it wears. Only she dresses it. Which objects she owns is partly in
+// her browser (the times she came back), so the server checks shape, not ownership.
+export async function guardarMascota(nombre: string, puestos: Partial<Record<string, ObjetoId>>): Promise<EstadoResult> {
+  if ((await currentRole()) !== "jazz") return { ok: false, error: "Solo Jazz viste a su mascota." };
+  const limpio = limpiarNombre(nombre);
+  if (!limpio) return { ok: false, error: "Ponle un nombre." };
+  try {
+    // a category left out wears nothing: «nada» is a choice too
+    await saveMascota({ nombre: limpio, puestos: limpiarPuestos(puestos) });
+  } catch {
+    return { ok: false, error: "No se pudo guardar. Inténtalo de nuevo en un momento." };
+  }
+  refresh();
+  return { ok: true, error: null };
 }
 
 export async function borrarRegalo(form: FormData) {
