@@ -17,7 +17,7 @@ import {
   registrarDoc,
   soltarTablero,
 } from "@/app/actions";
-import { ArrowLeft, ArrowRight, Close, Pencil, Plus, Star, Trash } from "@/components/icons";
+import { ArrowLeft, ArrowRight, Close, Pencil, Plus, Share, Star, Trash } from "@/components/icons";
 import { type Item, type Tablero, MAX_DESCRIPCION, MAX_DOC, MAX_LADO, MAX_NOMBRE, MAX_NOTA, docSrc, imgSrc } from "@/lib/tablero";
 
 // Shrunk on her device before it travels: 1600 px on the long side, WebP where the browser
@@ -169,8 +169,8 @@ export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tabler
         tableros
       </Link>
 
-      {/* Like a goal in «misiones» (Brian, 2026-10-25): the name with its pencil and its trash can
-          beside it, the description under it, and sharing as a switch — nothing hidden at the bottom. */}
+      {/* Like a goal in «misiones» (Brian, 2026-10-25): the name with its pencil, sharing and trash can
+          beside it, the description under it — nothing hidden at the bottom. */}
       {editando ? (
         <form
           className="rise mt-3 space-y-3 rounded-2xl border border-line bg-surface p-4"
@@ -234,6 +234,23 @@ export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tabler
                 >
                   <Pencil className="size-4" />
                 </button>
+                {/* sharing is an icon in the same row (Brian, 2026-10-25): lit when Brian can see it */}
+                <button
+                  type="button"
+                  aria-pressed={compartido}
+                  aria-label={compartido ? "dejar de compartir con Brian" : "compartir con Brian (solo verlo)"}
+                  onClick={() => {
+                    const si = !compartido;
+                    start(async () => {
+                      setCompartido(si);
+                      const r = await compartirTablero(tablero.id, si);
+                      setMsg(r.ok ? (si ? "listo, Brian puede verlo" : "listo, ya es solo tuyo") : r.error);
+                    });
+                  }}
+                  className={`press grid size-10 shrink-0 place-items-center rounded-full hover:bg-surface-2 ${compartido ? "text-accent" : "text-ink-soft hover:text-ink"}`}
+                >
+                  <Share className="size-4" />
+                </button>
                 <button
                   type="button"
                   onClick={() => setSeguro(!seguro)}
@@ -262,35 +279,15 @@ export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tabler
             </div>
           )}
           {tablero.descripcion && <p className="mt-1 max-w-prose whitespace-pre-line text-pretty text-sm text-ink-soft">{tablero.descripcion}</p>}
+          {!isBrian && compartido && (
+            <p className="mt-1 flex items-center gap-1.5 text-xs text-accent">
+              <Share className="size-3" />
+              compartido con Brian · solo puede verlo
+            </p>
+          )}
         </>
       )}
       {isBrian && <p className="mt-2 text-sm text-ink-soft">Jazz lo compartió contigo. Solo puedes verlo.</p>}
-
-      {!isBrian && (
-        <button
-          type="button"
-          role="switch"
-          aria-checked={compartido}
-          onClick={() => {
-            const si = !compartido;
-            start(async () => {
-              setCompartido(si);
-              const r = await compartirTablero(tablero.id, si);
-              setMsg(r.ok ? (si ? "listo, Brian puede verlo" : "listo, ya es solo tuyo") : r.error);
-            });
-          }}
-          className="press mt-3 inline-flex items-center gap-2 rounded-full border border-line bg-surface py-1.5 pl-2 pr-3 text-xs font-semibold hover:border-accent/60"
-        >
-          <span aria-hidden className="relative h-4 w-6 rounded-full bg-accent-soft">
-            <span
-              className={`absolute left-0.5 top-0.5 size-3 rounded-full transition-transform duration-200 ease-[var(--ease-out-strong)] ${
-                compartido ? "translate-x-2 bg-accent" : "translate-x-0 bg-ink-soft/60"
-              }`}
-            />
-          </span>
-          {compartido ? "compartido con Brian" : "solo tuyo"}
-        </button>
-      )}
 
       {!isBrian && (
         <div className="mt-5 flex flex-wrap gap-2">
