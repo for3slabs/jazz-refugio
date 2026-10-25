@@ -4,10 +4,11 @@ import { PageTitle, Shell } from "@/components/shell";
 import { Letter } from "@/components/icons";
 import { Tabs } from "@/components/tabs";
 import { loadMisiones } from "@/lib/misiones";
-import { formatDate, loadNotes } from "@/lib/notes";
+import { formatDate, loadDejadas, loadNotes } from "@/lib/notes";
 import { vistaDe } from "@/lib/presente";
-import { hayParaAbrir, loadRegalos, vistaDeJazz } from "@/lib/regalos";
+import { hayParaAbrir, loadDados, loadRegalos, vistaDeJazz } from "@/lib/regalos";
 import { currentRole } from "@/lib/session";
+import type { Role } from "@/lib/token";
 import { borrarNota } from "../actions";
 import { Composer, MarkSeen } from "./composer";
 import { EntreLosDos } from "./presente";
@@ -29,20 +30,22 @@ export default function DeBrian({ searchParams }: { searchParams: Search }) {
   );
 }
 
-// Two tabs: his notes, and his gifts — a dot on «regalos» when one is ready for her.
+// Notes and gifts between the two, both ways — a dot on «regalos» when one is ready for whoever
+// is looking.
 async function Content({ searchParams }: { searchParams: Search }) {
   const role = await currentRole();
   if (!role) redirect("/entrar");
   const { v } = await searchParams;
-  const [regalos, m] = await Promise.all([loadRegalos(), loadMisiones()]).catch(() => [null, null] as const);
-  const total = m?.total ?? 0;
+  const [regalos, m] = await Promise.all([loadRegalos(role), loadMisiones()]).catch(() => [null, null] as const);
+  // her garden opens her gifts; his open right away
+  const total = role === "jazz" ? (m?.total ?? 0) : 0;
   const tabs = (
     <Tabs
       label="de Brian"
       current={v === "regalos" || v === "presente" ? v : "notas"}
       items={[
         { key: "notas", href: "/brian", label: "notas" },
-        { key: "regalos", href: "/brian?v=regalos", label: "regalos", dot: role === "jazz" && !!regalos && hayParaAbrir(regalos, total) },
+        { key: "regalos", href: "/brian?v=regalos", label: "regalos", dot: !!regalos && hayParaAbrir(regalos, total) },
         { key: "presente", href: "/brian?v=presente", label: "entre los dos" },
       ]}
     />
@@ -74,14 +77,14 @@ async function Content({ searchParams }: { searchParams: Search }) {
     return (
       <>
         {tabs}
-        {role === "brian" ? (
-          <>
-            <RegaloForm regalos={regalos} total={total} />
-            <ObjetosBrian regalados={await loadRegalados().catch(() => [])} />
-          </>
-        ) : (
-          <Regalos {...vistaDeJazz(regalos, total)} />
-        )}
+        <h2 className="t-label mt-8 text-ink-soft">para ti</h2>
+        <Regalos {...vistaDeJazz(regalos, total)} de={role === "jazz" ? "Brian" : "Jazz"} />
+        <RegaloForm
+          regalos={await loadDados(role).catch(() => [])}
+          total={role === "brian" ? (m?.total ?? 0) : 0}
+          para={role === "jazz" ? "Brian" : "Jazz"}
+        />
+        {role === "brian" && <ObjetosBrian regalados={await loadRegalados().catch(() => [])} />}
       </>
     );
   }
@@ -89,48 +92,59 @@ async function Content({ searchParams }: { searchParams: Search }) {
   return (
     <>
       {tabs}
-      <Notes isBrian={role === "brian"} />
+      <Notes role={role} />
     </>
   );
 }
 
-async function Notes({ isBrian }: { isBrian: boolean }) {
-  const notes = await loadNotes();
+// Notes both ways: what the other left for you, and what you left — with whether it was seen.
+async function Notes({ role }: { role: Role }) {
+  const otro = role === "jazz" ? "Brian" : "Jazz";
+  const [notes, dejadas] = await Promise.all([loadNotes(role), loadDejadas(role)]);
   return (
     <>
-      {isBrian && <Composer />}
-      {/* Brian reading his own notes must not mark them as seen for her. */}
-      {!isBrian && <MarkSeen at={notes[0]?.at ?? null} />}
+      <Composer para={otro} />
+      <MarkSeen />
 
+      <h2 className="t-label mt-10 text-ink-soft">para ti</h2>
       {notes.length === 0 ? (
-        <p className="rise mt-10 text-pretty text-lg leading-relaxed text-ink-soft">
-          {isBrian
-            ? "Todavía no le has dejado ninguna nota. La primera que escribas le aparecerá aquí al instante."
-            : "Aquí van a aparecer las notas que Brian te deje. Vuelve cuando quieras: siempre habrá algo esperándote."}
+        <p className="rise mt-3 text-pretty text-lg leading-relaxed text-ink-soft">
+          {`Aquí van a aparecer las notas que ${otro} te deje. Vuelve cuando quieras.`}
         </p>
       ) : (
-        <ol className="mt-8 space-y-4">
+        <ol className="mt-3 space-y-4">
           {notes.map((n, i) => (
-            <li
-              key={n.id}
-              className="rise rounded-3xl border border-line bg-surface p-6"
-              style={{ animationDelay: `${Math.min(i, 6) * 60}ms` }}
-            >
-              <div className="flex items-baseline justify-between gap-4">
-                <p className="t-label text-accent">{formatDate(n.at)}</p>
-                {isBrian && (
+            <li key={n.id} className="rise rounded-3xl border border-line bg-surface p-6" style={{ animationDelay: `${Math.min(i, 6) * 60}ms` }}>
+              <p className="t-label text-accent">{formatDate(n.at)}</p>
+              <p className="mt-3 whitespace-pre-line text-pretty text-lg leading-relaxed">{n.texto}</p>
+            </li>
+          ))}
+        </ol>
+      )}
+
+      {dejadas.length > 0 && (
+        <>
+          <h2 className="t-label mt-10 text-ink-soft">las que dejaste</h2>
+          <ol className="mt-3 space-y-4">
+            {dejadas.map((n) => (
+              <li key={n.id} className="rounded-3xl border border-dashed border-line bg-surface/60 p-6">
+                <div className="flex items-baseline justify-between gap-4">
+                  <p className="t-label text-ink-soft">
+                    {formatDate(n.at)}
+                    {n.visto && <span className="ml-3 text-accent">✓ visto</span>}
+                  </p>
                   <form action={borrarNota}>
                     <input type="hidden" name="id" value={n.id} />
                     <button type="submit" className="text-xs text-ink-soft underline-offset-4 hover:text-ink hover:underline">
                       borrar
                     </button>
                   </form>
-                )}
-              </div>
-              <p className="mt-3 whitespace-pre-line text-pretty text-lg leading-relaxed">{n.texto}</p>
-            </li>
-          ))}
-        </ol>
+                </div>
+                <p className="mt-3 whitespace-pre-line text-pretty text-lg leading-relaxed text-ink-soft">{n.texto}</p>
+              </li>
+            ))}
+          </ol>
+        </>
       )}
     </>
   );

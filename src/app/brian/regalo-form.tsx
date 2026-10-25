@@ -13,9 +13,9 @@ function estado(r: Regalo, total: number) {
   return `envuelto · faltan ${misionesWord(r.desde - total)}`;
 }
 
-// Brian's side: leave a letter or a coupon — now, or after some of her missions — and see
-// what became of each one.
-export function RegaloForm({ regalos, total }: { regalos: Regalo[]; total: number }) {
+// Leave a letter or a coupon for the other one — for her: now, or after some of her missions —
+// and see what became of each one.
+export function RegaloForm({ regalos, total, para = "Jazz" }: { regalos: Regalo[]; total: number; para?: string }) {
   const [state, action, pending] = useActionState<RegaloState, FormData>(dejarRegalo, { ok: false, error: null });
   const [abre, setAbre] = useState<"ya" | "tras">("ya");
   const form = useRef<HTMLFormElement>(null);
@@ -34,7 +34,7 @@ export function RegaloForm({ regalos, total }: { regalos: Regalo[]; total: numbe
   return (
     <>
       <form ref={form} action={action} className="mt-8 space-y-4 rounded-3xl border border-line bg-surface p-5">
-        <p className="t-label text-accent">un regalo para Jazz</p>
+        <p className="t-label text-accent">un regalo para {para}</p>
         <fieldset className="flex gap-2">
           <legend className="sr-only">tipo</legend>
           {(["cupon", "carta"] as const).map((t) => (
@@ -55,6 +55,7 @@ export function RegaloForm({ regalos, total }: { regalos: Regalo[]; total: numbe
           aria-label="texto"
           className={`${field} resize-y leading-relaxed`}
         />
+        {para === "Jazz" && (
         <fieldset className="space-y-2">
           <legend className="t-label text-ink-soft">se abre</legend>
           <label className="flex items-center gap-3">
@@ -77,6 +78,7 @@ export function RegaloForm({ regalos, total }: { regalos: Regalo[]; total: numbe
             misiones
           </label>
         </fieldset>
+        )}
         <div className="flex items-center justify-between gap-3">
           <p aria-live="polite" className="text-sm text-ink-soft">
             {state.error ?? (state.ok ? "listo. ya lo ve envuelto." : "")}
@@ -93,7 +95,7 @@ export function RegaloForm({ regalos, total }: { regalos: Regalo[]; total: numbe
 
       {regalos.length > 0 && (
         <section className="mt-10">
-          <h2 className="t-label text-ink-soft">tus regalos</h2>
+          <h2 className="t-label text-ink-soft">los que diste</h2>
           <ul className="mt-3 divide-y divide-line">
             {regalos.map((r) => (
               <li key={r.id} className="flex items-baseline justify-between gap-4 py-3">

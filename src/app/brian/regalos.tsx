@@ -10,7 +10,8 @@ const when = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "long", t
 
 // Her gifts: wrapped ones show only how many missions are left — their content is still on
 // the server. Opening one asks the server for it and bursts into flowers.
-export function Regalos({ envueltos, abiertos }: { envueltos: Envuelto[]; abiertos: Abierto[] }) {
+// `de`: who left them — Brian on her screen, Jazz on his.
+export function Regalos({ envueltos, abiertos, de = "Brian" }: { envueltos: Envuelto[]; abiertos: Abierto[]; de?: string }) {
   const [list, markUsed] = useOptimistic(abiertos, (l: Abierto[], id: string) =>
     l.map((r) => (r.id === id ? { ...r, usado: Date.now() } : r)),
   );
@@ -42,14 +43,14 @@ export function Regalos({ envueltos, abiertos }: { envueltos: Envuelto[]; abiert
     start(async () => {
       markUsed(id);
       const r = await usarCupon(id);
-      setMsg(r.ok ? "listo, Brian lo sabrá" : r.error);
+      setMsg(r.ok ? `listo, ${de} lo sabrá` : r.error);
     });
   }
 
   const shown = reveal ? list.find((r) => r.id === reveal.id) ?? reveal : null;
 
   return (
-    <div className="relative mt-6">
+    <div className="relative mt-2">
       {party > 0 && <Confetti key={party} />}
       <p role="status" className="min-h-6 text-sm text-ink-soft">
         {msg && (
@@ -63,14 +64,14 @@ export function Regalos({ envueltos, abiertos }: { envueltos: Envuelto[]; abiert
         <div className="rise mb-8">
           <p className="t-label text-accent">acabas de abrir</p>
           <div className="mt-3">
-            <Card r={shown} onUse={use} big />
+            <Card r={shown} onUse={use} de={de} big />
           </div>
         </div>
       )}
 
       {envueltos.length === 0 && list.length === 0 && !shown && (
-        <p className="mt-6 text-pretty text-lg leading-relaxed text-ink-soft">
-          Aquí van a aparecer los regalos que Brian te deje. Algunos se abren al instante; otros, después de unas misiones.
+        <p className="mt-1 text-pretty text-lg leading-relaxed text-ink-soft">
+          Aquí van a aparecer los regalos que {de} te deje.{de === "Brian" && " Algunos se abren al instante; otros, después de unas misiones."}
         </p>
       )}
 
@@ -110,7 +111,7 @@ export function Regalos({ envueltos, abiertos }: { envueltos: Envuelto[]; abiert
               .filter((r) => r.id !== shown?.id)
               .map((r) => (
                 <li key={r.id}>
-                  <Card r={r} onUse={use} />
+                  <Card r={r} onUse={use} de={de} />
                 </li>
               ))}
           </ul>
@@ -120,7 +121,7 @@ export function Regalos({ envueltos, abiertos }: { envueltos: Envuelto[]; abiert
   );
 }
 
-function Card({ r, onUse, big = false }: { r: Abierto; onUse: (id: string) => void; big?: boolean }) {
+function Card({ r, onUse, de, big = false }: { r: Abierto; onUse: (id: string) => void; de: string; big?: boolean }) {
   return (
     <article className={`rounded-3xl border bg-surface p-6 ${big ? "border-accent/60" : "border-line"}`}>
       <p className="t-label text-accent">{r.tipo === "cupon" ? "cupón" : "carta"}</p>
@@ -136,7 +137,7 @@ function Card({ r, onUse, big = false }: { r: Abierto; onUse: (id: string) => vo
               onClick={() => onUse(r.id)}
               className="press rounded-full bg-accent px-5 py-2.5 font-semibold text-accent-ink"
             >
-              usar cupón <span className="font-normal opacity-80">(Brian lo sabrá)</span>
+              usar cupón <span className="font-normal opacity-80">({de} lo sabrá)</span>
             </button>
           )}
         </div>

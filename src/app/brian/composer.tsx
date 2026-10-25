@@ -1,10 +1,10 @@
 "use client";
 
 import { useActionState, useEffect, useRef } from "react";
-import { dejarNota, type NotaState } from "../actions";
-import { notesSeen } from "@/lib/local";
+import { dejarNota, marcarNotasVistas, type NotaState } from "../actions";
 
-export function Composer() {
+// `para`: the one the note is for.
+export function Composer({ para = "Jazz" }: { para?: string }) {
   const [state, action, pending] = useActionState<NotaState, FormData>(dejarNota, { ok: false, error: null });
   const form = useRef<HTMLFormElement>(null);
 
@@ -15,7 +15,7 @@ export function Composer() {
   return (
     <form ref={form} action={action} className="mt-8 space-y-3 rounded-3xl border border-line bg-surface p-5">
       <label htmlFor="texto" className="t-label text-accent">
-        una nota para Jazz
+        una nota para {para}
       </label>
       <textarea
         id="texto"
@@ -42,10 +42,10 @@ export function Composer() {
   );
 }
 
-// Opening this page is what "reading" means: the door on the home stops glowing.
-export function MarkSeen({ at }: { at: number | null }) {
+// Opening «notas» is what reading means: the door on the home stops glowing — on every device.
+export function MarkSeen() {
   useEffect(() => {
-    if (at) notesSeen.set(at);
-  }, [at]);
+    void marcarNotasVistas();
+  }, []);
   return null;
 }
