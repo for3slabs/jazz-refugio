@@ -19,6 +19,14 @@ insert into resultado select 'old thought purged', not exists (select 1 from ide
 insert into resultado select 'recent thought kept (29 days)', exists (select 1 from idea where texto = 's81 reciente');
 insert into resultado select 'old let-go mission purged', not exists (select 1 from mision where texto = 's81 mision vieja');
 insert into resultado select 'a flower is never purged', exists (select 1 from mision where texto = 's81 flor vieja');
+-- the purge only reaches let-go rows, and the schema refuses to let a flower go (mision_check): that is
+-- what keeps her garden whole; the function's own `hecha_en is null` is a second layer no row can reach
+do $$ begin
+  update mision set soltada_en = now() - interval '31 days' where texto = 's81 flor vieja';
+  insert into resultado values ('a flower cannot be let go', false);
+exception when check_violation then
+  insert into resultado values ('a flower cannot be let go', true);
+end $$;
 insert into resultado select 'old board and its image purged', not exists (select 1 from tablero where nombre = 's81 tablero viejo');
 insert into resultado select 'its image path returned for Blob', exists (select 1 from borradas where archivo = 'lienzo/img/s81-prueba.png');
 insert into resultado select 'old note purged', not exists (select 1 from nota where texto = 's81 nota vieja');
