@@ -22,8 +22,11 @@ def url() -> str:
 
 if __name__ == "__main__":
     address = url()  # read once: JAZZ_DB_FILE may be a pipe, <(…), which reads only once
+    env = dict(os.environ)
+    if os.environ.get("DB_SCHEMA"):  # e.g. dev: the same migrations, in a schema of their own
+        env["PGOPTIONS"] = f"-c search_path={os.environ['DB_SCHEMA']}"
     r = subprocess.run(["psql", address, "-X", "-q", "-v", "ON_ERROR_STOP=1", "-f", sys.argv[1]],
-                       capture_output=True, text=True)
+                       capture_output=True, text=True, env=env)
     out = (r.stdout + r.stderr).replace(address, "‹url›")
     print(out.strip() or "ok")
     sys.exit(r.returncode)

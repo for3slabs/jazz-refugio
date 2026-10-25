@@ -13,6 +13,7 @@ const K = {
   notesSeen: "refugio:notes-seen",
   avisoHoyNo: "refugio:aviso-hoy-no",
   modo: "refugio:modo",
+  vueltasSubidas: "refugio:vueltas-subidas",
 } as const;
 
 function read<T>(key: string, fallback: T): T {
@@ -32,6 +33,13 @@ function write(key: string, value: unknown) {
     /* storage blocked: the page still works, it just forgets */
   }
 }
+
+// Her «volver» flowers used to live here only. Since the move to the DB this list is read once,
+// uploaded, and kept as it was (a backup on her device); `vueltasSubidas` remembers it went up.
+export const vueltasSubidas = {
+  get: (): boolean => read<boolean>(K.vueltasSubidas, false),
+  set: () => write(K.vueltasSubidas, true),
+};
 
 export const moments = {
   all: (): Moment[] => read<Moment[]>(K.moments, []),

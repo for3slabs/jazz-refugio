@@ -4,7 +4,6 @@ import dynamic from "next/dynamic";
 import { useEffect, useState, useTransition } from "react";
 import { guardarMascota } from "@/app/actions";
 import { Sparkle } from "@/components/icons";
-import { moments } from "@/lib/local";
 import type { ModoId } from "@/lib/modos";
 import {
   type Categoria,
@@ -42,9 +41,9 @@ export function Personalizador({
   const [pending, start] = useTransition();
 
   useEffect(() => {
-    // the garden counts the times she came back (her browser) and her missions (synced)
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- her flowers live on her device
-    setItems(estante(moments.all().length + misiones, regalados));
+    // the whole garden — her returns and her missions — counted on the server
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- derived once per change of the garden
+    setItems(estante(misiones, regalados));
   }, [misiones, regalados]);
 
   const dirty = nombre.trim() !== mascota.nombre || JSON.stringify(puestos) !== JSON.stringify(mascota.puestos);

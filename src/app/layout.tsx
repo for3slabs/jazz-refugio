@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Bricolage_Grotesque } from "next/font/google";
 import { Notifications } from "@/components/notifications";
 import "./globals.css";
+import { SubirVueltas } from "@/components/subir-vueltas";
 
 // One family, three voices (display · label · body) — see the t-* roles in globals.css.
 const bricolage = Bricolage_Grotesque({
@@ -33,6 +34,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full font-sans">
         {children}
         <Notifications />
+        <SubirVueltas />
       </body>
     </html>
   );

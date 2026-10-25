@@ -16,7 +16,7 @@ import { type Abierto, MAX_REGALO, MAX_TITULO, MAX_TRAS } from "@/lib/regalo";
 import { abrir, borrar, crear, usar } from "@/lib/regalos";
 import { type ObjetoId, isObjeto, limpiarPuestos } from "@/lib/objeto";
 import { limpiarNombre, regalar, saveMascota } from "@/lib/mascota";
-import { MAX_ABIERTAS, MAX_TEXTO } from "@/lib/mision";
+import { MAX_TEXTO } from "@/lib/mision";
 import { MAX_PASOS, siguiente, terminada } from "@/lib/pendiente";
 import { agregar, cumplir, florDePaso, loadMisiones, soltar } from "@/lib/misiones";
 import {
@@ -25,6 +25,8 @@ import {
   marcarPaso,
   nuevaMeta,
   nuevoPaso,
+  pasarIdeaAHoy,
+  pasarIdeaAMeta,
   pasoDe,
   sacarIdea,
   soltarMeta,
@@ -33,6 +35,8 @@ import {
 import { isModo } from "@/lib/modos";
 import { MAX_NOTE, addNote, removeNote } from "@/lib/notes";
 import { currentRole } from "@/lib/session";
+import type { Moment } from "@/lib/local";
+import { anotarVuelta, subirVueltas } from "@/lib/vueltas";
 import { COOKIE, MAX_AGE_S, type Role, issueToken } from "@/lib/token";
 
 // Forgiving on purpose: case, accents and extra spaces do not matter — a wrong
@@ -110,6 +114,29 @@ export async function marcarEstado(modo: string | null): Promise<EstadoResult> {
   return { ok: true, error: null };
 }
 
+// A return («volver»): one more flower, the same on every device. Returns how many there are.
+export async function volviste(paso: string): Promise<number | null> {
+  const role = await currentRole();
+  if (!role) return null;
+  try {
+    return await anotarVuelta(role, paso.trim());
+  } catch {
+    return null;
+  }
+}
+
+// The flowers a browser kept before the DB: uploaded once; the same one twice counts once.
+export async function subirMisVueltas(list: Moment[]): Promise<boolean> {
+  const role = await currentRole();
+  if (!role || !Array.isArray(list)) return false;
+  try {
+    await subirVueltas(role, list);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // Her missions and goals are hers: only her session changes them. One wrapper says so,
 // turns a failure into a sentence for her, and refreshes what she sees.
 async function deJazz(op: () => Promise<string | void>): Promise<EstadoResult> {
@@ -163,23 +190,10 @@ export const anotar = async (t: string) =>
 
 export const soltarIdea = async (id: string) => deJazz(async () => void (await sacarIdea(id)));
 
-export const ideaAHoy = async (id: string) =>
-  deJazz(async () => {
-    if ((await loadMisiones()).abiertas.length >= MAX_ABIERTAS) return LLENO;
-    const idea = await sacarIdea(id);
-    if (idea) await agregar(idea.texto.slice(0, MAX_TEXTO));
-  });
+// One transaction each: if today or the goals are full, the thought stays where it was.
+export const ideaAHoy = async (id: string) => deJazz(async () => ((await pasarIdeaAHoy(id)) ? LLENO : undefined));
 
-export const ideaAMeta = async (id: string) =>
-  deJazz(async () => {
-    const idea = await sacarIdea(id);
-    if (!idea) return;
-    const err = await nuevaMeta(idea.texto.slice(0, MAX_TEXTO), null);
-    if (err) {
-      await anotarIdea(idea.texto); // the goal list is full: the thought goes back where it was
-      return err;
-    }
-  });
+export const ideaAMeta = async (id: string) => deJazz(() => pasarIdeaAMeta(id));
 
 export const crearMeta = async (t: string, para: string | null) =>
   deJazz(async () => {

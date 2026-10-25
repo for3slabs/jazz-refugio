@@ -5,6 +5,7 @@ import { Star } from "@/components/icons";
 import { Tabs } from "@/components/tabs";
 import { deseos, loadColeccion } from "@/lib/coleccion";
 import { loadMisiones } from "@/lib/misiones";
+import { loadVueltas } from "@/lib/vueltas";
 import { currentRole } from "@/lib/session";
 import { Deseos } from "./deseos";
 import { Garden } from "./garden";
@@ -52,12 +53,12 @@ async function Content({ searchParams }: { searchParams: Search }) {
   );
 
   if (vista === "jardin") {
-    const m = await loadMisiones().catch(() => null);
+    const [m, vueltas] = await Promise.all([loadMisiones().catch(() => null), loadVueltas(role).catch(() => [])]);
     return (
       <>
         <PageTitle icon={<Star className="size-7" />}>tu jardín</PageTitle>
         {tabs}
-        <Garden misiones={m?.total ?? 0} mejorDia={m?.mejorDia ?? 0} />
+        <Garden misiones={m?.total ?? 0} vueltas={vueltas} mejorDia={m?.mejorDia ?? 0} />
       </>
     );
   }

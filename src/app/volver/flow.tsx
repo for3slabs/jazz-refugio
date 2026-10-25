@@ -7,7 +7,8 @@ import { Flower } from "@/components/flower";
 import { Orb } from "@/components/orb";
 import { ArrowRight } from "@/components/icons";
 import { useCountdown } from "@/components/home-live";
-import { moments, timer } from "@/lib/local";
+import { timer } from "@/lib/local";
+import { volviste } from "@/app/actions";
 
 type Step = 1 | 2 | 3;
 
@@ -41,7 +42,7 @@ function BreathOrbLabel({ inhale, round }: { inhale: boolean; round: number }) {
   );
 }
 
-export function Flow() {
+export function Flow({ vueltas = 0 }: { vueltas?: number }) {
   const [step, setStep] = useState<Step>(1);
   const [text, setText] = useState("");
   const [minutes, setMinutes] = useState(10);
@@ -53,10 +54,10 @@ export function Flow() {
   useEffect(() => {
     if (new URLSearchParams(location.search).get("paso") === "3" && timer.get()) {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- the URL and the timer only exist in the browser
-      setFlowers(moments.all().length);
+      setFlowers(vueltas);
       setStep(3);
     }
-  }, []);
+  }, [vueltas]);
 
   useEffect(() => {
     if (step === 2) inputRef.current?.focus();
@@ -65,7 +66,9 @@ export function Flow() {
   function commit() {
     const s = text.trim() || "volver a lo que estaba haciendo";
     timer.start(minutes, s);
-    setFlowers(moments.add(s));
+    // the flower shows at once; the server's count follows (the same on every device)
+    setFlowers(vueltas + 1);
+    volviste(s).then((n) => n && setFlowers(n));
     setCelebrate(true);
     setStep(3);
   }

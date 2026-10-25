@@ -1,20 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { Flower } from "@/components/flower";
 import { Logros } from "@/components/logros";
-import { moments, type Moment } from "@/lib/local";
+import type { Moment } from "@/lib/local";
 
 const when = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
 
-// Two kinds of flower: the times she came back (her browser) and the missions she
-// completed (synced, passed in by the page). The garden only grows.
-export function Garden({ misiones = 0, mejorDia = 0 }: { misiones?: number; mejorDia?: number }) {
-  const [list, setList] = useState<Moment[] | null>(null);
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- the garden lives in her browser
-  useEffect(() => setList(moments.all()), []);
-  if (list === null) return null;
+// Two kinds of flower: the times she came back and the missions she completed — both read on
+// the server, the same on every device. The garden only grows.
+export function Garden({ misiones = 0, vueltas: list = [], mejorDia = 0 }: { misiones?: number; vueltas?: Moment[]; mejorDia?: number }) {
   const flores = list.length + misiones;
 
   if (flores === 0) {
