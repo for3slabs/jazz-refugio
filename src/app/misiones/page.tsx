@@ -49,7 +49,8 @@ async function Missions({ searchParams }: { searchParams: Search }) {
   return (
     <>
       <Tabs vista="hoy" />
-      <p className="mt-5 text-pretty text-lg text-ink-soft">Máximo 3 a la vez. Cada una que cumplas es una flor.</p>
+      <h2 className="mt-8 text-xl font-semibold">tus 3 misiones de hoy</h2>
+      <p className="mt-1 text-pretty text-sm text-ink-soft">cada una que cumplas es una flor en tu jardín</p>
       <Board abiertas={m.abiertas} hoy={deHoy(m.hechas)} total={m.total} />
       <LoSoltado items={soltado} />
     </>
