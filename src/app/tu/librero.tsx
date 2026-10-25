@@ -12,7 +12,8 @@ const SECCIONES: { estado: EstadoLibro; titulo: string }[] = [
 
 // Her shelf: spines coloured by their title, grouped by where she is with each book.
 // Tapping one opens it; nothing here counts what she has not done.
-export function Librero({ libros, aprendido }: { libros: Libro[]; aprendido: Aprendido[] }) {
+// `otro`: who sees the wishes — Brian on her shelf, Jazz on his.
+export function Librero({ libros, aprendido, otro = "Brian" }: { libros: Libro[]; aprendido: Aprendido[]; otro?: string }) {
   const [abierto, setAbierto] = useState<string | null>(null);
   const [form, setForm] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -28,7 +29,7 @@ export function Librero({ libros, aprendido }: { libros: Libro[]; aprendido: Apr
 
   return (
     <div className="mt-6">
-      <p className="text-sm text-ink-soft">Brian ve tus «quiero leer» —solo los títulos— para regalarte.</p>
+      <p className="text-sm text-ink-soft">{otro} ve tus «quiero leer» —solo los títulos— para regalarte.</p>
       <p role="status" className="min-h-6 text-sm text-ink-soft">
         {msg}
       </p>
