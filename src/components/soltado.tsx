@@ -1,0 +1,74 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { recuperarSoltado } from "@/app/actions";
+import { Undo } from "@/components/icons";
+import type { Soltado } from "@/lib/soltado";
+
+const hace = (en: number) => {
+  const d = Math.floor((Date.now() - en) / 86_400_000);
+  return d === 0 ? "hoy" : d === 1 ? "ayer" : `hace ${d} días`;
+};
+
+const marca: Record<Soltado["tipo"], string> = { mision: "○", idea: "«»", meta: "◇", paso: "·" };
+
+// «lo que soltaste»: closed by default, only when there is something, the last 30 days.
+// Recovering puts it back where it was; a full list says so in her words and changes nothing.
+export function LoSoltado({ items }: { items: Soltado[] }) {
+  const [, start] = useTransition();
+  const [msg, setMsg] = useState<string | null>(null);
+  const [fuera, setFuera] = useState<string[]>([]);
+  const visibles = items.filter((s) => !fuera.includes(s.id));
+  // the last one recovered still says so — an empty list must not swallow her confirmation
+  if (visibles.length === 0)
+    return msg ? (
+      <p role="status" className="rise mt-12 text-sm text-ink-soft">
+        {msg}
+      </p>
+    ) : null;
+  return (
+    <details className="group mt-12 border-t border-dashed border-line pt-5">
+      <summary className="press t-label inline-flex cursor-pointer list-none items-center gap-2 rounded-full px-2 py-1.5 text-ink-soft hover:text-ink">
+        <span className="transition-transform group-open:rotate-90">▸</span>
+        lo que soltaste ({visibles.length})
+      </summary>
+      {msg && (
+        <p role="status" className="mt-3 text-sm text-ink-soft">
+          {msg}
+        </p>
+      )}
+      <ul className="mt-3 space-y-2">
+        {visibles.map((s) => (
+          <li key={s.tipo + s.id} className="flex items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3">
+            <span aria-hidden className="w-5 shrink-0 text-center text-ink-soft">
+              {marca[s.tipo]}
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="block truncate">
+                {s.tipo === "meta" ? `meta: ${s.texto}` : s.texto}
+              </span>
+              <span className="block truncate text-sm text-ink-soft">
+                {hace(s.en)}
+                {s.meta && ` · de «${s.meta}»`}
+              </span>
+            </span>
+            <button
+              type="button"
+              onClick={() =>
+                start(async () => {
+                  const r = await recuperarSoltado(s.tipo, s.id);
+                  if (r.ok) setFuera((f) => [...f, s.id]);
+                  setMsg(r.ok ? "listo, volvió a su lugar" : r.error);
+                })
+              }
+              className="press inline-flex shrink-0 items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-semibold hover:border-accent/60"
+            >
+              <Undo className="size-4" />
+              recuperar
+            </button>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}

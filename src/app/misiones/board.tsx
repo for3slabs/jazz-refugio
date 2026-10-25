@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useOptimistic, useState, useTransition } from "react";
-import { cumplirMision, nuevaMision, soltarMision } from "@/app/actions";
+import { cumplirMision, nuevaMision, recuperarSoltado, soltarMision } from "@/app/actions";
 import { Confetti } from "@/components/confetti";
 import { Flower } from "@/components/flower";
 import { Check } from "@/components/icons";
@@ -25,13 +25,14 @@ export function Board({ abiertas, hoy, total }: View & { total: number }) {
   const [view, change] = useOptimistic<View, Change>({ abiertas, hoy }, apply);
   const [, start] = useTransition();
   const [texto, setTexto] = useState("");
-  const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  // `undo`: the mission she just let go, offered back for a few seconds
+  const [msg, setMsg] = useState<{ text: string; ok: boolean; undo?: string } | null>(null);
   const [party, setParty] = useState(0);
   const full = view.abiertas.length >= MAX_ABIERTAS;
 
   useEffect(() => {
     if (!msg) return;
-    const id = setTimeout(() => setMsg(null), 2800);
+    const id = setTimeout(() => setMsg(null), msg.undo ? 8000 : 2800);
     return () => clearTimeout(id);
   }, [msg]);
 
@@ -61,9 +62,18 @@ export function Board({ abiertas, hoy, total }: View & { total: number }) {
   }
 
   function drop(id: string) {
+    const texto = view.abiertas.find((m) => m.id === id)?.texto ?? "";
     start(async () => {
       change({ kind: "drop", id });
       const r = await soltarMision(id);
+      setMsg(r.ok ? { text: `«${texto}» se soltó`, ok: true, undo: id } : { text: r.error ?? "", ok: false });
+    });
+  }
+
+  function undo(id: string) {
+    setMsg(null);
+    start(async () => {
+      const r = await recuperarSoltado("mision", id);
       if (!r.ok) setMsg({ text: r.error ?? "", ok: false });
     });
   }
@@ -75,8 +85,13 @@ export function Board({ abiertas, hoy, total }: View & { total: number }) {
       <p role="status" className="min-h-6 text-sm text-ink-soft">
         {msg && (
           <span key={msg.text + party} className="rise inline-flex items-center gap-2">
-            {msg.ok && <Flower n={total + view.hoy.length} className="size-5" />}
+            {msg.ok && !msg.undo && <Flower n={total + view.hoy.length} className="size-5" />}
             {msg.text}
+            {msg.undo && (
+              <button type="button" onClick={() => undo(msg.undo!)} className="press t-label rounded-full border border-line px-3 py-1 text-ink hover:border-accent/60">
+                deshacer
+              </button>
+            )}
           </span>
         )}
       </p>

@@ -47,6 +47,7 @@ import { MAX_NOTE, addNote, removeNote } from "@/lib/notes";
 import { currentRole } from "@/lib/session";
 import type { Moment } from "@/lib/local";
 import { anotarVuelta, subirVueltas } from "@/lib/vueltas";
+import { type Tipo as TipoSoltado, recuperar } from "@/lib/soltado";
 import { COOKIE, MAX_AGE_S, type Role, issueToken } from "@/lib/token";
 
 // Forgiving on purpose: case, accents and extra spaces do not matter — a wrong
@@ -146,6 +147,10 @@ export async function subirMisVueltas(list: Moment[]): Promise<boolean> {
     return false;
   }
 }
+
+// «deshacer» / «recuperar»: what she let go in the last 30 days goes back where it was.
+export const recuperarSoltado = async (tipo: TipoSoltado, id: string) =>
+  deJazz(async () => (["mision", "idea", "meta", "paso"].includes(tipo) ? recuperar(tipo, id) : "Eso no existe."));
 
 // Her missions and goals are hers: only her session changes them. One wrapper says so,
 // turns a failure into a sentence for her, and refreshes what she sees.

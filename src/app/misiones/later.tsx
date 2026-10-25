@@ -13,6 +13,7 @@ import {
   ideaAHoy,
   ideaAMeta,
   pasoAHoy,
+  recuperarSoltado,
   soltarIdea,
 } from "@/app/actions";
 import { Confetti } from "@/components/confetti";
@@ -76,21 +77,31 @@ const tmp = () => `nuevo-${Date.now()}`;
 export function Later({ mente, metas, abierta, hoyLleno }: View & { abierta: string | null; hoyLleno: boolean }) {
   const [view, change] = useOptimistic<View, Change>({ mente, metas }, apply);
   const [, start] = useTransition();
-  const [msg, setMsg] = useState<{ text: string; ok: boolean } | null>(null);
+  // `undo`: what she just let go, offered back for a few seconds
+  const [msg, setMsg] = useState<{ text: string; ok: boolean; undo?: { tipo: "idea" | "meta" | "paso"; id: string } } | null>(null);
   const [party, setParty] = useState(0);
 
   useEffect(() => {
     if (!msg) return;
-    const id = setTimeout(() => setMsg(null), 2800);
+    const id = setTimeout(() => setMsg(null), msg.undo ? 8000 : 2800);
     return () => clearTimeout(id);
   }, [msg]);
 
-  function run(c: Change | null, op: () => Promise<EstadoResult>, ok?: string) {
+  function run(c: Change | null, op: () => Promise<EstadoResult>, ok?: string, undo?: { tipo: "idea" | "meta" | "paso"; id: string; texto: string }) {
     start(async () => {
       if (c) change(c);
       const r = await op();
       if (!r.ok) setMsg({ text: r.error ?? "", ok: false });
+      else if (undo) setMsg({ text: `«${undo.texto}» se soltó`, ok: true, undo: { tipo: undo.tipo, id: undo.id } });
       else if (ok) setMsg({ text: ok, ok: true });
+    });
+  }
+
+  function deshacer(u: { tipo: "idea" | "meta" | "paso"; id: string }) {
+    setMsg(null);
+    start(async () => {
+      const r = await recuperarSoltado(u.tipo, u.id);
+      if (!r.ok) setMsg({ text: r.error ?? "", ok: false });
     });
   }
 
@@ -107,8 +118,13 @@ export function Later({ mente, metas, abierta, hoyLleno }: View & { abierta: str
       <p role="status" className="min-h-6 text-sm text-ink-soft">
         {msg && (
           <span key={msg.text + party} className="rise inline-flex items-center gap-2">
-            {msg.ok && party > 0 && <Flower n={party + 3} className="size-5" />}
+            {msg.ok && party > 0 && !msg.undo && <Flower n={party + 3} className="size-5" />}
             {msg.text}
+            {msg.undo && (
+              <button type="button" onClick={() => deshacer(msg.undo!)} className="press t-label rounded-full border border-line px-3 py-1 text-ink hover:border-accent/60">
+                deshacer
+              </button>
+            )}
           </span>
         )}
       </p>
@@ -121,7 +137,12 @@ export function Later({ mente, metas, abierta, hoyLleno }: View & { abierta: str
   );
 }
 
-type Run = (c: Change | null, op: () => Promise<EstadoResult>, ok?: string) => void;
+type Run = (
+  c: Change | null,
+  op: () => Promise<EstadoResult>,
+  ok?: string,
+  undo?: { tipo: "idea" | "meta" | "paso"; id: string; texto: string },
+) => void;
 
 function Dots({ meta }: { meta: Meta }) {
   return (
@@ -215,7 +236,7 @@ function List({ view, hoyLleno, run }: { view: View; hoyLleno: boolean; run: Run
                     >
                       hacerla meta
                     </Chip>
-                    <Chip onClick={() => run({ k: "idea-", id: i.id }, () => soltarIdea(i.id))}>soltar</Chip>
+                    <Chip onClick={() => run({ k: "idea-", id: i.id }, () => soltarIdea(i.id), undefined, { tipo: "idea", id: i.id, texto: i.texto })}>soltar</Chip>
                   </div>
                 )}
               </li>
@@ -420,7 +441,7 @@ function Goal({ meta, hoyLleno, run, celebrate }: { meta: Meta; hoyLleno: boolea
                 {!p.hecho && !p.enHoy && (
                   <button
                     type="button"
-                    onClick={() => run({ k: "paso", meta: meta.id, id: p.id, to: "fuera" }, () => borrarPaso(meta.id, p.id))}
+                    onClick={() => run({ k: "paso", meta: meta.id, id: p.id, to: "fuera" }, () => borrarPaso(meta.id, p.id), undefined, { tipo: "paso", id: p.id, texto: p.texto })}
                     className="press t-label rounded-full px-2 py-1 text-ink-soft hover:text-ink"
                   >
                     soltar
@@ -461,10 +482,10 @@ function Goal({ meta, hoyLleno, run, celebrate }: { meta: Meta; hoyLleno: boolea
       <div className="mt-10 border-t border-dashed border-line pt-5">
         {seguro ? (
           <p className="flex flex-wrap items-center gap-3 text-ink-soft">
-            ¿La sueltas? Sus pasos se van con ella.
+            ¿La sueltas? Sus pasos se van con ella, y vuelven si la recuperas.
             <Link
               href="/misiones?v=despues"
-              onClick={() => run({ k: "meta-", id: meta.id }, () => borrarMeta(meta.id))}
+              onClick={() => run({ k: "meta-", id: meta.id }, () => borrarMeta(meta.id), undefined, { tipo: "meta", id: meta.id, texto: meta.titulo })}
               className="press t-label rounded-full border border-line px-3 py-1.5 text-ink hover:border-accent/60"
             >
               sí, soltarla
