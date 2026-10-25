@@ -6,7 +6,7 @@ import { Flow } from "./flow";
 
 export default function Volver() {
   return (
-    <Shell back>
+    <Shell back menu={false}>
       <Suspense fallback={<Flow />}>
         <Content />
       </Suspense>

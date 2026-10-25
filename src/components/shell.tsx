@@ -1,17 +1,37 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { Suspense, type ReactNode } from "react";
+import { CurrentDoors, Doors } from "./doors";
 import { ArrowLeft, Gear } from "./icons";
 import { ThemeToggle } from "./theme-toggle";
 
-// The frame every screen shares: a quiet top bar, then one readable column — or, for the
-// home on a wide screen, the whole width for the bento.
-export function Shell({ children, back = false, wide = false }: { children: ReactNode; back?: boolean; wide?: boolean }) {
+// The frame every screen shares: a quiet top bar, then one readable column — or, `wide`, the
+// whole width on a wide screen (the home's bento, a board). Every inner page carries the doors
+// fixed at the bottom unless it says `menu={false}` — the focus flow, where a menu invites her
+// to wander off (Brian, 2026-10-25).
+export function Shell({
+  children,
+  back = false,
+  wide = false,
+  menu = true,
+}: {
+  children: ReactNode;
+  back?: boolean;
+  wide?: boolean;
+  menu?: boolean;
+}) {
+  const home = !back;
+  const bar = back && menu;
   return (
     <div
       className={`mx-auto flex w-full flex-col px-5 pt-5 sm:px-8 ${
         // The home is exactly one screen tall, so its orb can give room to the notes above it; on a
         // phone its tab bar closes the screen, so the frame adds no bottom padding.
-        wide ? "h-dvh max-w-md lg:max-w-6xl lg:pb-8" : "min-h-dvh max-w-md pb-8 lg:max-w-xl lg:pt-10"
+        home
+          ? "h-dvh max-w-md lg:max-w-6xl lg:pb-8"
+          : `min-h-dvh max-w-md ${wide ? "lg:max-w-6xl" : "lg:max-w-xl lg:pt-10"} ${
+              // room under the last line for the fixed doors (~80 px) plus the usual 2 rem
+              bar ? "pb-32" : "pb-8"
+            }`
       }`}
     >
       <header className="flex h-10 items-center justify-between">
@@ -40,6 +60,11 @@ export function Shell({ children, back = false, wide = false }: { children: Reac
         </div>
       </header>
       <main className="flex min-h-0 flex-1 flex-col">{children}</main>
+      {bar && (
+        <Suspense fallback={<Doors bar />}>
+          <CurrentDoors />
+        </Suspense>
+      )}
     </div>
   );
 }
