@@ -2,10 +2,11 @@
 
 import { useActionState, useEffect, useRef, useState } from "react";
 import { dejarNota, marcarNotasVistas, type NotaState } from "../actions";
-import { Abrir } from "./plegado";
+import { Plus } from "@/components/icons";
 
-// `para`: the one the note is for. Closed it is one line, «＋ dejarle una nota a Brian»; a tap opens
-// the box, and leaving the note closes it again with its confirmation.
+// The last row of the conversation, like «＋ nueva meta» in misiones: «＋ escribirle a Brian».
+// A tap opens the box in that same row; leaving the note closes it with its confirmation.
+// `para`: the one the note is for.
 export function Composer({ para = "Jazz" }: { para?: string }) {
   const [state, action, pending] = useActionState<NotaState, FormData>(dejarNota, { ok: false, error: null });
   const [abierto, setAbierto] = useState(false);
@@ -24,29 +25,29 @@ export function Composer({ para = "Jazz" }: { para?: string }) {
 
   if (!abierto)
     return (
-      <>
-        <Abrir onClick={() => setAbierto(true)}>dejarle una nota a {para}</Abrir>
-        {aviso && (
-          <p role="status" className="rise mt-2 text-sm text-ink-soft">
-            guardada. ya la puede ver.
-          </p>
-        )}
-      </>
+      <button
+        type="button"
+        onClick={() => setAbierto(true)}
+        className="press flex min-h-14 w-full items-center gap-3 px-4 text-left text-ink-soft hover:bg-surface-2 hover:text-ink"
+      >
+        <Plus className="size-5 shrink-0 text-accent" />
+        {aviso ? <span className="rise">guardada. ya la puede ver.</span> : `escribirle a ${para}`}
+      </button>
     );
 
   return (
-    <form ref={form} action={action} className="rise mt-8 space-y-3 rounded-3xl border border-line bg-surface p-5">
-      <label htmlFor="texto" className="font-semibold">
+    <form ref={form} action={action} className="rise space-y-3 bg-surface-2/60 p-4">
+      <label htmlFor="texto" className="sr-only">
         una nota para {para}
       </label>
       <textarea
         id="texto"
         name="texto"
-        rows={4}
+        rows={3}
         maxLength={2000}
         required
         autoFocus
-        placeholder="lo que quieras que encuentre al entrar…"
+        placeholder={`lo que quieras que ${para} encuentre al entrar…`}
         className="block w-full resize-y rounded-2xl border border-line bg-canvas px-4 py-3 text-lg leading-relaxed text-ink placeholder:text-ink-soft/60 focus:border-accent focus:outline-none"
       />
       <div className="flex items-center justify-between gap-3">

@@ -2,20 +2,18 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { PageTitle, Shell } from "@/components/shell";
 import { Letter, Trash } from "@/components/icons";
-import { Tabs } from "@/components/tabs";
 import { loadMisiones } from "@/lib/misiones";
 import { formatDate, loadDejadas, loadNotes } from "@/lib/notes";
 import { vistaDe } from "@/lib/presente";
 import { hayParaAbrir, loadDados, loadRegalos, vistaDeJazz } from "@/lib/regalos";
 import { currentRole } from "@/lib/session";
 import type { Role } from "@/lib/token";
+import { loadRegalados } from "@/lib/mascota";
 import { borrarNota } from "../actions";
 import { Composer, MarkSeen } from "./composer";
+import { Apartados, caja } from "./plegado";
 import { EntreLosDos } from "./presente";
-import { RegaloForm } from "./regalo-form";
 import { Regalos } from "./regalos";
-import { Encabezado, Plegado } from "./plegado";
-import { loadRegalados } from "@/lib/mascota";
 
 type Search = Promise<{ v?: string }>;
 
@@ -30,23 +28,31 @@ export default function DeBrian({ searchParams }: { searchParams: Search }) {
   );
 }
 
-// Notes and gifts between the two, both ways — a dot on «regalos» when one is ready for whoever
-// is looking.
+// Three parts, each in the shape of what it does (Brian, 2026-10-25: «no se notan los apartados»):
+// «notas» a conversation in one box, «regalos» cards like inspiración's boards, «la pregunta» one
+// big card. A dot on «regalos» when one is ready for whoever is looking.
 async function Content({ searchParams }: { searchParams: Search }) {
   const role = await currentRole();
   if (!role) redirect("/entrar");
   const { v } = await searchParams;
+  const otro = role === "jazz" ? "Brian" : "Jazz";
   const [regalos, m] = await Promise.all([loadRegalos(role), loadMisiones()]).catch(() => [null, null] as const);
   // her garden opens her gifts; his open right away
   const total = role === "jazz" ? (m?.total ?? 0) : 0;
+  const current = v === "regalos" || v === "presente" ? v : "notas";
+  const subs = {
+    notas: `notas cortas entre ${otro} y tú · se quedan aquí`,
+    regalos: role === "jazz" ? "cupones y cartas que se abren con tus misiones" : "cupones y cartas entre Jazz y tú",
+    presente: `una al día · la de ${otro} se abre cuando contestes`,
+  };
   const tabs = (
-    <Tabs
-      label="mensajes"
-      current={v === "regalos" || v === "presente" ? v : "notas"}
+    <Apartados
+      current={current}
+      sub={subs[current]}
       items={[
         { key: "notas", href: "/brian", label: "notas" },
         { key: "regalos", href: "/brian?v=regalos", label: "regalos", dot: !!regalos && hayParaAbrir(regalos, total) },
-        { key: "presente", href: "/brian?v=presente", label: "entre los dos" },
+        { key: "presente", href: "/brian?v=presente", label: "la pregunta" },
       ]}
     />
   );
@@ -59,8 +65,9 @@ async function Content({ searchParams }: { searchParams: Search }) {
         {vista ? (
           <EntreLosDos vista={vista} isBrian={role === "brian"} />
         ) : (
-          <p className="mt-10 text-pretty text-lg text-ink-soft">No pude leer esta parte. Vuelve a abrir en un momento.</p>
+          <p className="mt-6 text-pretty text-lg text-ink-soft">No pude leer esta parte. Vuelve a abrir en un momento.</p>
         )}
+        <Aire />
       </>
     );
   }
@@ -70,11 +77,10 @@ async function Content({ searchParams }: { searchParams: Search }) {
       return (
         <>
           {tabs}
-          <p className="mt-10 text-pretty text-lg text-ink-soft">No pude leer los regalos. Vuelve a abrir en un momento.</p>
+          <p className="mt-6 text-pretty text-lg text-ink-soft">No pude leer los regalos. Vuelve a abrir en un momento.</p>
         </>
       );
     }
-    const otro = role === "jazz" ? "Brian" : "Jazz";
     // what was given and, for Brian, the pet objects — together, not one after the other
     const [dados, regalados] = await Promise.all([
       loadDados(role).catch(() => []),
@@ -83,12 +89,13 @@ async function Content({ searchParams }: { searchParams: Search }) {
     return (
       <>
         {tabs}
-        <Encabezado
-          titulo="para ti"
-          sub={role === "jazz" ? "ábrelos cuando estén listos" : "lo que Jazz te regaló"}
+        <Regalos
+          {...vistaDeJazz(regalos, total)}
+          de={otro}
+          dados={dados}
+          total={role === "brian" ? (m?.total ?? 0) : 0}
+          regalados={regalados}
         />
-        <Regalos {...vistaDeJazz(regalos, total)} de={otro} />
-        <RegaloForm regalos={dados} total={role === "brian" ? (m?.total ?? 0) : 0} para={otro} regalados={regalados} />
         <Aire />
       </>
     );
@@ -98,64 +105,55 @@ async function Content({ searchParams }: { searchParams: Search }) {
     <>
       {tabs}
       <Notes role={role} />
+      <Aire />
     </>
   );
 }
 
-// Notes both ways: what the other left for you first, then «＋ dejarle una nota», and what you
-// left folded under it — with whether it was seen.
+// Notes both ways in ONE conversation, newest first: the other one's on the left, yours on the
+// right with whether they were seen — and «＋ escribirle» as the last row, like «＋ nueva meta».
 async function Notes({ role }: { role: Role }) {
   const otro = role === "jazz" ? "Brian" : "Jazz";
   const [notes, dejadas] = await Promise.all([loadNotes(role), loadDejadas(role)]);
+  const conversacion = [
+    ...notes.map((n) => ({ ...n, mia: false, visto: false })),
+    ...dejadas.map((n) => ({ ...n, mia: true, visto: !!n.visto })),
+  ].sort((a, b) => b.at - a.at);
   return (
     <>
       <MarkSeen />
-      <Encabezado titulo="para ti" sub={`lo que ${otro} te dejó`} />
-      {notes.length === 0 ? (
-        <p className="rise mt-4 text-pretty text-lg leading-relaxed text-ink-soft">
-          {`Cuando ${otro} te deje una nota, aparece aquí.`}
-        </p>
-      ) : (
-        <ol className="mt-4 space-y-4">
-          {notes.map((n, i) => (
-            <li key={n.id} className="rise rounded-3xl border border-line bg-surface p-6" style={{ animationDelay: `${Math.min(i, 6) * 60}ms` }}>
-              <p className="text-sm font-semibold text-accent">{formatDate(n.at)}</p>
-              <p className="mt-2 whitespace-pre-line text-pretty text-lg leading-relaxed">{n.texto}</p>
-            </li>
-          ))}
-        </ol>
-      )}
-
-      <Composer para={otro} />
-
-      {dejadas.length > 0 && (
-        <Plegado titulo="las que dejaste" n={dejadas.length}>
-          <ol className="space-y-3">
-            {dejadas.map((n) => (
-              <li key={n.id} className="rounded-3xl border border-dashed border-line bg-surface/60 py-4 pl-5 pr-2">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm text-ink-soft">
-                    {formatDate(n.at)}
-                    {n.visto && <span className="ml-2 font-semibold text-accent">· ✓ la vio</span>}
-                  </p>
-                  <form action={borrarNota}>
-                    <input type="hidden" name="id" value={n.id} />
-                    <button
-                      type="submit"
-                      aria-label="borrar esta nota"
-                      className="press grid size-10 place-items-center rounded-full text-ink-soft hover:bg-surface-2 hover:text-ink"
-                    >
-                      <Trash className="size-4" />
-                    </button>
-                  </form>
-                </div>
-                <p className="mt-1 whitespace-pre-line pr-3 text-pretty leading-relaxed text-ink-soft">{n.texto}</p>
-              </li>
-            ))}
-          </ol>
-        </Plegado>
-      )}
-      <Aire />
+      <ol className={`mt-3 ${caja}`}>
+        {conversacion.map((n, i) => (
+          <li
+            key={n.id}
+            className={`rise flex flex-col py-3.5 ${n.mia ? "items-end pl-1 pr-4 text-right" : "items-start pl-4 pr-10"}`}
+            style={{ animationDelay: `${Math.min(i, 6) * 40}ms` }}
+          >
+            {/* one line that reads left to right on both sides: who · when · seen — and yours can go */}
+            <div className={`flex items-center gap-2 text-sm ${n.mia ? "w-full justify-end" : ""}`}>
+              {n.mia && (
+                <form action={borrarNota} className="-my-2 mr-auto">
+                  <input type="hidden" name="id" value={n.id} />
+                  <button
+                    type="submit"
+                    aria-label="borrar esta nota"
+                    className="press grid size-10 place-items-center rounded-full text-ink-soft hover:bg-surface-2 hover:text-ink"
+                  >
+                    <Trash className="size-4" />
+                  </button>
+                </form>
+              )}
+              <span className={`font-semibold ${n.mia ? "text-ink-soft" : "text-accent"}`}>{n.mia ? "tú" : otro}</span>
+              <span className="text-ink-soft">· {formatDate(n.at)}</span>
+              {n.mia && n.visto && <span className="font-semibold text-accent">· ✓ la vio</span>}
+            </div>
+            <p className={`mt-1 whitespace-pre-line text-pretty text-lg leading-relaxed ${n.mia ? "text-ink-soft" : ""}`}>{n.texto}</p>
+          </li>
+        ))}
+        <li>
+          <Composer para={otro} />
+        </li>
+      </ol>
     </>
   );
 }
