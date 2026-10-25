@@ -12,13 +12,13 @@ export const MAX_NOTE = 2000;
 function parse(raw: string): Note[] {
   try {
     const list = JSON.parse(raw);
-    if (!Array.isArray(list)) return [];
+    if (!Array.isArray(list)) throw new Error("not a list");
     return list.filter(
       (n): n is Note =>
         typeof n?.id === "string" && typeof n?.texto === "string" && typeof n?.at === "number" && n.texto.trim() !== "",
     );
-  } catch {
-    return [];
+  } catch (cause) {
+    throw new Error(`${PATH} is unreadable: refusing to treat it as empty`, { cause });
   }
 }
 

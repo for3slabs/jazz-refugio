@@ -21,8 +21,8 @@ function parse(raw: string): Misiones {
       total: Number.isInteger(d?.total) ? d.total : 0,
       mejorDia: Number.isInteger(d?.mejorDia) ? d.mejorDia : 0,
     };
-  } catch {
-    return EMPTY;
+  } catch (cause) {
+    throw new Error(`${PATH} is unreadable: refusing to treat it as empty`, { cause });
   }
 }
 

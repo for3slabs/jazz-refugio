@@ -12,7 +12,7 @@ const num = (v: unknown): v is number => typeof v === "number";
 function parse(raw: string): Regalo[] {
   try {
     const list = JSON.parse(raw);
-    if (!Array.isArray(list)) return [];
+    if (!Array.isArray(list)) throw new Error("not a list");
     return list.filter(
       (r: Regalo) =>
         str(r?.id) &&
@@ -24,8 +24,8 @@ function parse(raw: string): Regalo[] {
         (r.abierto === null || num(r.abierto)) &&
         (r.usado === null || num(r.usado)),
     );
-  } catch {
-    return [];
+  } catch (cause) {
+    throw new Error(`${PATH} is unreadable: refusing to treat it as empty`, { cause });
   }
 }
 

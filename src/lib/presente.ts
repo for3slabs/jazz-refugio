@@ -27,8 +27,8 @@ function parse(raw: string): Presente {
       respuestas[dia] = { ...(isResp(r.jazz) && { jazz: r.jazz }), ...(isResp(r.brian) && { brian: r.brian }) };
     }
     return { hasta: typeof d?.hasta === "number" ? d.hasta : null, respuestas };
-  } catch {
-    return { hasta: null, respuestas: {} };
+  } catch (cause) {
+    throw new Error(`${PATH} is unreadable: refusing to treat it as empty`, { cause });
   }
 }
 
