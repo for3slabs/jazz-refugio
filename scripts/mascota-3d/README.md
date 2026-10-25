@@ -21,20 +21,27 @@ month), running TRELLIS locally (needs a 24 GB NVIDIA GPU).
 
 ## State
 
-- `input/michi-conectada.png` — the waving cat, cut out and checked: it is exactly what the
-  Space prepares from it.
+- `input/michi-sheet.jpg` — the approved michi sheet; `input/michi-<mode>.png` — its six poses,
+  cut out. Only the largest piece of ink is kept, so sparkles, swirls and motion marks go on
+  their own; the one mark that touches the cat (the desk line in *hiperfoco*) is wiped by box.
 - First run with the raw sheet cell: a flat plane, discarded. The cut-out run waits on the free
   quota (≈ one run a day).
-- Next: generate, compare front / side / back against the sheet, then the other poses and the
-  objects.
+- `prepare.py` (Blender, headless) is ready and tested on stand-in models: feet on y = 0, 2.6
+  units tall, ≤ 40,000 triangles, and it refuses a decimate that cuts the model short.
+- Next: generate `conectada`, compare front / side / back against the sheet, then the other poses
+  and the objects; splitting into parts is designed on the first real mesh.
 
 ## Run
 
 ```
-uv pip install gradio_client pillow
 uvx --from huggingface_hub hf auth login     # once, in your own terminal
-python cutout.py input/michi-conectada-sheet.png input/michi-conectada.png 822,385,900,490
-python generate.py input/michi-conectada.png out/michi-conectada.glb
+uv run --with pillow python cutout.py --sheet input/michi-sheet.jpg input/michi hiperfoco:782,676,832,698
+uv run --with gradio_client python generate.py input/michi-conectada.png out/michi-conectada.glb
+uv run --python 3.11 --with bpy python prepare.py out/michi-conectada.glb out/michi-conectada-ready.glb
 ```
+
+`bpy` needs `libSM` and `libICE`. Without sudo, unpack them into your home and point at them:
+`apt-get download libsm6 libice6`, `dpkg -x <each>.deb ~/.local/lib/blender-x11`, then
+`export LD_LIBRARY_PATH=~/.local/lib/blender-x11/usr/lib/x86_64-linux-gnu`.
 
 `out/` is not committed until a model is approved.

@@ -263,7 +263,8 @@ function Mono() {
   const ball = useMemo(() => new THREE.SphereGeometry(1, 20, 14), []);
   const pink = useMemo(() => toon(C.bow), []);
   return (
-    <group position={[0, 0.98, 0.56]} rotation={[-0.25, 0, 0]}>
+    // under the chin: the head reaches down to y 0.56, so any higher it sits inside the head
+    <group position={[0, 0.74, 0.66]} rotation={[-0.25, 0, 0]}>
       <Part geo={cone} mat={pink} position={[-0.15, 0, 0]} rotation={[0, 0, Math.PI / 2]} scale={[1, 1, 0.55]} />
       <Part geo={cone} mat={pink} position={[0.15, 0, 0]} rotation={[0, 0, -Math.PI / 2]} scale={[1, 1, 0.55]} />
       <Part geo={ball} mat={pink} scale={[0.07, 0.07, 0.06]} />
