@@ -4,7 +4,7 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { refresh } from "next/cache";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { agregarAprendido, agregarLibro, agregarViaje, moverLibro, moverViaje, soltarDe } from "@/lib/coleccion";
+import { agregarAprendido, agregarLibro, agregarViaje, marcarRegalado, moverLibro, moverViaje, soltarDe } from "@/lib/coleccion";
 import { MAX_NOTA as MAX_NOTA_ESTANTE, MAX_TITULO as MAX_TITULO_ESTANTE } from "@/lib/estante";
 import { partirEnPasos, porDondeEmpiezo } from "@/lib/ayudantes";
 import { loadEstado, saveEstado } from "@/lib/estado";
@@ -418,47 +418,65 @@ export const moverEnTablero = async (id: string, item: string, paso: -1 | 1) =>
 
 export const deshacerTablero = async (id: string) => deJazz(() => restaurarTablero(id));
 
-// Her shelf and trips: only she writes them. Optional fields may be empty; the rest are short.
+// A shelf and trips each: whoever is in writes their own. Optional fields may be empty; the rest
+// are short.
+async function deCadaUno(op: (role: Role) => Promise<string | void>): Promise<EstadoResult> {
+  const role = await currentRole();
+  if (!role) return { ok: false, error: "Entra primero." };
+  try {
+    const err = await op(role);
+    if (err) return { ok: false, error: err };
+  } catch {
+    return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
+  }
+  refresh();
+  return { ok: true, error: null };
+}
 function opcional(t: string, max: number): string | { error: string } {
   const v = t.trim();
   return v.length > max ? { error: `Máximo ${max} caracteres.` } : v;
 }
 
 export const guardarLibro = async (titulo: string, autor: string, estado: string, nota: string) =>
-  deJazz(async () => {
+  deCadaUno(async (role) => {
     const t = texto(titulo, MAX_TITULO_ESTANTE);
     const a = opcional(autor, MAX_TITULO_ESTANTE);
     const n = opcional(nota, MAX_NOTA_ESTANTE);
     for (const v of [t, a, n]) if (typeof v !== "string") return v.error;
     const e = estado === "leyendo" || estado === "leido" ? estado : "quiero";
-    return agregarLibro(t as string, a as string, e, n as string);
+    return agregarLibro(role, t as string, a as string, e, n as string);
   });
 
 export const guardarAprendido = async (titulo: string, donde: string, nota: string) =>
-  deJazz(async () => {
+  deCadaUno(async (role) => {
     const t = texto(titulo, MAX_TITULO_ESTANTE);
     const d = opcional(donde, MAX_TITULO_ESTANTE);
     const n = opcional(nota, MAX_NOTA_ESTANTE);
     for (const v of [t, d, n]) if (typeof v !== "string") return v.error;
-    return agregarAprendido(t as string, d as string, n as string);
+    return agregarAprendido(role, t as string, d as string, n as string);
   });
 
 export const guardarViaje = async (lugar: string, cuando: string, estado: string, nota: string) =>
-  deJazz(async () => {
+  deCadaUno(async (role) => {
     const l = texto(lugar, MAX_TITULO_ESTANTE);
     const c = opcional(cuando, 40);
     const n = opcional(nota, MAX_NOTA_ESTANTE);
     for (const v of [l, c, n]) if (typeof v !== "string") return v.error;
-    return agregarViaje(l as string, c as string, estado === "fui" ? "fui" : "quiero", n as string);
+    return agregarViaje(role, l as string, c as string, estado === "fui" ? "fui" : "quiero", n as string);
   });
 
 export const cambiarLibro = async (id: string, estado: string) =>
-  deJazz(() => moverLibro(id, estado === "leyendo" || estado === "leido" ? estado : "quiero"));
+  deCadaUno((role) => moverLibro(role, id, estado === "leyendo" || estado === "leido" ? estado : "quiero"));
 
-export const cambiarViaje = async (id: string, estado: string) => deJazz(() => moverViaje(id, estado === "fui" ? "fui" : "quiero"));
+export const cambiarViaje = async (id: string, estado: string) =>
+  deCadaUno((role) => moverViaje(role, id, estado === "fui" ? "fui" : "quiero"));
 
 export const soltarDelEstante = async (lista: string, id: string) =>
-  deJazz(() => soltarDe(lista === "aprendido" ? "aprendido" : lista === "viajes" ? "viajes" : "libros", id));
+  deCadaUno((role) => soltarDe(role, lista === "aprendido" ? "aprendido" : lista === "viajes" ? "viajes" : "libros", id));
+
+// «ya se lo regalé»: only on the OTHER one's wishes, and only the giver ever sees it.
+export const regaladoDeseo = async (tipo: string, id: string, si: boolean) =>
+  deCadaUno((role) => marcarRegalado(role === "jazz" ? "brian" : "jazz", tipo === "viaje" ? "viaje" : "libro", id, si));
 
 // The helpers (block agentes). What they send is read here, on the server, from her own
 // stores — never taken from the browser — and only her session may call them.

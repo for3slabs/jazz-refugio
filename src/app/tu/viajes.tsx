@@ -6,7 +6,8 @@ import { type EstadoViaje, type Viaje, MAX_NOTA, MAX_TITULO } from "@/lib/estant
 
 // Her trips: places she went, like postcards, and places she wants to go. No map, no count
 // of what is missing — a collection that only grows.
-export function Viajes({ viajes }: { viajes: Viaje[] }) {
+// `otro`: who sees the wishes — Brian on her trips, Jazz on his.
+export function Viajes({ viajes, otro = "Brian" }: { viajes: Viaje[]; otro?: string }) {
   const [form, setForm] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -22,7 +23,7 @@ export function Viajes({ viajes }: { viajes: Viaje[] }) {
 
   return (
     <div className="mt-6">
-      <p className="text-sm text-ink-soft">Brian ve tus «quiero ir» —solo los lugares— para regalarte.</p>
+      <p className="text-sm text-ink-soft">{otro} ve tus «quiero ir» —solo los lugares— para regalarte.</p>
       <p role="status" className="min-h-6 text-sm text-ink-soft">
         {msg}
       </p>
