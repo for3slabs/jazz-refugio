@@ -421,12 +421,19 @@ export async function aquiEstoy(horas: number): Promise<EstadoResult> {
 }
 
 // Her boards: only she changes them (images and drawings arrive through /api/lienzo/subir).
-export const nuevoTablero = async (t: string) =>
-  deJazz(async () => {
+// The new board's id comes back: the list opens it at once, so naming it is the only step
+// before filling it (Brian, 2026-10-25: «nos ahorramos un paso»).
+export async function nuevoTablero(t: string): Promise<EstadoResult & { id?: string }> {
+  let id: string | undefined;
+  const r = await deJazz(async () => {
     const v = texto(t, MAX_NOMBRE);
     if (typeof v !== "string") return v.error;
-    return crearTablero(v);
+    const c = await crearTablero(v);
+    if (typeof c === "string") return c;
+    id = c.id;
   });
+  return { ...r, ...(id && { id }) };
+}
 
 export const soltarTablero = async (id: string) => deJazz(() => borrarTablero(id));
 
