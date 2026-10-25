@@ -3,7 +3,7 @@
 import { createHash, timingSafeEqual } from "node:crypto";
 import { refresh } from "next/cache";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { RedirectType, redirect } from "next/navigation";
 import { agregarAprendido, agregarLibro, agregarViaje, marcarRegalado, moverLibro, moverViaje, soltarDe } from "@/lib/coleccion";
 import { MAX_NOTA as MAX_NOTA_ESTANTE, MAX_TITULO as MAX_TITULO_ESTANTE } from "@/lib/estante";
 import { partirEnPasos, porDondeEmpiezo } from "@/lib/ayudantes";
@@ -433,6 +433,15 @@ export async function nuevoTablero(t: string): Promise<EstadoResult & { id?: str
     id = c.id;
   });
   return { ...r, ...(id && { id }) };
+}
+
+// The create screen's one call: on success the server answers with the new board itself (a redirect
+// resolved in the same request — one trip, and «atrás» returns to the list); otherwise the sentence.
+// Outside deJazz on purpose: a redirect is thrown, and deJazz would turn it into «No se pudo guardar».
+export async function crearYAbrirTablero(t: string): Promise<EstadoResult> {
+  const r = await nuevoTablero(t);
+  if (r.ok && r.id) redirect(`/lienzo/${r.id}`, RedirectType.replace);
+  return { ok: r.ok, error: r.error };
 }
 
 export const soltarTablero = async (id: string) => deJazz(() => borrarTablero(id));

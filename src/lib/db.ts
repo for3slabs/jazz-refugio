@@ -24,8 +24,14 @@ export function sql(): postgres.Sql {
 
 // A limit the DB enforces (3 open missions, 40 thoughts…) comes back as check_violation with
 // the sentence for her already written in the trigger. Anything else is a real failure.
+// The unique indexes that protect her words, and the sentence each one says when it refuses.
+const UNICOS: Record<string, string> = {
+  tablero_nombre_unico: "Ya tienes un tablero con ese nombre.",
+};
+
 export function frase(e: unknown): string | null {
-  const err = e as { code?: string; message?: string };
+  const err = e as { code?: string; message?: string; constraint_name?: string };
+  if (err?.code === "23505" && err.constraint_name && UNICOS[err.constraint_name]) return UNICOS[err.constraint_name];
   return err?.code === "23514" && err.message ? err.message : null;
 }
 
