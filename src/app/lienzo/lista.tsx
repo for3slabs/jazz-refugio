@@ -4,9 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { deshacerTablero, nuevoTablero } from "@/app/actions";
+import { deshacerTablero } from "@/app/actions";
 import { Palette, Plus, Undo } from "@/components/icons";
-import { type Item, type Tablero, MAX_NOMBRE, MAX_TABLEROS, imgSrc } from "@/lib/tablero";
+import { type Item, type Tablero, MAX_TABLEROS, imgSrc } from "@/lib/tablero";
 
 // Her boards as covers — the image she chose, or her first things — so she knows which is which at
 // a glance. Shaped like «misiones» (Brian, 2026-10-25): a section title, creating FIRST (the first
@@ -22,25 +22,8 @@ export function Lista({
 }) {
   const router = useRouter();
   const [deshecho, setDeshecho] = useState(false);
-  const [nombre, setNombre] = useState("");
-  const [creando, setCreando] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
-
-  function create(e: React.FormEvent) {
-    e.preventDefault();
-    const n = nombre.trim();
-    if (!n) return;
-    start(async () => {
-      const r = await nuevoTablero(n);
-      // straight into the new board, to fill it
-      if (r.ok && r.id) router.push(`/lienzo/${r.id}`);
-      else if (r.ok) {
-        setNombre("");
-        setCreando(false);
-      } else setError(r.error);
-    });
-  }
 
   return (
     <div className="mt-8">
@@ -79,18 +62,7 @@ export function Lista({
       <ul className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         {!isBrian && (
           <li>
-            <Nuevo
-              lleno={tableros.length >= MAX_TABLEROS}
-              creando={creando}
-              setCreando={setCreando}
-              nombre={nombre}
-              setNombre={(v) => {
-                setNombre(v);
-                setError(null);
-              }}
-              pending={pending}
-              create={create}
-            />
+            <Nuevo lleno={tableros.length >= MAX_TABLEROS} />
           </li>
         )}
         {tableros.map((t, i) => (
@@ -154,25 +126,9 @@ function Cosa({ it }: { it: Item }) {
   return <Image src={imgSrc(it)} alt="" width={400} height={400} unoptimized className="size-full object-cover" />;
 }
 
-// The first card: «＋ nuevo tablero». A tap turns it into its own name field, right there;
-// «crear» arrives with the first letter, Escape or an empty blur puts the card back.
-function Nuevo({
-  lleno,
-  creando,
-  setCreando,
-  nombre,
-  setNombre,
-  pending,
-  create,
-}: {
-  lleno: boolean;
-  creando: boolean;
-  setCreando: (v: boolean) => void;
-  nombre: string;
-  setNombre: (v: string) => void;
-  pending: boolean;
-  create: (e: React.FormEvent) => void;
-}) {
+// The first card: «＋ nuevo tablero». It opens its own small screen to name the board — no field
+// squeezed into the card (Brian, 2026-10-25) — and from there she lands inside it to fill it.
+function Nuevo({ lleno }: { lleno: boolean }) {
   const caja = "flex h-full min-h-56 flex-col rounded-2xl border border-dashed border-line";
   if (lleno)
     return (
@@ -180,43 +136,10 @@ function Nuevo({
         Tienes {MAX_TABLEROS} tableros: suelta uno para empezar otro.
       </p>
     );
-  if (!creando)
-    return (
-      <button
-        type="button"
-        onClick={() => setCreando(true)}
-        className={`press ${caja} w-full items-center justify-center gap-2 text-ink-soft hover:border-accent/60 hover:text-ink`}
-      >
-        <Plus className="size-7 text-accent" />
-        <span className="text-sm font-medium">nuevo tablero</span>
-      </button>
-    );
   return (
-    <form onSubmit={create} className={`${caja} justify-center gap-3 border-accent/60 bg-surface p-3.5`}>
-      <label htmlFor="tablero" className="text-xs text-ink-soft">
-        nombre del tablero
-      </label>
-      <input
-        id="tablero"
-        autoFocus
-        value={nombre}
-        onChange={(e) => setNombre(e.target.value)}
-        onKeyDown={(e) => e.key === "Escape" && setCreando(false)}
-        onBlur={() => !nombre.trim() && setCreando(false)}
-        maxLength={MAX_NOMBRE}
-        placeholder="ideas para…"
-        autoComplete="off"
-        className="w-full rounded-xl border border-line bg-surface-2 px-3 py-2 font-medium placeholder:font-normal placeholder:text-ink-soft"
-      />
-      {nombre.trim() && (
-        <button
-          type="submit"
-          disabled={pending}
-          className="rise press self-start rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-ink disabled:opacity-50"
-        >
-          crear
-        </button>
-      )}
-    </form>
+    <Link href="/lienzo/nuevo" className={`press ${caja} items-center justify-center gap-2 text-ink-soft hover:border-accent/60 hover:text-ink`}>
+      <Plus className="size-7 text-accent" />
+      <span className="text-sm font-medium">nuevo tablero</span>
+    </Link>
   );
 }
