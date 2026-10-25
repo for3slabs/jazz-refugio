@@ -1,16 +1,14 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
-import { PageTitle, Shell } from "@/components/shell";
-import { Palette } from "@/components/icons";
+import { Shell } from "@/components/shell";
 import { currentRole } from "@/lib/session";
 import { Crear } from "./crear";
 
-// Creating a board is its own small screen: she names it, and lands inside it to fill it. No field
-// squeezed into a card, and no empty board left behind if she changes her mind (Brian, 2026-10-25).
+// A new board, in the same frame as a board: she names it here and this screen becomes the board.
+// No field squeezed into a card, and no empty board left behind if she changes her mind.
 export default function NuevoTablero() {
   return (
-    <Shell back>
-      <PageTitle icon={<Palette className="size-7" />}>inspiración</PageTitle>
+    <Shell back wide>
       <Suspense>
         <Content />
       </Suspense>

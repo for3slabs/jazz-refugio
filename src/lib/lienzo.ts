@@ -106,10 +106,16 @@ export async function quitar(tableroId: string, itemId: string): Promise<string 
 
 // Her name and description; the DB keeps the lengths (40 · 280).
 export async function editarTablero(id: string, nombre: string, descripcion: string): Promise<string | void> {
-  const r = await sql()`
-    update tablero set nombre = ${nombre}, descripcion = ${descripcion}, editado = now()
-    where id = ${id} and soltado_en is null`;
-  if (r.count === 0) return "Ese tablero ya no está.";
+  try {
+    const r = await sql()`
+      update tablero set nombre = ${nombre}, descripcion = ${descripcion}, editado = now()
+      where id = ${id} and soltado_en is null`;
+    if (r.count === 0) return "Ese tablero ya no está.";
+  } catch (e) {
+    const f = frase(e); // a name she already uses on another board
+    if (f) return f;
+    throw e;
+  }
 }
 
 // The cover is one of its images or drawings — the DB refuses anything else. null: back to the four.
