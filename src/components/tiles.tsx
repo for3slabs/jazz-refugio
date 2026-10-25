@@ -54,7 +54,7 @@ export function PowerTile({ className = "" }: { className?: string }) {
   );
 }
 
-// Her mode, for Brian — it leads to «de Brian», where he can write to her.
+// Her mode, for Brian — it leads to «mensajes», where he can write to her.
 export function JazzTile({ estado, failed, className = "" }: { estado: Estado | null; failed: boolean; className?: string }) {
   return (
     <Link href="/brian" className={`${tile} ${className}`}>

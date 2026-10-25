@@ -48,7 +48,7 @@ async function Content({ searchParams }: { searchParams: Search }) {
           { key: "viajes", href: "/tu?v=viajes", label: "tus viajes" },
         ];
   const vista = items.some((i) => i.key === v) ? v! : items[0].key;
-  const tabs = <Tabs label="tú" current={vista} items={items} />;
+  const tabs = <Tabs label="colecciones" current={vista} items={items} />;
 
   if (vista === "jardin") {
     const [m, vueltas] = await Promise.all([loadMisiones().catch(() => null), loadVueltas(role).catch(() => [])]);

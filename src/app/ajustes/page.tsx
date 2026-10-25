@@ -15,7 +15,7 @@ export default function Ajustes() {
       </div>
       <form action={salir} className="mt-auto pt-10 text-center">
         <button type="submit" className="text-sm text-ink-soft underline-offset-4 hover:text-ink hover:underline">
-          cerrar tu lienzo en este dispositivo
+          cerrar tu refugio en este dispositivo
         </button>
       </form>
     </Shell>

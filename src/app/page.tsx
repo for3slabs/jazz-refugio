@@ -15,8 +15,9 @@ import { Sparkle } from "@/components/icons";
 // The title lives in the top bar and her mode inside the orb, so the doors fit on a phone
 // without scrolling.
 // The orb is the piece that gives: up to 12rem (14 on a wide screen), shrinking to 6rem when
-// notes above it need the room. Its width follows its height (aspect-square).
-const ORB = "orb-idle aspect-square h-48 min-h-24 w-auto shrink lg:h-56";
+// notes above it need the room. Its width follows its height (aspect-square); mt-12 keeps the
+// room for the thought bubble that floats above it.
+const ORB = "orb-idle mt-12 aspect-square h-48 min-h-24 w-auto shrink lg:h-56";
 
 export default function Home() {
   return (
@@ -36,7 +37,7 @@ export default function Home() {
             href="/volver"
             className="desvio press group inline-flex items-center gap-3 rounded-full px-8 py-4 text-lg font-semibold"
           >
-            me estoy desviando
+            ayúdame a enfocarme
             <Sparkle className="size-5 transition-transform duration-500 ease-[var(--ease-out-strong)] group-hover:rotate-45" />
           </Link>
           <RunningTimer />

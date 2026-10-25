@@ -209,7 +209,7 @@ a {
 [data-sileo-viewport] .notify-text.notify-text.notify-text { text-transform: none; }
 [data-sileo-viewport] .notify-text.notify-text.notify-text { color: color-mix(in oklab, var(--canvas) 72%, transparent); }
 
-/* «me estoy desviando» wears her mode's colour too: the orb and the button are siblings, so
+/* «ayúdame a enfocarme» wears her mode's colour too: the orb and the button are siblings, so
    the section that holds both carries it. The text colour is chosen per mode — check-palette
    measures every pair at ≥ 4.5:1. */
 .desvio {
@@ -237,17 +237,22 @@ a {
   section:has(> .order-first) .home-quote { display: none; }
 }
 
-/* Four doors in one row: on the narrowest phones the labels tighten so «misiones» fits whole. */
-@media (max-width: 359px) {
+/* Four doors in one row: on a phone the labels tighten so «inspiración» and «colecciones» fit
+   whole, and below 390 px they also step down to 10 px. */
+@media (max-width: 479px) {
   nav .t-label { letter-spacing: 0.04em; }
 }
+@media (max-width: 389px) {
+  nav .t-label { font-size: 0.625rem; }
+}
 
-/* The chip on the orb's upper right: dark glass, so it reads on every colour the orb can take. */
-.orb-chip {
-  color: oklch(0.98 0.008 320);
-  background: oklch(0.14 0.028 315 / 0.55);
-  border: 1px solid oklch(1 0 0 / 0.18);
-  backdrop-filter: blur(8px);
+/* Her mode as the cat's thought, above the orb: a pale cloud with two beads trailing to its head.
+   Pale on purpose — dark glass vanished on the dark page once the bubble left the orb (2026-10-25). */
+.pensamiento {
+  color: oklch(0.22 0.06 315);
+  background: oklch(0.97 0.012 320);
+  border: 1px solid var(--line);
+  box-shadow: 0 6px 20px oklch(0.1 0.03 315 / 0.35);
 }
 
 /* The grid behind the bento, like a cutting mat — barely there. */

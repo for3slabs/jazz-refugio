@@ -24,7 +24,7 @@ export function Shell({ children, back = false, wide = false }: { children: Reac
           </Link>
         ) : (
           <h1 className="t-display text-2xl">
-            tu lienzo <span className="t-narrow text-accent">mental</span>
+            tu <span className="t-narrow text-accent">refugio</span>
           </h1>
         )}
         <div className="flex items-center gap-1">

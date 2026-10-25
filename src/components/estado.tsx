@@ -80,14 +80,17 @@ export function EstadoOrb({
 
   return (
     <Orb modo={current?.modo ?? null} className={className}>
-      {/* Her pet lives in the orb: its body opens the wardrobe; the chip on its edge, her mode. */}
+      {/* Her pet lives in the orb: its body opens the wardrobe. Her mode floats above it as the
+          cat's thought — a bubble with two beads trailing down to its head (Brian, 2026-10-25). */}
       <GatoEnEsfera modo={current?.modo ?? null} puestos={puestos} href="/mascota" />
       <button
         type="button"
         aria-haspopup="dialog"
         onClick={() => sheet.current?.showModal()}
-        className="orb-chip press absolute right-0 top-[6%] z-10 translate-x-1/4 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-semibold"
+        className="pensamiento press absolute bottom-full left-[52%] z-10 mb-5 whitespace-nowrap rounded-[1.4rem] px-4 py-2 text-sm font-semibold"
       >
+        <span aria-hidden className="pensamiento absolute left-2.5 top-full mt-1 size-3 rounded-full" />
+        <span aria-hidden className="pensamiento absolute -left-0.5 top-full mt-5 size-2 rounded-full" />
         {current ? current.modo : "¿cómo estás?"}
       </button>
 

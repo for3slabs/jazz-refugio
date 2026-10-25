@@ -1,4 +1,4 @@
-# tu lienzo mental
+# tu refugio
 
 A small, calm web app to come back to: when the mind drifts, one button brings it back in
 under a minute — breathe, pick the smallest next step, start a short timer — and rewards the
@@ -34,7 +34,7 @@ sits at OKLCH hue 200–300°, if a theme token leaves 305–345°, or if a text
 - **No personal content lives in this repository.** Notes are one private file in a Vercel Blob store
   (`src/lib/notes.ts`), read without the CDN cache so a new one shows at once; the garden, the timer
   and the theme stay in the visitor's own browser (`src/lib/local.ts`).
-- A note she has not opened makes the «de Brian» door glow (`/api/ultima` returns only its time).
+- A note she has not opened makes the «mensajes» door glow (`/api/ultima` returns only its time).
 - Pages are marked `noindex`.
 
 ## Configuration

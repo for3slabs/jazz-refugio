@@ -18,7 +18,7 @@ export default function Mascota() {
   );
 }
 
-// Her pet is hers to dress; Brian gives objects from his side («de Brian» › regalos).
+// Her pet is hers to dress; Brian gives objects from his side («mensajes» › regalos).
 async function Content() {
   const role = await currentRole();
   if (!role) redirect("/entrar");

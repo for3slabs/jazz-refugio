@@ -9,7 +9,7 @@ import { Lista } from "./lista";
 export default function Lienzo({ searchParams }: PageProps<"/lienzo">) {
   return (
     <Shell back>
-      <PageTitle icon={<Palette className="size-7" />}>lienzo</PageTitle>
+      <PageTitle icon={<Palette className="size-7" />}>inspiración</PageTitle>
       <Suspense fallback={<div className="mt-8 h-40 animate-pulse rounded-3xl bg-accent-soft/60" aria-hidden />}>
         <Boards searchParams={searchParams} />
       </Suspense>

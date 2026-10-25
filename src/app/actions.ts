@@ -64,7 +64,7 @@ export type EntrarState = { error: string | null };
 
 export async function entrar(_: EntrarState, form: FormData): Promise<EntrarState> {
   if (!process.env.REFUGIO_CLAVE || !process.env.REFUGIO_SECRETO) {
-    return { error: "Tu lienzo todavía no está listo. Avísale a Brian." };
+    return { error: "Tu refugio todavía no está listo. Avísale a Brian." };
   }
 
   const given = digest(String(form.get("clave") ?? ""));

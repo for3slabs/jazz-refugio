@@ -12,7 +12,7 @@ const bricolage = Bricolage_Grotesque({
 });
 
 export const metadata: Metadata = {
-  title: "tu lienzo mental",
+  title: "tu refugio",
   description: "un lugar para volver",
   // A private place: never indexed, never previewed.
   robots: { index: false, follow: false },
