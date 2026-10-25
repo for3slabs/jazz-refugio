@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Diamond, Letter, Palette, Star } from "./icons";
 
 // Her three places, then «colecciones» set apart: it is about her, not something she does (Brian, 2026-10-24).
@@ -36,15 +36,16 @@ function useUnreadNote() {
 export function Doors() {
   const unread = useUnreadNote();
   return (
-    // one row on every screen: three doors, a quiet divider, then «colecciones»
-    <nav className="grid grid-cols-[1fr_1fr_1fr_auto_1fr] items-center gap-x-1 border-t border-dashed border-line pt-5 sm:gap-x-3">
-      {doors.map(({ href, label, Icon }, i) => {
+    // On a phone, a tab bar: edge to edge, a hairline on top, four equal columns, lowercase labels
+    // like every other word in the app. On a wide screen, a quiet row under the bento.
+    <nav className="-mx-5 grid grid-cols-4 border-t border-line px-1 pb-3 pt-2 sm:-mx-8 lg:mx-0 lg:border-dashed lg:px-0 lg:pb-0 lg:pt-5">
+      {doors.map(({ href, label, Icon }) => {
         const glow = unread && href === "/brian";
         const door = (
           <Link
             key={href}
             href={href}
-            className={`press group t-label flex min-w-0 flex-col items-center gap-2.5 rounded-2xl py-2 text-center whitespace-nowrap hover:text-ink ${
+            className={`press group flex min-w-0 flex-col items-center gap-1.5 rounded-2xl py-2 text-center text-xs font-medium whitespace-nowrap hover:text-ink ${
               glow ? "text-ink" : "text-ink-soft"
             }`}
           >
@@ -65,14 +66,7 @@ export function Doors() {
             {glow && <span className="sr-only">(hay algo nuevo de Brian)</span>}
           </Link>
         );
-        return i === doors.length - 1 ? (
-          <Fragment key={href}>
-            <span aria-hidden className="mx-1 h-9 w-px self-center bg-line sm:mx-3" />
-            {door}
-          </Fragment>
-        ) : (
-          door
-        );
+        return door;
       })}
     </nav>
   );

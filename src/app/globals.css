@@ -237,14 +237,6 @@ a {
   section:has(> .order-first) .home-quote { display: none; }
 }
 
-/* Four doors in one row: on a phone the labels tighten so «inspiración» and «colecciones» fit
-   whole, and below 390 px they also step down to 10 px. */
-@media (max-width: 479px) {
-  nav .t-label { letter-spacing: 0.04em; }
-}
-@media (max-width: 389px) {
-  nav .t-label { font-size: 0.625rem; }
-}
 
 /* Her mode as the cat's thought, above the orb: a pale cloud with two beads trailing to its head.
    Pale on purpose — dark glass vanished on the dark page once the bubble left the orb (2026-10-25). */
