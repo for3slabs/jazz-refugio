@@ -23,7 +23,7 @@ import { LoSoltado } from "@/components/soltado";
 import { MAX_TEXTO } from "@/lib/mision";
 import { type Enlace, type Idea, type Meta, MAX_DESCRIPCION_META, MAX_METAS, MAX_PASOS, cuando, siguiente, terminada } from "@/lib/pendiente";
 import type { Soltado } from "@/lib/soltado";
-import { AsistenteBoton } from "./asistente";
+import { AsistenteBoton, AsistenteGeneral } from "@/components/asistente";
 import { PartirEnPasos } from "./ayudantes";
 
 type View = { mente: Idea[]; metas: Meta[] };
@@ -381,6 +381,8 @@ function List({
       {(hechas.length > 0 || soltado.length > 0) && <Historial hechas={hechas} soltado={soltado} />}
       {/* room under the last line, so the assistant's floating button never sits on it */}
       <div aria-hidden className="h-16" />
+      {/* the page's own assistant is off (misiones mounts its own per view): the list gets the general one */}
+      <AsistenteGeneral />
     </>
   );
 }
@@ -695,10 +697,12 @@ function Goal({
 
       {/* room under the last line, so the assistant's floating button never sits on it */}
       <div aria-hidden className="h-16" />
-      {meta.pasos.length < MAX_PASOS && !done && (
+      {meta.pasos.length < MAX_PASOS && !done ? (
         <AsistenteBoton label="asistente: te ayuda a partir esta meta en pasos">
           <PartirEnPasos key={meta.pasos.length} metaId={meta.id} />
         </AsistenteBoton>
+      ) : (
+        <AsistenteGeneral />
       )}
     </div>
   );
