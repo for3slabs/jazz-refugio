@@ -197,3 +197,9 @@ export const Plus = ({ className }: P) => (
     <path d="M12 6v12M6 12h12" />
   </svg>
 );
+
+export const Trash = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <path d="M5 7h14M10 4h4M7 7l.8 11.2A2 2 0 0 0 9.8 20h4.4a2 2 0 0 0 2-1.8L17 7M10.5 11v5M13.5 11v5" />
+  </svg>
+);

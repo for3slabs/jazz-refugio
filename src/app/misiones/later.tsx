@@ -18,7 +18,7 @@ import {
 } from "@/app/actions";
 import { Confetti } from "@/components/confetti";
 import { Flower } from "@/components/flower";
-import { ArrowLeft, ArrowRight, Check, Chevron, More, Pencil, Plus } from "@/components/icons";
+import { ArrowLeft, ArrowRight, Check, Chevron, More, Pencil, Plus, Trash } from "@/components/icons";
 import { LoSoltado } from "@/components/soltado";
 import { MAX_TEXTO } from "@/lib/mision";
 import { type Idea, type Meta, MAX_DESCRIPCION_META, MAX_METAS, MAX_PASOS, cuando, siguiente, terminada } from "@/lib/pendiente";
@@ -214,6 +214,7 @@ function List({
   const [menu, setMenu] = useState<string | null>(null);
   const [todas, setTodas] = useState(false);
   const [nueva, setNueva] = useState(false);
+  const [pagina, setPagina] = useState<"metas" | "mente">("metas");
   const activas = view.metas.filter((m) => !terminada(m));
   const hechas = view.metas.filter(terminada);
   const mente = todas ? view.mente : view.mente.slice(0, VISIBLES_MENTE);
@@ -228,110 +229,135 @@ function List({
 
   return (
     <>
-      <h2 className="mt-8 text-lg font-semibold">tus metas</h2>
-      <p className="mt-0.5 text-pretty text-sm text-ink-soft">lo grande, en pasos pequeños</p>
-      <ul className={`mt-3 ${lista}`}>
-        {activas.map((m, i) => (
-          <li key={m.id} className="rise" style={{ animationDelay: `${Math.min(i, 4) * 40}ms` }}>
-            <button type="button" onClick={() => abrir(m.id)} className="press flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left hover:bg-surface-2">
-              <span className="min-w-0 flex-1">
-                <span className="block text-pretty font-medium leading-snug">{m.titulo}</span>
-                {m.descripcion && <span className="mt-0.5 block truncate text-sm text-ink-soft">{m.descripcion}</span>}
-                <span className="mt-1.5 block">
-                  <Estado meta={m} />
-                </span>
-              </span>
-              <ArrowRight className="size-4 shrink-0 text-ink-soft" />
-            </button>
-          </li>
+      {/* Two pages side by side, like an open book: one name lit and underlined, a tap turns to
+          the other — nothing stacks downwards (Brian, 2026-10-25). */}
+      <div role="tablist" aria-label="más adelante" className="mt-8 flex items-end gap-6">
+        {(
+          [
+            ["metas", "tus metas"],
+            ["mente", "en tu mente"],
+          ] as const
+        ).map(([k, label]) => (
+          <button
+            key={k}
+            type="button"
+            role="tab"
+            aria-selected={pagina === k}
+            onClick={() => setPagina(k)}
+            className={`press -mb-px border-b-2 pb-1 text-lg font-semibold transition-colors ${
+              pagina === k ? "border-accent text-ink" : "border-transparent text-ink-soft hover:text-ink"
+            }`}
+          >
+            {label}
+          </button>
         ))}
-        <li>
-          {activas.length >= MAX_METAS ? (
-            <p className="px-4 py-3.5 text-pretty text-sm text-ink-soft">Tienes {MAX_METAS} metas. Termina o suelta una primero.</p>
-          ) : nueva ? (
-            <MetaForm
-              onCancel={() => setNueva(false)}
-              onSave={(titulo, descripcion, para) => {
-                setNueva(false);
-                run({ k: "meta+", m: { id: tmp(), titulo, descripcion, para, at: Date.now(), pasos: [] } }, () => crearMeta(titulo, para, descripcion));
-              }}
-            />
-          ) : (
-            <button type="button" onClick={() => setNueva(true)} className="press flex min-h-14 w-full items-center gap-3 px-4 text-left text-ink-soft hover:bg-surface-2 hover:text-ink">
-              <Plus className="size-5 text-accent" />
-              nueva meta
-            </button>
-          )}
-        </li>
-      </ul>
+      </div>
+      <p className="mt-2 text-pretty text-sm text-ink-soft">{pagina === "metas" ? "lo grande, en pasos pequeños" : "lo que no quieres olvidar"}</p>
 
-      <h2 className="mt-10 text-lg font-semibold">en tu mente</h2>
-      <p className="mt-0.5 text-pretty text-sm text-ink-soft">lo que no quieres olvidar</p>
-      <ul className={`mt-3 ${lista}`}>
-        <li>
-          <form onSubmit={capture} className="flex min-h-14 items-center gap-3 py-2 pl-4 pr-2 focus-within:bg-surface-2">
-            <label htmlFor="idea" className="sr-only">
-              anotar algo
-            </label>
-            <input
-              id="idea"
-              value={idea}
-              onChange={(e) => setIdea(e.target.value)}
-              maxLength={240}
-              placeholder="algo para no olvidar…"
-              autoComplete="off"
-              style={{ boxShadow: "none" }}
-              className={campo}
-            />
-            {idea.trim() && (
-              <button type="submit" className="rise press shrink-0 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-ink">
-                anotar
+      <div role="tabpanel" hidden={pagina !== "metas"}>
+        <ul className={`mt-3 ${lista}`}>
+          {activas.map((m, i) => (
+            <li key={m.id} className="rise" style={{ animationDelay: `${Math.min(i, 4) * 40}ms` }}>
+              <button type="button" onClick={() => abrir(m.id)} className="press flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left hover:bg-surface-2">
+                <span className="min-w-0 flex-1">
+                  <span className="block text-pretty font-medium leading-snug">{m.titulo}</span>
+                  {m.descripcion && <span className="mt-0.5 block truncate text-sm text-ink-soft">{m.descripcion}</span>}
+                  <span className="mt-1.5 block">
+                    <Estado meta={m} />
+                  </span>
+                </span>
+                <ArrowRight className="size-4 shrink-0 text-ink-soft" />
+              </button>
+            </li>
+          ))}
+          <li>
+            {activas.length >= MAX_METAS ? (
+              <p className="px-4 py-3.5 text-pretty text-sm text-ink-soft">Tienes {MAX_METAS} metas. Termina o suelta una primero.</p>
+            ) : nueva ? (
+              <MetaForm
+                onCancel={() => setNueva(false)}
+                onSave={(titulo, descripcion, para) => {
+                  setNueva(false);
+                  run({ k: "meta+", m: { id: tmp(), titulo, descripcion, para, at: Date.now(), pasos: [] } }, () => crearMeta(titulo, para, descripcion));
+                }}
+              />
+            ) : (
+              <button type="button" onClick={() => setNueva(true)} className="press flex min-h-14 w-full items-center gap-3 px-4 text-left text-ink-soft hover:bg-surface-2 hover:text-ink">
+                <Plus className="size-5 text-accent" />
+                nueva meta
               </button>
             )}
-          </form>
-        </li>
-        {mente.map((i) => (
-          <li key={i.id}>
-            <div className="flex min-h-12 items-center gap-3 py-1.5 pl-4 pr-1">
-              <p className="flex-1 text-pretty">{i.texto}</p>
-              <button
-                type="button"
-                aria-expanded={menu === i.id}
-                aria-label={`opciones: ${i.texto}`}
-                onClick={() => setMenu(menu === i.id ? null : i.id)}
-                className="press grid size-10 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-surface-2 hover:text-ink"
-              >
-                <More className="size-5" />
-              </button>
-            </div>
-            {menu === i.id && (
-              <div className="rise flex flex-wrap items-center gap-2 px-4 pb-3">
-                <Chip disabled={hoyLleno} onClick={() => run({ k: "idea-", id: i.id }, () => ideaAHoy(i.id), "listo, está en hoy")}>
-                  {hoyLleno ? "hoy está lleno" : "a hoy"}
-                </Chip>
-                <Chip disabled={activas.length >= MAX_METAS} onClick={() => run({ k: "idea-", id: i.id }, () => ideaAMeta(i.id), "listo, ahora es una meta")}>
-                  hacerla meta
-                </Chip>
+          </li>
+        </ul>
+      </div>
+
+      <div role="tabpanel" hidden={pagina !== "mente"}>
+        <ul className={`mt-3 ${lista}`}>
+          <li>
+            <form onSubmit={capture} className="flex min-h-14 items-center gap-3 py-2 pl-4 pr-2 focus-within:bg-surface-2">
+              <label htmlFor="idea" className="sr-only">
+                anotar algo
+              </label>
+              <input
+                id="idea"
+                value={idea}
+                onChange={(e) => setIdea(e.target.value)}
+                maxLength={240}
+                placeholder="algo para no olvidar…"
+                autoComplete="off"
+                style={{ boxShadow: "none" }}
+                className={campo}
+              />
+              {idea.trim() && (
+                <button type="submit" className="rise press shrink-0 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-ink">
+                  anotar
+                </button>
+              )}
+            </form>
+          </li>
+          {mente.map((i) => (
+            <li key={i.id}>
+              <div className="flex min-h-12 items-center gap-3 py-1.5 pl-4 pr-1">
+                <p className="flex-1 text-pretty">{i.texto}</p>
                 <button
                   type="button"
-                  onClick={() => run({ k: "idea-", id: i.id }, () => soltarIdea(i.id), undefined, { tipo: "idea", id: i.id, texto: i.texto })}
-                  className="press ml-auto rounded-full px-3 py-1.5 text-xs font-medium text-ink-soft hover:text-ink"
+                  aria-expanded={menu === i.id}
+                  aria-label={`opciones: ${i.texto}`}
+                  onClick={() => setMenu(menu === i.id ? null : i.id)}
+                  className="press grid size-10 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-surface-2 hover:text-ink"
                 >
-                  soltar
+                  <More className="size-5" />
                 </button>
               </div>
-            )}
-          </li>
-        ))}
-        {/* a long list stays short until she asks — five, then «ver las N» */}
-        {!todas && view.mente.length > VISIBLES_MENTE && (
-          <li>
-            <button type="button" onClick={() => setTodas(true)} className="press flex min-h-12 w-full items-center px-4 text-left text-sm text-ink-soft hover:bg-surface-2 hover:text-ink">
-              ver las {view.mente.length}
-            </button>
-          </li>
-        )}
-      </ul>
+              {menu === i.id && (
+                <div className="rise flex flex-wrap items-center gap-2 px-4 pb-3">
+                  <Chip disabled={hoyLleno} onClick={() => run({ k: "idea-", id: i.id }, () => ideaAHoy(i.id), "listo, está en hoy")}>
+                    {hoyLleno ? "hoy está lleno" : "a hoy"}
+                  </Chip>
+                  <Chip disabled={activas.length >= MAX_METAS} onClick={() => run({ k: "idea-", id: i.id }, () => ideaAMeta(i.id), "listo, ahora es una meta")}>
+                    hacerla meta
+                  </Chip>
+                  <button
+                    type="button"
+                    onClick={() => run({ k: "idea-", id: i.id }, () => soltarIdea(i.id), undefined, { tipo: "idea", id: i.id, texto: i.texto })}
+                    className="press ml-auto rounded-full px-3 py-1.5 text-xs font-medium text-ink-soft hover:text-ink"
+                  >
+                    soltar
+                  </button>
+                </div>
+              )}
+            </li>
+          ))}
+          {/* a long list stays short until she asks — five, then «ver las N» */}
+          {!todas && view.mente.length > VISIBLES_MENTE && (
+            <li>
+              <button type="button" onClick={() => setTodas(true)} className="press flex min-h-12 w-full items-center px-4 text-left text-sm text-ink-soft hover:bg-surface-2 hover:text-ink">
+                ver las {view.mente.length}
+              </button>
+            </li>
+          )}
+        </ul>
+      </div>
 
       {(hechas.length > 0 || soltado.length > 0) && <Historial hechas={hechas} soltado={soltado} />}
       {/* room under the last line, so the assistant's floating button never sits on it */}
@@ -502,17 +528,46 @@ function Goal({
         </div>
       ) : (
         <>
-          <div className="mt-2 flex items-start gap-2">
+          <div className="mt-2 flex items-start gap-1">
             <h2 className="flex-1 text-pretty text-2xl font-semibold leading-tight">{meta.titulo}</h2>
             <button
               type="button"
               aria-label="editar la meta"
               onClick={() => setEditando(true)}
-              className="press -mr-2 -mt-1 grid size-10 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-surface-2 hover:text-ink"
+              className="press -mt-1 grid size-10 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-surface-2 hover:text-ink"
             >
               <Pencil className="size-4" />
             </button>
+            {/* in sight beside the pencil (Brian, 2026-10-25: «muy escondido»); it lets the goal go,
+                so «historial» can bring it back for 30 days */}
+            <button
+              type="button"
+              aria-label="eliminar la meta"
+              aria-expanded={seguro}
+              onClick={() => setSeguro(!seguro)}
+              className="press -mr-2 -mt-1 grid size-10 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-surface-2 hover:text-ink"
+            >
+              <Trash className="size-4" />
+            </button>
           </div>
+          {seguro && (
+            <div className="rise mt-2 flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface px-4 py-3 text-sm">
+              <p className="mr-auto text-pretty text-ink-soft">¿La eliminas? Sus pasos se van con ella. 30 días puedes recuperarla desde historial.</p>
+              <button type="button" onClick={() => setSeguro(false)} className="press rounded-full px-3 py-1.5 text-xs font-medium text-ink-soft hover:text-ink">
+                no
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  run({ k: "meta-", id: meta.id }, () => borrarMeta(meta.id), undefined, { tipo: "meta", id: meta.id, texto: meta.titulo });
+                  cerrar();
+                }}
+                className="press rounded-full border border-line px-3 py-1.5 text-xs font-semibold text-ink hover:border-accent/60"
+              >
+                sí, eliminar
+              </button>
+            </div>
+          )}
           {meta.descripcion && <p className="mt-1 text-pretty text-sm text-ink-soft">{meta.descripcion}</p>}
           <div className="mt-2">
             <Estado meta={meta} />
@@ -595,31 +650,6 @@ function Goal({
           </li>
         )}
       </ul>
-
-      <div className="mt-8">
-        {seguro ? (
-          <p className="flex flex-wrap items-center gap-3 text-sm text-ink-soft">
-            ¿La sueltas? Sus pasos se van con ella, y vuelven si la recuperas.
-            <button
-              type="button"
-              onClick={() => {
-                run({ k: "meta-", id: meta.id }, () => borrarMeta(meta.id), undefined, { tipo: "meta", id: meta.id, texto: meta.titulo });
-                cerrar();
-              }}
-              className="press rounded-full border border-line px-3 py-1.5 text-xs font-medium text-ink hover:border-accent/60"
-            >
-              sí, soltarla
-            </button>
-            <button type="button" onClick={() => setSeguro(false)} className="press px-2 py-1.5 text-xs font-medium hover:text-ink">
-              no
-            </button>
-          </p>
-        ) : (
-          <button type="button" onClick={() => setSeguro(true)} className="press -ml-2 rounded-full px-2 py-1.5 text-xs font-medium text-ink-soft hover:text-ink">
-            soltar esta meta
-          </button>
-        )}
-      </div>
 
       {/* room under the last line, so the assistant's floating button never sits on it */}
       <div aria-hidden className="h-16" />
