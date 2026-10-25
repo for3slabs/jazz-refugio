@@ -18,8 +18,10 @@ import {
   moverItem,
   quitar,
   restaurarTablero,
+  PREFIX,
 } from "@/lib/lienzo";
-import { MAX_DESCRIPCION, MAX_NOMBRE, MAX_NOTA, isHex } from "@/lib/tablero";
+import { MAX_DESCRIPCION, MAX_DOC, MAX_NOMBRE, MAX_NOTA, isHex } from "@/lib/tablero";
+import { head } from "@vercel/blob";
 import { MAX_RESPUESTA } from "@/lib/entre";
 import { contestar, marcarPresente } from "@/lib/presente";
 import { type Abierto, MAX_REGALO, MAX_TITULO, MAX_TRAS } from "@/lib/regalo";
@@ -467,6 +469,27 @@ export const agregarNota = async (tablero: string, t: string) =>
     const v = texto(t, MAX_NOTA);
     if (typeof v !== "string") return v.error;
     return agregarAlTablero(tablero, { tipo: "nota", texto: v });
+  });
+
+// A «doc» she just sent straight to Blob: it must be in her docs folder, really there and within
+// 10 MB (checked on Blob itself, not trusted from the device) before it joins the board.
+export const registrarDoc = async (tablero: string, pathname: string, nombre: string, mime: string) =>
+  deJazz(async () => {
+    if (!pathname.startsWith(`${PREFIX}/doc/`)) return "Ese archivo no se puede agregar.";
+    const b = await head(pathname).catch(() => null);
+    if (!b) return "El archivo no llegó. Inténtalo otra vez.";
+    if (b.size > MAX_DOC) return "Ese archivo pesa más de 10 MB.";
+    const n = nombre.trim().slice(0, 200) || "documento";
+    return agregarAlTablero(tablero, { tipo: "doc", path: b.pathname, nombre: n, mime: (mime || b.contentType || "").slice(0, 120) || undefined, bytes: b.size });
+  });
+
+// A «liga»: any web address, its preview read once through the guarded reader (lib/vista-previa).
+export const agregarLiga = async (tablero: string, url: string) =>
+  deJazz(async () => {
+    const e = await enlaceDe(url);
+    if (!e) return "Escribe una dirección primero.";
+    if (typeof e === "string") return e;
+    return agregarAlTablero(tablero, { tipo: "enlace", enlace: e });
   });
 
 export const quitarDelTablero = async (tablero: string, item: string) => deJazz(() => quitar(tablero, item));

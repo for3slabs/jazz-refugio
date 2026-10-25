@@ -7,7 +7,7 @@ import { type Item, type Tablero, type Tipo } from "./tablero";
 // checks who asks. Brian sees a board only once she shares it, and never edits it. Letting a
 // board or a thing go hides it and keeps its file, so «undo» can bring it back. Each operation
 // returns a sentence for her on failure.
-const PREFIX = process.env.VERCEL_ENV === "production" ? "lienzo" : "lienzo-dev";
+export const PREFIX = process.env.VERCEL_ENV === "production" ? "lienzo" : "lienzo-dev";
 
 type FilaItem = {
   id: string;
@@ -18,6 +18,13 @@ type FilaItem = {
   alto: number | null;
   color: string | null;
   texto: string | null;
+  nombre: string | null;
+  mime: string | null;
+  bytes: number | null;
+  url: string | null;
+  url_titulo: string | null;
+  url_imagen: string | null;
+  url_sitio: string | null;
   creado: Date;
 };
 
@@ -30,6 +37,10 @@ const item = (i: FilaItem): Item => ({
   ...(i.alto && { h: i.alto }),
   ...(i.color && { color: i.color }),
   ...(i.texto && { texto: i.texto }),
+  ...(i.nombre && { nombre: i.nombre }),
+  ...(i.mime && { mime: i.mime }),
+  ...(i.bytes && { bytes: i.bytes }),
+  ...(i.url && { enlace: { url: i.url, titulo: i.url_titulo, imagen: i.url_imagen, sitio: i.url_sitio } }),
 });
 
 export async function loadTableros(): Promise<Tablero[]> {
@@ -40,7 +51,8 @@ export async function loadTableros(): Promise<Tablero[]> {
       select id, nombre, descripcion, portada_item_id, creado, compartido from tablero
       where soltado_en is null order by orden, creado desc`,
     db<FilaItem[]>`
-      select i.id, i.tablero_id, i.tipo, i.archivo, i.ancho, i.alto, i.color, i.texto, i.creado
+      select i.id, i.tablero_id, i.tipo, i.archivo, i.ancho, i.alto, i.color, i.texto,
+             i.nombre, i.mime, i.bytes, i.url, i.url_titulo, i.url_imagen, i.url_sitio, i.creado
       from item i join tablero t on t.id = i.tablero_id
       where i.soltado_en is null and t.soltado_en is null order by i.orden, i.creado desc`,
   ]);
@@ -88,9 +100,10 @@ export async function agregar(tableroId: string, nuevo: Omit<Item, "id" | "at">)
   if (!t) return "Ese tablero ya no está.";
   return con(
     () => sql()`
-      insert into item (tablero_id, tipo, archivo, ancho, alto, color, texto, orden)
+      insert into item (tablero_id, tipo, archivo, ancho, alto, color, texto, nombre, mime, bytes, url, url_titulo, url_imagen, url_sitio, orden)
       values (${tableroId}, ${nuevo.tipo}, ${nuevo.path ?? null}, ${nuevo.w ?? null}, ${nuevo.h ?? null},
-              ${nuevo.color ?? null}, ${nuevo.texto ?? null},
+              ${nuevo.color ?? null}, ${nuevo.texto ?? null}, ${nuevo.nombre ?? null}, ${nuevo.mime ?? null}, ${nuevo.bytes ?? null},
+              ${nuevo.enlace?.url ?? null}, ${nuevo.enlace?.titulo ?? null}, ${nuevo.enlace?.imagen ?? null}, ${nuevo.enlace?.sitio ?? null},
               -- a new thing goes first, ahead of the order she set
               (select coalesce(min(orden), 0) - 1 from item where tablero_id = ${tableroId}))`,
   );
@@ -184,6 +197,18 @@ export async function imagenPara(itemId: string, role: "jazz" | "brian") {
     where i.id = ${itemId} and i.archivo is not null and i.soltado_en is null and t.soltado_en is null
       and (${role} = 'jazz' or t.compartido)`;
   return i ? get(i.archivo, { access: "private" }) : null;
+}
+
+// A doc, with what the download needs: she always; Brian only when its board is shared.
+export async function docPara(itemId: string, role: "jazz" | "brian") {
+  if (!esId(itemId)) return null;
+  const [i] = await sql()<{ archivo: string; nombre: string; mime: string | null }[]>`
+    select i.archivo, i.nombre, i.mime from item i join tablero t on t.id = i.tablero_id
+    where i.id = ${itemId} and i.tipo = 'doc' and i.soltado_en is null and t.soltado_en is null
+      and (${role} = 'jazz' or t.compartido)`;
+  if (!i) return null;
+  const res = await get(i.archivo, { access: "private" });
+  return res ? { res, nombre: i.nombre, mime: i.mime } : null;
 }
 
 // What each one may see of the boards.

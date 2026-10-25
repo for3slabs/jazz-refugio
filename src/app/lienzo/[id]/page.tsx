@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import { Shell } from "@/components/shell";
-import { loadTableros, visibles } from "@/lib/lienzo";
+import { PREFIX, loadTableros, visibles } from "@/lib/lienzo";
 import { currentRole } from "@/lib/session";
 import { Board } from "./board";
 
@@ -24,5 +24,5 @@ async function Content({ params }: { params: Params }) {
   // Brian reaches a board only if she shared it — otherwise it does not exist for him.
   const t = visibles(await loadTableros(), role).find((x) => x.id === id);
   if (!t) notFound();
-  return <Board tablero={t} isBrian={role === "brian"} />;
+  return <Board tablero={t} isBrian={role === "brian"} docs={`${PREFIX}/doc`} />;
 }
