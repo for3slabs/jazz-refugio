@@ -1,6 +1,6 @@
 import { frase, hayBase, ms, sql } from "./db";
 import { MAX_TEXTO } from "./mision";
-import type { Idea, Meta, Paso, Pendientes } from "./pendiente";
+import type { Enlace, Idea, Meta, Paso, Pendientes } from "./pendiente";
 
 // What does not fit in today: her captured thoughts and her goals. Rows in Postgres, synced
 // between her devices; only she reads or writes them. Every operation returns an error sentence
@@ -25,8 +25,18 @@ export async function loadPendientes(): Promise<Pendientes> {
   const [ideas, metas, pasos] = await Promise.all([
     db<{ id: string; texto: string; anotada_en: Date }[]>`
       select id, texto, anotada_en from idea where soltada_en is null and paso_a is null order by anotada_en desc`,
-    db<{ id: string; titulo: string; descripcion: string | null; para: string | null; creada_en: Date }[]>`
-      select id, titulo, descripcion, to_char(para, 'YYYY-MM-DD') as para, creada_en from meta
+    db<{
+      id: string;
+      titulo: string;
+      descripcion: string | null;
+      para: string | null;
+      creada_en: Date;
+      url: string | null;
+      url_titulo: string | null;
+      url_imagen: string | null;
+      url_sitio: string | null;
+    }[]>`
+      select id, titulo, descripcion, to_char(para, 'YYYY-MM-DD') as para, creada_en, url, url_titulo, url_imagen, url_sitio from meta
       where soltada_en is null order by creada_en desc`,
     db<{ id: string; meta_id: string; texto: string; hecho_en: Date | null; en_hoy: boolean }[]>`
       select p.id, p.meta_id, p.texto, p.hecho_en,
@@ -41,6 +51,7 @@ export async function loadPendientes(): Promise<Pendientes> {
         titulo: m.titulo,
         descripcion: m.descripcion,
         para: m.para,
+        enlace: m.url ? { url: m.url, titulo: m.url_titulo, imagen: m.url_imagen, sitio: m.url_sitio } : null,
         at: ms(m.creada_en)!,
         pasos: pasos
           .filter((p) => p.meta_id === m.id)
@@ -80,14 +91,26 @@ export const pasarIdeaAMeta = (id: string) =>
     }),
   );
 
-export const nuevaMeta = (titulo: string, para: string | null, descripcion: string | null = null) =>
-  con(() => sql()`insert into meta (titulo, para, descripcion) values (${titulo}, ${para}, ${descripcion})`);
+export const nuevaMeta = (titulo: string, para: string | null, descripcion: string | null = null, enlace: Enlace | null = null) =>
+  con(
+    () => sql()`
+      insert into meta (titulo, para, descripcion, url, url_titulo, url_imagen, url_sitio)
+      values (${titulo}, ${para}, ${descripcion}, ${enlace?.url ?? null}, ${enlace?.titulo ?? null}, ${enlace?.imagen ?? null}, ${enlace?.sitio ?? null})`,
+  );
 
 // Her goal's name, description and date, changed from its detail. False when it is no longer hers
 // to change (let go meanwhile).
-export async function editarMeta(id: string, titulo: string, descripcion: string | null, para: string | null): Promise<boolean> {
+export async function editarMeta(
+  id: string,
+  titulo: string,
+  descripcion: string | null,
+  para: string | null,
+  enlace: Enlace | null,
+): Promise<boolean> {
   const rows = await sql()`
-    update meta set titulo = ${titulo}, descripcion = ${descripcion}, para = ${para}
+    update meta set titulo = ${titulo}, descripcion = ${descripcion}, para = ${para},
+      url = ${enlace?.url ?? null}, url_titulo = ${enlace?.titulo ?? null},
+      url_imagen = ${enlace?.imagen ?? null}, url_sitio = ${enlace?.sitio ?? null}
     where id = ${id} and soltada_en is null returning id`;
   return rows.length > 0;
 }

@@ -27,7 +27,8 @@ import { abrir, borrar, crear, usar } from "@/lib/regalos";
 import { type ObjetoId, isObjeto, limpiarPuestos } from "@/lib/objeto";
 import { limpiarNombre, regalar, saveMascota } from "@/lib/mascota";
 import { ESTADOS_MISION, type EstadoMision, MAX_TEXTO } from "@/lib/mision";
-import { MAX_DESCRIPCION_META, MAX_PASOS, siguiente, terminada } from "@/lib/pendiente";
+import { type Enlace, MAX_DESCRIPCION_META, MAX_PASOS, siguiente, terminada } from "@/lib/pendiente";
+import { urlValida, vistaPrevia } from "@/lib/vista-previa";
 import { agregar, cumplir, florDePaso, loadMisiones, marcarEstadoMision, soltar } from "@/lib/misiones";
 import {
   anotarIdea,
@@ -230,19 +231,34 @@ export const ideaAMeta = async (id: string) => deJazz(() => pasarIdeaAMeta(id));
 const fechaValida = (para: string | null) => (para && /^\d{4}-\d{2}-\d{2}$/.test(para) ? para : null);
 const descripcionDe = (d: string | null | undefined) => (d ?? "").trim().slice(0, MAX_DESCRIPCION_META) || null;
 
-export const crearMeta = async (t: string, para: string | null, descripcion?: string | null) =>
+// A link she pins: «behance.net/…» works without «https://». Its page's preview is read once, here,
+// through the guarded reader; a page that does not share one still keeps the link.
+async function enlaceDe(raw: string | null | undefined): Promise<Enlace | null | string> {
+  const t = (raw ?? "").trim();
+  if (!t) return null;
+  const u = urlValida(/^[a-z][a-z0-9+.-]*:/i.test(t) ? t : `https://${t}`);
+  if (!u) return "Ese enlace no se puede usar. Revisa que sea una página web (https://…).";
+  const v = await vistaPrevia(u);
+  return { url: u.href, titulo: v?.titulo ?? null, imagen: v?.imagen ?? null, sitio: v?.sitio ?? u.hostname.replace(/^www\./, "") };
+}
+
+export const crearMeta = async (t: string, para: string | null, descripcion?: string | null, url?: string | null) =>
   deJazz(async () => {
     const v = texto(t);
     if (typeof v !== "string") return v.error;
-    return nuevaMeta(v, fechaValida(para), descripcionDe(descripcion));
+    const e = await enlaceDe(url);
+    if (typeof e === "string") return e;
+    return nuevaMeta(v, fechaValida(para), descripcionDe(descripcion), e);
   });
 
-// The pencil on a goal: its name, description and date in one save.
-export const editarLaMeta = async (id: string, t: string, descripcion: string | null, para: string | null) =>
+// The pencil on a goal: its name, description, date and link in one save.
+export const editarLaMeta = async (id: string, t: string, descripcion: string | null, para: string | null, url?: string | null) =>
   deJazz(async () => {
     const v = texto(t);
     if (typeof v !== "string") return v.error;
-    if (!(await editarMeta(id, v, descripcionDe(descripcion), fechaValida(para)))) return "Esa meta ya no está.";
+    const e = await enlaceDe(url);
+    if (typeof e === "string") return e;
+    if (!(await editarMeta(id, v, descripcionDe(descripcion), fechaValida(para), e))) return "Esa meta ya no está.";
   });
 
 export const borrarMeta = async (id: string) => deJazz(() => soltarMeta(id));

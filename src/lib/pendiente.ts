@@ -3,7 +3,17 @@
 export type Idea = { id: string; texto: string; at: number };
 export type Paso = { id: string; texto: string; hecho: number | null; enHoy: boolean };
 // `descripcion`: optional, one or two lines under the name (0009); null when she wrote none.
-export type Meta = { id: string; titulo: string; descripcion: string | null; para: string | null; at: number; pasos: Paso[] };
+// `enlace`: one link she pinned, with the preview its page declared when she saved it (0010).
+export type Enlace = { url: string; titulo: string | null; imagen: string | null; sitio: string | null };
+export type Meta = {
+  id: string;
+  titulo: string;
+  descripcion: string | null;
+  para: string | null;
+  at: number;
+  pasos: Paso[];
+  enlace: Enlace | null;
+};
 export const MAX_DESCRIPCION_META = 160;
 export type Pendientes = { mente: Idea[]; metas: Meta[] };
 

@@ -21,7 +21,7 @@ import { Flower } from "@/components/flower";
 import { ArrowLeft, ArrowRight, Check, Chevron, More, Pencil, Plus, Trash } from "@/components/icons";
 import { LoSoltado } from "@/components/soltado";
 import { MAX_TEXTO } from "@/lib/mision";
-import { type Idea, type Meta, MAX_DESCRIPCION_META, MAX_METAS, MAX_PASOS, cuando, siguiente, terminada } from "@/lib/pendiente";
+import { type Enlace, type Idea, type Meta, MAX_DESCRIPCION_META, MAX_METAS, MAX_PASOS, cuando, siguiente, terminada } from "@/lib/pendiente";
 import type { Soltado } from "@/lib/soltado";
 import { AsistenteBoton } from "./asistente";
 import { PartirEnPasos } from "./ayudantes";
@@ -32,7 +32,7 @@ type Change =
   | { k: "idea-"; id: string }
   | { k: "meta+"; m: Meta }
   | { k: "meta-"; id: string }
-  | { k: "meta~"; id: string; titulo: string; descripcion: string | null; para: string | null }
+  | { k: "meta~"; id: string; titulo: string; descripcion: string | null; para: string | null; enlace: Enlace | null }
   | { k: "paso+"; meta: string; id: string; texto: string }
   | { k: "paso"; meta: string; id: string; to: "hecho" | "enHoy" | "fuera" };
 
@@ -47,7 +47,10 @@ function apply(v: View, c: Change): View {
     case "meta-":
       return { ...v, metas: v.metas.filter((m) => m.id !== c.id) };
     case "meta~":
-      return { ...v, metas: v.metas.map((m) => (m.id === c.id ? { ...m, titulo: c.titulo, descripcion: c.descripcion, para: c.para } : m)) };
+      return {
+        ...v,
+        metas: v.metas.map((m) => (m.id === c.id ? { ...m, titulo: c.titulo, descripcion: c.descripcion, para: c.para, enlace: c.enlace } : m)),
+      };
     case "paso+":
       return {
         ...v,
@@ -76,6 +79,19 @@ function apply(v: View, c: Change): View {
 }
 
 const tmp = () => `nuevo-${Date.now()}`;
+
+// What shows of a link while its preview is being read: the same link, its site, no image yet.
+// The same link as before keeps the preview it already had.
+function enlaceProvisional(url: string | null, antes: Enlace | null): Enlace | null {
+  if (!url) return null;
+  const href = /^[a-z][a-z0-9+.-]*:/i.test(url) ? url : `https://${url}`;
+  if (antes && antes.url === href) return antes;
+  try {
+    return { url: href, titulo: null, imagen: null, sitio: new URL(href).hostname.replace(/^www\./, "") };
+  } catch {
+    return null;
+  }
+}
 const VISIBLES_MENTE = 5;
 
 // «Más adelante», shaped like «hoy» (Brian, 2026-10-25): her goals first — what gives the day a
@@ -276,9 +292,12 @@ function List({
             ) : nueva ? (
               <MetaForm
                 onCancel={() => setNueva(false)}
-                onSave={(titulo, descripcion, para) => {
+                onSave={(titulo, descripcion, para, url) => {
                   setNueva(false);
-                  run({ k: "meta+", m: { id: tmp(), titulo, descripcion, para, at: Date.now(), pasos: [] } }, () => crearMeta(titulo, para, descripcion));
+                  run(
+                    { k: "meta+", m: { id: tmp(), titulo, descripcion, para, at: Date.now(), pasos: [], enlace: enlaceProvisional(url, null) } },
+                    () => crearMeta(titulo, para, descripcion, url),
+                  );
                 }}
               />
             ) : (
@@ -393,25 +412,26 @@ function Historial({ hechas, soltado }: { hechas: Meta[]; soltado: Soltado[] }) 
   );
 }
 
-// Name, a line more and a date — creating a goal, or editing it from its detail.
+// Name, a line more, a date and a link — creating a goal, or editing it from its detail.
 function MetaForm({
   inicial,
   onSave,
   onCancel,
 }: {
   inicial?: Meta;
-  onSave: (titulo: string, descripcion: string | null, para: string | null) => void;
+  onSave: (titulo: string, descripcion: string | null, para: string | null, url: string | null) => void;
   onCancel: () => void;
 }) {
   const [titulo, setTitulo] = useState(inicial?.titulo ?? "");
   const [descripcion, setDescripcion] = useState(inicial?.descripcion ?? "");
   const [para, setPara] = useState(inicial?.para ?? "");
+  const [url, setUrl] = useState(inicial?.enlace?.url ?? "");
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
         const t = titulo.trim();
-        if (t) onSave(t, descripcion.trim() || null, para || null);
+        if (t) onSave(t, descripcion.trim() || null, para || null, url.trim() || null);
       }}
       className="rise space-y-3 p-4"
     >
@@ -435,6 +455,23 @@ function MetaForm({
           rows={2}
           placeholder="una línea más · opcional"
           className="w-full resize-none rounded-xl border border-line bg-surface-2 px-3.5 py-2.5 text-sm placeholder:text-ink-soft"
+        />
+      </label>
+      <label className="block">
+        <span className="sr-only">un enlace · opcional</span>
+        {/* text, not type="url": the browser would silently refuse «behance.net» without https://;
+            the server adds it and checks the link (lib/vista-previa) */}
+        <input
+          type="text"
+          inputMode="url"
+          autoCapitalize="none"
+          spellCheck={false}
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          maxLength={500}
+          placeholder="un enlace · opcional"
+          autoComplete="off"
+          className="w-full rounded-xl border border-line bg-surface-2 px-3.5 py-2.5 text-sm placeholder:text-ink-soft"
         />
       </label>
       <label className="flex items-center justify-between gap-3">
@@ -520,9 +557,13 @@ function Goal({
           <MetaForm
             inicial={meta}
             onCancel={() => setEditando(false)}
-            onSave={(titulo, descripcion, para) => {
+            onSave={(titulo, descripcion, para, url) => {
               setEditando(false);
-              run({ k: "meta~", id: meta.id, titulo, descripcion, para }, () => editarLaMeta(meta.id, titulo, descripcion, para), "listo, guardada");
+              run(
+                { k: "meta~", id: meta.id, titulo, descripcion, para, enlace: enlaceProvisional(url, meta.enlace) },
+                () => editarLaMeta(meta.id, titulo, descripcion, para, url),
+                "listo, guardada",
+              );
             }}
           />
         </div>
@@ -569,6 +610,7 @@ function Goal({
             </div>
           )}
           {meta.descripcion && <p className="mt-1 text-pretty text-sm text-ink-soft">{meta.descripcion}</p>}
+          {meta.enlace && <TarjetaEnlace enlace={meta.enlace} />}
           <div className="mt-2">
             <Estado meta={meta} />
           </div>
@@ -659,6 +701,40 @@ function Goal({
         </AsistenteBoton>
       )}
     </div>
+  );
+}
+
+// The pinned link, inside the goal only: the page's own image (16:9, cropped to fit) when it shares
+// one, its title and site; a tap opens it in a new tab. The image loads straight from that site,
+// without telling it which page asked (no referrer).
+function TarjetaEnlace({ enlace }: { enlace: Enlace }) {
+  const [rota, setRota] = useState(false);
+  return (
+    <a
+      href={enlace.url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="press group mt-3 block overflow-hidden rounded-2xl border border-line bg-surface hover:border-accent/60"
+    >
+      {enlace.imagen && !rota && (
+        // eslint-disable-next-line @next/next/no-img-element -- any site's image, sized by CSS; next/image would need every host listed
+        <img
+          src={enlace.imagen}
+          alt=""
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={() => setRota(true)}
+          className="aspect-video w-full bg-surface-2 object-cover"
+        />
+      )}
+      <span className="flex items-center gap-3 px-4 py-3">
+        <span className="min-w-0 flex-1">
+          {enlace.titulo && <span className="block truncate text-sm font-medium">{enlace.titulo}</span>}
+          <span className="block truncate text-xs text-ink-soft">{enlace.sitio ?? enlace.url}</span>
+        </span>
+        <ArrowRight className="size-4 shrink-0 -rotate-45 text-ink-soft transition-colors group-hover:text-accent" />
+      </span>
+    </a>
   );
 }
 
