@@ -61,6 +61,9 @@ html {
 }
 
 body {
+  /* The orb's glow is wider than a narrow phone: it fades at the screen's edge instead of
+     opening a sideways scroll. clip, not hidden — no new scroll container. */
+  overflow-x: clip;
   background: var(--canvas);
   color: var(--ink);
   caret-color: var(--accent);
@@ -232,6 +235,11 @@ a {
    place: one thing less on screen, and the doors stay in view. */
 @media (max-width: 1023px) {
   section:has(> .order-first) .home-quote { display: none; }
+}
+
+/* Four doors in one row: on the narrowest phones the labels tighten so «misiones» fits whole. */
+@media (max-width: 359px) {
+  nav .t-label { letter-spacing: 0.04em; }
 }
 
 /* The chip on the orb's upper right: dark glass, so it reads on every colour the orb can take. */
