@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { PageTitle, Shell } from "@/components/shell";
-import { Letter } from "@/components/icons";
+import { Letter, Trash } from "@/components/icons";
 import { Tabs } from "@/components/tabs";
 import { loadMisiones } from "@/lib/misiones";
 import { formatDate, loadDejadas, loadNotes } from "@/lib/notes";
@@ -14,7 +14,7 @@ import { Composer, MarkSeen } from "./composer";
 import { EntreLosDos } from "./presente";
 import { RegaloForm } from "./regalo-form";
 import { Regalos } from "./regalos";
-import { ObjetosBrian } from "./objetos";
+import { Encabezado, Plegado } from "./plegado";
 import { loadRegalados } from "@/lib/mascota";
 
 type Search = Promise<{ v?: string }>;
@@ -74,17 +74,22 @@ async function Content({ searchParams }: { searchParams: Search }) {
         </>
       );
     }
+    const otro = role === "jazz" ? "Brian" : "Jazz";
+    // what was given and, for Brian, the pet objects — together, not one after the other
+    const [dados, regalados] = await Promise.all([
+      loadDados(role).catch(() => []),
+      role === "brian" ? loadRegalados().catch(() => []) : null,
+    ]);
     return (
       <>
         {tabs}
-        <h2 className="t-label mt-8 text-ink-soft">para ti</h2>
-        <Regalos {...vistaDeJazz(regalos, total)} de={role === "jazz" ? "Brian" : "Jazz"} />
-        <RegaloForm
-          regalos={await loadDados(role).catch(() => [])}
-          total={role === "brian" ? (m?.total ?? 0) : 0}
-          para={role === "jazz" ? "Brian" : "Jazz"}
+        <Encabezado
+          titulo="para ti"
+          sub={role === "jazz" ? "ábrelos cuando estén listos" : "lo que Jazz te regaló"}
         />
-        {role === "brian" && <ObjetosBrian regalados={await loadRegalados().catch(() => [])} />}
+        <Regalos {...vistaDeJazz(regalos, total)} de={otro} />
+        <RegaloForm regalos={dados} total={role === "brian" ? (m?.total ?? 0) : 0} para={otro} regalados={regalados} />
+        <Aire />
       </>
     );
   }
@@ -97,57 +102,67 @@ async function Content({ searchParams }: { searchParams: Search }) {
   );
 }
 
-// Notes both ways: what the other left for you, and what you left — with whether it was seen.
+// Notes both ways: what the other left for you first, then «＋ dejarle una nota», and what you
+// left folded under it — with whether it was seen.
 async function Notes({ role }: { role: Role }) {
   const otro = role === "jazz" ? "Brian" : "Jazz";
   const [notes, dejadas] = await Promise.all([loadNotes(role), loadDejadas(role)]);
   return (
     <>
-      <Composer para={otro} />
       <MarkSeen />
-
-      <h2 className="t-label mt-10 text-ink-soft">para ti</h2>
+      <Encabezado titulo="para ti" sub={`lo que ${otro} te dejó`} />
       {notes.length === 0 ? (
-        <p className="rise mt-3 text-pretty text-lg leading-relaxed text-ink-soft">
-          {`Aquí van a aparecer las notas que ${otro} te deje. Vuelve cuando quieras.`}
+        <p className="rise mt-4 text-pretty text-lg leading-relaxed text-ink-soft">
+          {`Cuando ${otro} te deje una nota, aparece aquí.`}
         </p>
       ) : (
-        <ol className="mt-3 space-y-4">
+        <ol className="mt-4 space-y-4">
           {notes.map((n, i) => (
             <li key={n.id} className="rise rounded-3xl border border-line bg-surface p-6" style={{ animationDelay: `${Math.min(i, 6) * 60}ms` }}>
-              <p className="t-label text-accent">{formatDate(n.at)}</p>
-              <p className="mt-3 whitespace-pre-line text-pretty text-lg leading-relaxed">{n.texto}</p>
+              <p className="text-sm font-semibold text-accent">{formatDate(n.at)}</p>
+              <p className="mt-2 whitespace-pre-line text-pretty text-lg leading-relaxed">{n.texto}</p>
             </li>
           ))}
         </ol>
       )}
 
+      <Composer para={otro} />
+
       {dejadas.length > 0 && (
-        <>
-          <h2 className="t-label mt-10 text-ink-soft">las que dejaste</h2>
-          <ol className="mt-3 space-y-4">
+        <Plegado titulo="las que dejaste" n={dejadas.length}>
+          <ol className="space-y-3">
             {dejadas.map((n) => (
-              <li key={n.id} className="rounded-3xl border border-dashed border-line bg-surface/60 p-6">
-                <div className="flex items-baseline justify-between gap-4">
-                  <p className="t-label text-ink-soft">
+              <li key={n.id} className="rounded-3xl border border-dashed border-line bg-surface/60 py-4 pl-5 pr-2">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm text-ink-soft">
                     {formatDate(n.at)}
-                    {n.visto && <span className="ml-3 text-accent">✓ visto</span>}
+                    {n.visto && <span className="ml-2 font-semibold text-accent">· ✓ la vio</span>}
                   </p>
                   <form action={borrarNota}>
                     <input type="hidden" name="id" value={n.id} />
-                    <button type="submit" className="text-xs text-ink-soft underline-offset-4 hover:text-ink hover:underline">
-                      borrar
+                    <button
+                      type="submit"
+                      aria-label="borrar esta nota"
+                      className="press grid size-10 place-items-center rounded-full text-ink-soft hover:bg-surface-2 hover:text-ink"
+                    >
+                      <Trash className="size-4" />
                     </button>
                   </form>
                 </div>
-                <p className="mt-3 whitespace-pre-line text-pretty text-lg leading-relaxed text-ink-soft">{n.texto}</p>
+                <p className="mt-1 whitespace-pre-line pr-3 text-pretty leading-relaxed text-ink-soft">{n.texto}</p>
               </li>
             ))}
           </ol>
-        </>
+        </Plegado>
       )}
+      <Aire />
     </>
   );
+}
+
+// Room under the last line, so the assistant's floating button never sits on it.
+function Aire() {
+  return <div aria-hidden className="h-16" />;
 }
 
 function NotesSkeleton() {
