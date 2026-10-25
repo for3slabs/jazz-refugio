@@ -184,7 +184,7 @@ function List({ view, hoyLleno, run }: { view: View; hoyLleno: boolean; run: Run
   return (
     <>
       <section>
-        <h2 className="t-label text-accent">en tu mente</h2>
+        <h2 className="text-xl font-semibold">en tu mente</h2>
         <form onSubmit={capture} className="mt-3 flex items-center gap-2 rounded-full border border-dashed border-line bg-surface p-1.5 pl-5">
           <label htmlFor="idea" className="sr-only">
             anotar algo
@@ -246,7 +246,7 @@ function List({ view, hoyLleno, run }: { view: View; hoyLleno: boolean; run: Run
       </section>
 
       <section className="mt-10 border-t border-dashed border-line pt-6">
-        <h2 className="t-label text-accent">metas</h2>
+        <h2 className="text-xl font-semibold">metas</h2>
         <ul className="mt-3 space-y-3">
           {activas.map((m, i) => {
             const next = siguiente(m);

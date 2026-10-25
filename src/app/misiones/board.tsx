@@ -91,29 +91,21 @@ export function Board({ abiertas, hoy, total }: View & { total: number }) {
     });
   }
 
+  // Three places, always in sight: the limit reads without a word. The next free one is the only
+  // live field; the rest wait, dimmed. Until her first flower, the first mission says how it
+  // works (Brian, 2026-10-25: «llevarla de la manita»).
+  const primeraVez = total === 0 && view.hoy.length === 0;
+  const libres = Math.max(0, MAX_ABIERTAS - view.abiertas.length - 1);
+
   return (
-    <div className="relative mt-8">
+    <div className="relative mt-6">
       {party > 0 && <Confetti key={party} />}
 
-      <p role="status" className="min-h-6 text-sm text-ink-soft">
-        {msg && (
-          <span key={msg.text + party} className="rise inline-flex items-center gap-2">
-            {msg.ok && !msg.undo && <Flower n={total + view.hoy.length} className="size-5" />}
-            {msg.text}
-            {msg.undo && (
-              <button type="button" onClick={() => undo(msg.undo!)} className="press t-label rounded-full border border-line px-3 py-1 text-ink hover:border-accent/60">
-                deshacer
-              </button>
-            )}
-          </span>
-        )}
-      </p>
-
-      <ul className="mt-2 space-y-3">
+      <ul className="space-y-3">
         {view.abiertas.map((m, i) => (
           <li
             key={m.id}
-            className="rise flex items-center gap-4 rounded-3xl border border-line bg-surface p-4 pr-5"
+            className="rise flex items-center gap-4 rounded-3xl border border-line bg-surface p-4 pr-3"
             style={{ animationDelay: `${Math.min(i, 3) * 50}ms` }}
           >
             <button
@@ -124,42 +116,84 @@ export function Board({ abiertas, hoy, total }: View & { total: number }) {
             >
               <Check className="size-5 text-accent opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
             </button>
-            <p className="flex-1 text-pretty text-lg leading-snug">{m.texto}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-pretty text-lg font-medium leading-snug">{m.texto}</p>
+              {primeraVez && i === 0 && <p className="mt-1 text-sm text-ink-soft">toca el círculo al terminarla</p>}
+            </div>
             <button
               type="button"
               onClick={() => drop(m.id)}
-              className="press t-label shrink-0 rounded-full px-2 py-2 text-ink-soft hover:text-ink"
+              className="press t-label shrink-0 self-start rounded-full px-2 py-2 text-ink-soft hover:text-ink"
             >
               soltar
             </button>
           </li>
         ))}
+
+        {!full && (
+          <li>
+            <form
+              onSubmit={add}
+              className="flex min-h-14 items-center gap-3 rounded-3xl border border-accent/50 bg-surface p-2 pl-4 transition-shadow focus-within:border-accent focus-within:ring-4 focus-within:ring-accent-soft"
+            >
+              <Lugar n={view.abiertas.length + 1} activo />
+              <label htmlFor="nueva" className="sr-only">
+                nueva misión
+              </label>
+              <input
+                id="nueva"
+                value={texto}
+                onChange={(e) => setTexto(e.target.value)}
+                maxLength={MAX_TEXTO}
+                placeholder={view.abiertas.length === 0 ? "¿qué vas a hacer primero?" : "¿y después?"}
+                autoComplete="off"
+                // the whole card lights up instead; the global input ring would draw a box inside it
+                style={{ boxShadow: "none" }}
+                className="min-w-0 flex-1 bg-transparent py-2 text-lg placeholder:text-ink-soft focus:outline-none"
+              />
+              {/* One thing at a time: the empty field shows its whole question, and the button
+                  arrives with the first letter. Enter adds too. */}
+              {texto.trim() && (
+                <button
+                  type="submit"
+                  className="rise press shrink-0 rounded-full bg-accent px-5 py-2.5 font-semibold text-accent-ink"
+                >
+                  agregar
+                </button>
+              )}
+            </form>
+          </li>
+        )}
+
+        {Array.from({ length: libres }, (_, i) => (
+          <li
+            key={`libre-${i}`}
+            aria-hidden
+            className="flex items-center gap-3 rounded-3xl border border-dashed border-line px-4 py-3.5 text-sm text-ink-soft/70"
+          >
+            <Lugar n={view.abiertas.length + 2 + i} />
+            libre
+          </li>
+        ))}
       </ul>
 
-      {full ? (
-        <p className="mt-4 text-pretty text-ink-soft">Tienes 3 abiertas. Termina una primero.</p>
-      ) : (
-        <form onSubmit={add} className="mt-4 flex items-center gap-2 rounded-full border border-dashed border-line bg-surface p-1.5 pl-5">
-          <label htmlFor="nueva" className="sr-only">
-            nueva misión
-          </label>
-          <input
-            id="nueva"
-            value={texto}
-            onChange={(e) => setTexto(e.target.value)}
-            maxLength={MAX_TEXTO}
-            placeholder={view.abiertas.length === 0 ? "¿qué vas a hacer hoy?" : "nueva misión"}
-            autoComplete="off"
-            className="min-w-0 flex-1 bg-transparent py-2 text-lg placeholder:text-ink-soft focus:outline-none"
-          />
-          <button
-            type="submit"
-            disabled={!texto.trim()}
-            className="press shrink-0 rounded-full bg-accent px-5 py-2.5 font-semibold text-accent-ink disabled:opacity-50"
-          >
-            agregar
-          </button>
-        </form>
+      {full && (
+        <p className="mt-4 text-pretty text-sm text-ink-soft">Las 3 están en marcha: cuando cumplas una, se abre otro espacio.</p>
+      )}
+
+      {/* Only when there is something to say — an empty line here used to push the field down. */}
+      {msg && (
+        <p role="status" className="mt-4 text-sm text-ink-soft">
+          <span key={msg.text + party} className="rise inline-flex items-center gap-2">
+            {msg.ok && !msg.undo && <Flower n={total + view.hoy.length} className="size-5" />}
+            {msg.text}
+            {msg.undo && (
+              <button type="button" onClick={() => undo(msg.undo!)} className="press t-label rounded-full border border-line px-3 py-1 text-ink hover:border-accent/60">
+                deshacer
+              </button>
+            )}
+          </span>
+        </p>
       )}
 
       {view.abiertas.length > 0 && <PorDondeEmpiezo />}
@@ -178,5 +212,18 @@ export function Board({ abiertas, hoy, total }: View & { total: number }) {
         </section>
       )}
     </div>
+  );
+}
+
+// The number of a place: lit for the one she can fill now, quiet for the ones that wait.
+function Lugar({ n, activo = false }: { n: number; activo?: boolean }) {
+  return (
+    <span
+      className={`grid size-7 shrink-0 place-items-center rounded-full border text-sm font-semibold tabular-nums ${
+        activo ? "border-accent/60 text-accent" : "border-line text-ink-soft/70"
+      }`}
+    >
+      {n}
+    </span>
   );
 }
