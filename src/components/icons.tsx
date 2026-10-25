@@ -191,3 +191,9 @@ export const Chevron = ({ className }: P) => (
     <path d="m7 10 5 5 5-5" />
   </svg>
 );
+
+export const Plus = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <path d="M12 6v12M6 12h12" />
+  </svg>
+);

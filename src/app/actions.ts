@@ -27,12 +27,13 @@ import { abrir, borrar, crear, usar } from "@/lib/regalos";
 import { type ObjetoId, isObjeto, limpiarPuestos } from "@/lib/objeto";
 import { limpiarNombre, regalar, saveMascota } from "@/lib/mascota";
 import { ESTADOS_MISION, type EstadoMision, MAX_TEXTO } from "@/lib/mision";
-import { MAX_PASOS, siguiente, terminada } from "@/lib/pendiente";
+import { MAX_DESCRIPCION_META, MAX_PASOS, siguiente, terminada } from "@/lib/pendiente";
 import { agregar, cumplir, florDePaso, loadMisiones, marcarEstadoMision, soltar } from "@/lib/misiones";
 import {
   anotarIdea,
   loadPendientes,
   marcarPaso,
+  editarMeta,
   nuevaMeta,
   nuevoPaso,
   pasarIdeaAHoy,
@@ -226,11 +227,22 @@ export const ideaAHoy = async (id: string) => deJazz(async () => ((await pasarId
 
 export const ideaAMeta = async (id: string) => deJazz(() => pasarIdeaAMeta(id));
 
-export const crearMeta = async (t: string, para: string | null) =>
+const fechaValida = (para: string | null) => (para && /^\d{4}-\d{2}-\d{2}$/.test(para) ? para : null);
+const descripcionDe = (d: string | null | undefined) => (d ?? "").trim().slice(0, MAX_DESCRIPCION_META) || null;
+
+export const crearMeta = async (t: string, para: string | null, descripcion?: string | null) =>
   deJazz(async () => {
     const v = texto(t);
     if (typeof v !== "string") return v.error;
-    return nuevaMeta(v, para && /^\d{4}-\d{2}-\d{2}$/.test(para) ? para : null);
+    return nuevaMeta(v, fechaValida(para), descripcionDe(descripcion));
+  });
+
+// The pencil on a goal: its name, description and date in one save.
+export const editarLaMeta = async (id: string, t: string, descripcion: string | null, para: string | null) =>
+  deJazz(async () => {
+    const v = texto(t);
+    if (typeof v !== "string") return v.error;
+    if (!(await editarMeta(id, v, descripcionDe(descripcion), fechaValida(para)))) return "Esa meta ya no está.";
   });
 
 export const borrarMeta = async (id: string) => deJazz(() => soltarMeta(id));

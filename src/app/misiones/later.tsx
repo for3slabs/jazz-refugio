@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useOptimistic, useState, useTransition } from "react";
 import {
   type EstadoResult,
@@ -10,6 +9,7 @@ import {
   borrarPaso,
   crearMeta,
   cumplirPaso,
+  editarLaMeta,
   ideaAHoy,
   ideaAMeta,
   pasoAHoy,
@@ -18,10 +18,13 @@ import {
 } from "@/app/actions";
 import { Confetti } from "@/components/confetti";
 import { Flower } from "@/components/flower";
-import { ArrowLeft, ArrowRight, Check, More } from "@/components/icons";
+import { ArrowLeft, ArrowRight, Check, Chevron, More, Pencil, Plus } from "@/components/icons";
+import { LoSoltado } from "@/components/soltado";
 import { MAX_TEXTO } from "@/lib/mision";
+import { type Idea, type Meta, MAX_DESCRIPCION_META, MAX_METAS, MAX_PASOS, cuando, siguiente, terminada } from "@/lib/pendiente";
+import type { Soltado } from "@/lib/soltado";
+import { AsistenteBoton } from "./asistente";
 import { PartirEnPasos } from "./ayudantes";
-import { type Idea, type Meta, MAX_METAS, MAX_PASOS, cuando, siguiente, terminada } from "@/lib/pendiente";
 
 type View = { mente: Idea[]; metas: Meta[] };
 type Change =
@@ -29,6 +32,7 @@ type Change =
   | { k: "idea-"; id: string }
   | { k: "meta+"; m: Meta }
   | { k: "meta-"; id: string }
+  | { k: "meta~"; id: string; titulo: string; descripcion: string | null; para: string | null }
   | { k: "paso+"; meta: string; id: string; texto: string }
   | { k: "paso"; meta: string; id: string; to: "hecho" | "enHoy" | "fuera" };
 
@@ -42,6 +46,8 @@ function apply(v: View, c: Change): View {
       return { ...v, metas: [c.m, ...v.metas] };
     case "meta-":
       return { ...v, metas: v.metas.filter((m) => m.id !== c.id) };
+    case "meta~":
+      return { ...v, metas: v.metas.map((m) => (m.id === c.id ? { ...m, titulo: c.titulo, descripcion: c.descripcion, para: c.para } : m)) };
     case "paso+":
       return {
         ...v,
@@ -70,13 +76,22 @@ function apply(v: View, c: Change): View {
 }
 
 const tmp = () => `nuevo-${Date.now()}`;
+const VISIBLES_MENTE = 5;
 
-// «Más adelante»: what does not fit in today. A thought captured in one tap, goals with only
-// their next step in view, and every step one tap from «hoy». Changes show at once; a failed
-// save puts things back and says so.
-export function Later({ mente, metas, abierta, hoyLleno }: View & { abierta: string | null; hoyLleno: boolean }) {
+// «Más adelante», shaped like «hoy» (Brian, 2026-10-25): her goals first — what gives the day a
+// direction — then what she does not want to forget, each one compact list; what is finished or let
+// go folds into «historial». A goal opens right here, without a trip to the server, and its
+// assistant offers to split it into steps. Changes show at once; a failed save puts things back.
+export function Later({
+  mente,
+  metas,
+  abierta: inicial,
+  hoyLleno,
+  soltado,
+}: View & { abierta: string | null; hoyLleno: boolean; soltado: Soltado[] }) {
   const [view, change] = useOptimistic<View, Change>({ mente, metas }, apply);
   const [, start] = useTransition();
+  const [abierta, setAbierta] = useState(inicial);
   // `undo`: what she just let go, offered back for a few seconds
   const [msg, setMsg] = useState<{ text: string; ok: boolean; undo?: { tipo: "idea" | "meta" | "paso"; id: string } } | null>(null);
   const [party, setParty] = useState(0);
@@ -110,28 +125,35 @@ export function Later({ mente, metas, abierta, hoyLleno }: View & { abierta: str
     setMsg({ text, ok: true });
   }
 
+  // Opening a goal is instant: the address follows, so a reload lands in the same place.
+  function abrir(id: string | null) {
+    setAbierta(id);
+    window.history.replaceState(null, "", id ? `/misiones?v=despues&meta=${id}` : "/misiones?v=despues");
+    window.scrollTo({ top: 0 });
+  }
+
   const meta = abierta ? view.metas.find((m) => m.id === abierta) : undefined;
 
   return (
-    <div className="relative mt-6">
+    <div className="relative">
       {party > 0 && <Confetti key={party} />}
-      <p role="status" className="min-h-6 text-sm text-ink-soft">
-        {msg && (
+      {msg && (
+        <p role="status" className="mt-4 text-sm text-ink-soft">
           <span key={msg.text + party} className="rise inline-flex items-center gap-2">
             {msg.ok && party > 0 && !msg.undo && <Flower n={party + 3} className="size-5" />}
             {msg.text}
             {msg.undo && (
-              <button type="button" onClick={() => deshacer(msg.undo!)} className="press t-label rounded-full border border-line px-3 py-1 text-ink hover:border-accent/60">
+              <button type="button" onClick={() => deshacer(msg.undo!)} className="press rounded-full border border-line px-3 py-1 text-xs font-medium text-ink hover:border-accent/60">
                 deshacer
               </button>
             )}
           </span>
-        )}
-      </p>
+        </p>
+      )}
       {meta ? (
-        <Goal meta={meta} hoyLleno={hoyLleno} run={run} celebrate={celebrate} />
+        <Goal key={meta.id} meta={meta} hoyLleno={hoyLleno} run={run} celebrate={celebrate} cerrar={() => abrir(null)} />
       ) : (
-        <List view={view} hoyLleno={hoyLleno} run={run} />
+        <List view={view} hoyLleno={hoyLleno} run={run} abrir={abrir} soltado={soltado} />
       )}
     </div>
   );
@@ -148,20 +170,53 @@ function Dots({ meta }: { meta: Meta }) {
   return (
     <span className="inline-flex items-center gap-1" aria-hidden>
       {meta.pasos.map((p) => (
-        <span key={p.id} className={`size-2 rounded-full ${p.hecho ? "bg-accent" : "border border-ink-soft/60"}`} />
+        <span key={p.id} className={`size-1.5 rounded-full ${p.hecho ? "bg-accent" : "border border-ink-soft/60"}`} />
       ))}
     </span>
   );
 }
 
-function List({ view, hoyLleno, run }: { view: View; hoyLleno: boolean; run: Run }) {
+// «●●○○ 2 de 4 pasos · para el sáb 1 nov» — the one line that says where a goal stands.
+function Estado({ meta }: { meta: Meta }) {
+  const hechos = meta.pasos.filter((p) => p.hecho).length;
+  return (
+    <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-soft">
+      {meta.pasos.length > 0 ? (
+        <>
+          <Dots meta={meta} />
+          {hechos} de {meta.pasos.length} {meta.pasos.length === 1 ? "paso" : "pasos"}
+        </>
+      ) : (
+        "sin pasos todavía"
+      )}
+      {meta.para && <span>· para {cuando(meta.para)}</span>}
+    </p>
+  );
+}
+
+const lista = "divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface";
+const campo = "min-w-0 flex-1 bg-transparent py-1.5 placeholder:text-ink-soft focus:outline-none";
+
+function List({
+  view,
+  hoyLleno,
+  run,
+  abrir,
+  soltado,
+}: {
+  view: View;
+  hoyLleno: boolean;
+  run: Run;
+  abrir: (id: string) => void;
+  soltado: Soltado[];
+}) {
   const [idea, setIdea] = useState("");
   const [menu, setMenu] = useState<string | null>(null);
+  const [todas, setTodas] = useState(false);
   const [nueva, setNueva] = useState(false);
-  const [titulo, setTitulo] = useState("");
-  const [para, setPara] = useState("");
   const activas = view.metas.filter((m) => !terminada(m));
   const hechas = view.metas.filter(terminada);
+  const mente = todas ? view.mente : view.mente.slice(0, VISIBLES_MENTE);
 
   function capture(e: React.FormEvent) {
     e.preventDefault();
@@ -171,170 +226,209 @@ function List({ view, hoyLleno, run }: { view: View; hoyLleno: boolean; run: Run
     run({ k: "idea+", i: { id: tmp(), texto: t, at: Date.now() } }, () => anotar(t));
   }
 
-  function create(e: React.FormEvent) {
-    e.preventDefault();
-    const t = titulo.trim();
-    if (!t) return;
-    setTitulo("");
-    setPara("");
-    setNueva(false);
-    run({ k: "meta+", m: { id: tmp(), titulo: t, para: para || null, at: Date.now(), pasos: [] } }, () => crearMeta(t, para || null));
-  }
-
   return (
     <>
-      <section>
-        <h2 className="text-xl font-semibold">en tu mente</h2>
-        <form onSubmit={capture} className="mt-3 flex items-center gap-2 rounded-full border border-dashed border-line bg-surface p-1.5 pl-5">
-          <label htmlFor="idea" className="sr-only">
-            anotar algo
-          </label>
-          <input
-            id="idea"
-            value={idea}
-            onChange={(e) => setIdea(e.target.value)}
-            maxLength={240}
-            placeholder="algo para no olvidar…"
-            autoComplete="off"
-            className="min-w-0 flex-1 bg-transparent py-2 text-lg placeholder:text-ink-soft focus:outline-none"
-          />
-          <button
-            type="submit"
-            disabled={!idea.trim()}
-            className="press shrink-0 rounded-full bg-accent px-5 py-2.5 font-semibold text-accent-ink disabled:opacity-50"
-          >
-            anotar
-          </button>
-        </form>
-        {view.mente.length > 0 && (
-          <ul className="mt-3 divide-y divide-line">
-            {view.mente.map((i) => (
-              <li key={i.id} className="py-2">
-                <div className="flex items-center gap-3">
-                  <p className="flex-1 text-pretty">{i.texto}</p>
-                  <button
-                    type="button"
-                    aria-expanded={menu === i.id}
-                    aria-label={`opciones: ${i.texto}`}
-                    onClick={() => setMenu(menu === i.id ? null : i.id)}
-                    className="press grid size-9 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-surface-2 hover:text-ink"
-                  >
-                    <More className="size-5" />
-                  </button>
-                </div>
-                {menu === i.id && (
-                  <div className="rise mt-2 flex flex-wrap gap-2">
-                    <Chip
-                      disabled={hoyLleno}
-                      onClick={() => run({ k: "idea-", id: i.id }, () => ideaAHoy(i.id), "listo, está en hoy")}
-                    >
-                      {hoyLleno ? "hoy está lleno" : "a hoy"}
-                    </Chip>
-                    <Chip
-                      disabled={activas.length >= MAX_METAS}
-                      onClick={() => run({ k: "idea-", id: i.id }, () => ideaAMeta(i.id), "listo, ahora es una meta")}
-                    >
-                      hacerla meta
-                    </Chip>
-                    <Chip onClick={() => run({ k: "idea-", id: i.id }, () => soltarIdea(i.id), undefined, { tipo: "idea", id: i.id, texto: i.texto })}>soltar</Chip>
-                  </div>
-                )}
+      <h2 className="mt-8 text-lg font-semibold">tus metas</h2>
+      <p className="mt-0.5 text-pretty text-sm text-ink-soft">lo grande, en pasos pequeños</p>
+      <ul className={`mt-3 ${lista}`}>
+        {activas.map((m, i) => (
+          <li key={m.id} className="rise" style={{ animationDelay: `${Math.min(i, 4) * 40}ms` }}>
+            <button type="button" onClick={() => abrir(m.id)} className="press flex min-h-14 w-full items-center gap-3 px-4 py-3 text-left hover:bg-surface-2">
+              <span className="min-w-0 flex-1">
+                <span className="block text-pretty font-medium leading-snug">{m.titulo}</span>
+                {m.descripcion && <span className="mt-0.5 block truncate text-sm text-ink-soft">{m.descripcion}</span>}
+                <span className="mt-1.5 block">
+                  <Estado meta={m} />
+                </span>
+              </span>
+              <ArrowRight className="size-4 shrink-0 text-ink-soft" />
+            </button>
+          </li>
+        ))}
+        <li>
+          {activas.length >= MAX_METAS ? (
+            <p className="px-4 py-3.5 text-pretty text-sm text-ink-soft">Tienes {MAX_METAS} metas. Termina o suelta una primero.</p>
+          ) : nueva ? (
+            <MetaForm
+              onCancel={() => setNueva(false)}
+              onSave={(titulo, descripcion, para) => {
+                setNueva(false);
+                run({ k: "meta+", m: { id: tmp(), titulo, descripcion, para, at: Date.now(), pasos: [] } }, () => crearMeta(titulo, para, descripcion));
+              }}
+            />
+          ) : (
+            <button type="button" onClick={() => setNueva(true)} className="press flex min-h-14 w-full items-center gap-3 px-4 text-left text-ink-soft hover:bg-surface-2 hover:text-ink">
+              <Plus className="size-5 text-accent" />
+              nueva meta
+            </button>
+          )}
+        </li>
+      </ul>
+
+      <h2 className="mt-10 text-lg font-semibold">en tu mente</h2>
+      <p className="mt-0.5 text-pretty text-sm text-ink-soft">lo que no quieres olvidar</p>
+      <ul className={`mt-3 ${lista}`}>
+        <li>
+          <form onSubmit={capture} className="flex min-h-14 items-center gap-3 py-2 pl-4 pr-2 focus-within:bg-surface-2">
+            <label htmlFor="idea" className="sr-only">
+              anotar algo
+            </label>
+            <input
+              id="idea"
+              value={idea}
+              onChange={(e) => setIdea(e.target.value)}
+              maxLength={240}
+              placeholder="algo para no olvidar…"
+              autoComplete="off"
+              style={{ boxShadow: "none" }}
+              className={campo}
+            />
+            {idea.trim() && (
+              <button type="submit" className="rise press shrink-0 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-ink">
+                anotar
+              </button>
+            )}
+          </form>
+        </li>
+        {mente.map((i) => (
+          <li key={i.id}>
+            <div className="flex min-h-12 items-center gap-3 py-1.5 pl-4 pr-1">
+              <p className="flex-1 text-pretty">{i.texto}</p>
+              <button
+                type="button"
+                aria-expanded={menu === i.id}
+                aria-label={`opciones: ${i.texto}`}
+                onClick={() => setMenu(menu === i.id ? null : i.id)}
+                className="press grid size-10 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-surface-2 hover:text-ink"
+              >
+                <More className="size-5" />
+              </button>
+            </div>
+            {menu === i.id && (
+              <div className="rise flex flex-wrap items-center gap-2 px-4 pb-3">
+                <Chip disabled={hoyLleno} onClick={() => run({ k: "idea-", id: i.id }, () => ideaAHoy(i.id), "listo, está en hoy")}>
+                  {hoyLleno ? "hoy está lleno" : "a hoy"}
+                </Chip>
+                <Chip disabled={activas.length >= MAX_METAS} onClick={() => run({ k: "idea-", id: i.id }, () => ideaAMeta(i.id), "listo, ahora es una meta")}>
+                  hacerla meta
+                </Chip>
+                <button
+                  type="button"
+                  onClick={() => run({ k: "idea-", id: i.id }, () => soltarIdea(i.id), undefined, { tipo: "idea", id: i.id, texto: i.texto })}
+                  className="press ml-auto rounded-full px-3 py-1.5 text-xs font-medium text-ink-soft hover:text-ink"
+                >
+                  soltar
+                </button>
+              </div>
+            )}
+          </li>
+        ))}
+        {/* a long list stays short until she asks — five, then «ver las N» */}
+        {!todas && view.mente.length > VISIBLES_MENTE && (
+          <li>
+            <button type="button" onClick={() => setTodas(true)} className="press flex min-h-12 w-full items-center px-4 text-left text-sm text-ink-soft hover:bg-surface-2 hover:text-ink">
+              ver las {view.mente.length}
+            </button>
+          </li>
+        )}
+      </ul>
+
+      {(hechas.length > 0 || soltado.length > 0) && <Historial hechas={hechas} soltado={soltado} />}
+      {/* room under the last line, so the assistant's floating button never sits on it */}
+      <div aria-hidden className="h-16" />
+    </>
+  );
+}
+
+// The same fold as «hoy»: one quiet line, and inside the goals she finished and what she let go.
+function Historial({ hechas, soltado }: { hechas: Meta[]; soltado: Soltado[] }) {
+  return (
+    <details className="group mt-8">
+      <summary className="press flex cursor-pointer list-none items-center gap-2.5 rounded-2xl py-2 [&::-webkit-details-marker]:hidden">
+        <span className="font-semibold">historial</span>
+        <Flower n={hechas.length + 1} className="size-5" />
+        <Chevron className="ml-auto size-5 text-ink-soft transition-transform duration-200 group-open:rotate-180" />
+      </summary>
+      {hechas.length > 0 && (
+        <section className="mt-3">
+          <h3 className="text-sm font-semibold">metas cumplidas · {hechas.length}</h3>
+          <ul className="mt-2 space-y-2 border-l border-line pl-4">
+            {hechas.map((m) => (
+              <li key={m.id} className="flex items-center gap-2 text-sm">
+                <Check className="size-4 shrink-0 text-accent" />
+                {m.titulo}
               </li>
             ))}
           </ul>
-        )}
-      </section>
+        </section>
+      )}
+      <LoSoltado items={soltado} bare />
+    </details>
+  );
+}
 
-      <section className="mt-10 border-t border-dashed border-line pt-6">
-        <h2 className="text-xl font-semibold">metas</h2>
-        <ul className="mt-3 space-y-3">
-          {activas.map((m, i) => {
-            const next = siguiente(m);
-            return (
-              <li key={m.id} className="rise" style={{ animationDelay: `${Math.min(i, 4) * 50}ms` }}>
-                <Link
-                  href={`/misiones?v=despues&meta=${m.id}`}
-                  className="press group block rounded-3xl border border-line bg-surface p-5 hover:border-accent/60 hover:bg-surface-2"
-                >
-                  <p className="text-pretty text-lg font-semibold leading-snug">{m.titulo}</p>
-                  <p className="mt-2 flex items-center gap-2 text-sm text-ink-soft">
-                    {m.pasos.length > 0 ? <Dots meta={m} /> : "sin pasos todavía"}
-                    {m.para && <span>· {cuando(m.para)}</span>}
-                  </p>
-                  {next && (
-                    <p className="mt-3 flex items-center gap-2 text-ink-soft">
-                      <ArrowRight className="size-4 shrink-0 text-accent" />
-                      <span className="text-pretty">{next.texto}</span>
-                    </p>
-                  )}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
-
-        {activas.length >= MAX_METAS ? (
-          <p className="mt-4 text-pretty text-ink-soft">Tienes {MAX_METAS} metas. Termina o suelta una primero.</p>
-        ) : nueva ? (
-          <form onSubmit={create} className="rise mt-4 space-y-3 rounded-3xl border border-dashed border-line bg-surface p-5">
-            <label className="block">
-              <span className="t-label text-ink-soft">la meta</span>
-              <input
-                autoFocus
-                value={titulo}
-                onChange={(e) => setTitulo(e.target.value)}
-                maxLength={MAX_TEXTO}
-                placeholder="el portafolio nuevo"
-                className="mt-2 w-full rounded-2xl border border-line bg-surface-2 px-4 py-3 text-lg placeholder:text-ink-soft"
-              />
-            </label>
-            <label className="block">
-              <span className="t-label text-ink-soft">para cuándo · opcional</span>
-              <input
-                type="date"
-                value={para}
-                onChange={(e) => setPara(e.target.value)}
-                className="mt-2 w-full rounded-2xl border border-line bg-surface-2 px-4 py-3 text-lg [color-scheme:dark] [:root[data-theme=light]_&]:[color-scheme:light]"
-              />
-            </label>
-            <div className="flex items-center justify-end gap-2">
-              <button type="button" onClick={() => setNueva(false)} className="press t-label rounded-full px-3 py-2 text-ink-soft hover:text-ink">
-                cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={!titulo.trim()}
-                className="press rounded-full bg-accent px-5 py-2.5 font-semibold text-accent-ink disabled:opacity-50"
-              >
-                crear
-              </button>
-            </div>
-          </form>
-        ) : (
-          <button
-            type="button"
-            onClick={() => setNueva(true)}
-            className="press mt-4 w-full rounded-full border border-dashed border-line px-5 py-3 text-left text-ink-soft hover:border-accent/60 hover:text-ink"
-          >
-            + nueva meta
-          </button>
-        )}
-
-        {hechas.length > 0 && (
-          <details className="mt-8">
-            <summary className="t-label cursor-pointer text-ink-soft">cumplidas · {hechas.length}</summary>
-            <ul className="mt-3 space-y-2">
-              {hechas.map((m) => (
-                <li key={m.id} className="flex items-center gap-3 text-ink-soft">
-                  <Check className="size-4 shrink-0 text-accent" />
-                  {m.titulo}
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
-      </section>
-    </>
+// Name, a line more and a date — creating a goal, or editing it from its detail.
+function MetaForm({
+  inicial,
+  onSave,
+  onCancel,
+}: {
+  inicial?: Meta;
+  onSave: (titulo: string, descripcion: string | null, para: string | null) => void;
+  onCancel: () => void;
+}) {
+  const [titulo, setTitulo] = useState(inicial?.titulo ?? "");
+  const [descripcion, setDescripcion] = useState(inicial?.descripcion ?? "");
+  const [para, setPara] = useState(inicial?.para ?? "");
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const t = titulo.trim();
+        if (t) onSave(t, descripcion.trim() || null, para || null);
+      }}
+      className="rise space-y-3 p-4"
+    >
+      <label className="block">
+        <span className="sr-only">la meta</span>
+        <input
+          autoFocus
+          value={titulo}
+          onChange={(e) => setTitulo(e.target.value)}
+          maxLength={MAX_TEXTO}
+          placeholder="¿qué quieres lograr?"
+          className="w-full rounded-xl border border-line bg-surface-2 px-3.5 py-2.5 font-medium placeholder:font-normal placeholder:text-ink-soft"
+        />
+      </label>
+      <label className="block">
+        <span className="sr-only">descripción · opcional</span>
+        <textarea
+          value={descripcion}
+          onChange={(e) => setDescripcion(e.target.value)}
+          maxLength={MAX_DESCRIPCION_META}
+          rows={2}
+          placeholder="una línea más · opcional"
+          className="w-full resize-none rounded-xl border border-line bg-surface-2 px-3.5 py-2.5 text-sm placeholder:text-ink-soft"
+        />
+      </label>
+      <label className="flex items-center justify-between gap-3">
+        <span className="text-sm text-ink-soft">para cuándo · opcional</span>
+        <input
+          type="date"
+          value={para}
+          onChange={(e) => setPara(e.target.value)}
+          className="rounded-xl border border-line bg-surface-2 px-3 py-2 text-sm [color-scheme:dark] [:root[data-theme=light]_&]:[color-scheme:light]"
+        />
+      </label>
+      <div className="flex items-center justify-end gap-2">
+        <button type="button" onClick={onCancel} className="press rounded-full px-3 py-2 text-sm text-ink-soft hover:text-ink">
+          cancelar
+        </button>
+        <button type="submit" disabled={!titulo.trim()} className="press rounded-full bg-accent px-5 py-2 text-sm font-semibold text-accent-ink disabled:opacity-50">
+          {inicial ? "guardar" : "crear"}
+        </button>
+      </div>
+    </form>
   );
 }
 
@@ -344,19 +438,35 @@ function Chip({ children, onClick, disabled = false }: { children: React.ReactNo
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="press rounded-full border border-line bg-surface-2 px-3.5 py-1.5 text-sm hover:border-accent/60 disabled:opacity-50"
+      className="press rounded-full border border-line px-3 py-1.5 text-xs font-medium text-ink-soft hover:border-accent/60 hover:text-ink disabled:opacity-50"
     >
       {children}
     </button>
   );
 }
 
-function Goal({ meta, hoyLleno, run, celebrate }: { meta: Meta; hoyLleno: boolean; run: Run; celebrate: (t: string) => void }) {
+// One goal, open: its name and line, where it stands, and its steps as the same list as «hoy» —
+// the next one first, with «→ hoy». The assistant offers to split it into steps.
+function Goal({
+  meta,
+  hoyLleno,
+  run,
+  celebrate,
+  cerrar,
+}: {
+  meta: Meta;
+  hoyLleno: boolean;
+  run: Run;
+  celebrate: (t: string) => void;
+  cerrar: () => void;
+}) {
   const [paso, setPaso] = useState("");
+  const [editando, setEditando] = useState(false);
   const [seguro, setSeguro] = useState(false);
   const next = siguiente(meta);
-  const hechos = meta.pasos.filter((p) => p.hecho).length;
   const done = terminada(meta);
+  // the next step leads, then the rest in their order
+  const pasos = next ? [next, ...meta.pasos.filter((p) => p.id !== next.id)] : meta.pasos;
 
   function complete(id: string) {
     const last = meta.pasos.filter((p) => !p.hecho).length === 1;
@@ -374,147 +484,160 @@ function Goal({ meta, hoyLleno, run, celebrate }: { meta: Meta; hoyLleno: boolea
 
   return (
     <div>
-      <Link href="/misiones?v=despues" className="press t-label -ml-2 inline-flex items-center gap-2 rounded-full px-2 py-2 text-ink-soft hover:text-ink">
+      <button type="button" onClick={cerrar} className="press t-label -ml-2 mt-6 inline-flex items-center gap-2 rounded-full px-2 py-2 text-ink-soft hover:text-ink">
         <ArrowLeft className="size-4" />
         metas
-      </Link>
-      <h2 className="t-display mt-3 text-3xl">{meta.titulo}</h2>
-      {meta.para && <p className="mt-2 text-ink-soft">para {cuando(meta.para)}</p>}
-      {meta.pasos.length > 0 && (
-        <p className="mt-3 flex items-center gap-2 text-sm text-ink-soft">
-          <Dots meta={meta} />
-          {hechos} de {meta.pasos.length} {meta.pasos.length === 1 ? "paso" : "pasos"}
-        </p>
+      </button>
+
+      {editando ? (
+        <div className="mt-2 rounded-2xl border border-line bg-surface">
+          <MetaForm
+            inicial={meta}
+            onCancel={() => setEditando(false)}
+            onSave={(titulo, descripcion, para) => {
+              setEditando(false);
+              run({ k: "meta~", id: meta.id, titulo, descripcion, para }, () => editarLaMeta(meta.id, titulo, descripcion, para), "listo, guardada");
+            }}
+          />
+        </div>
+      ) : (
+        <>
+          <div className="mt-2 flex items-start gap-2">
+            <h2 className="flex-1 text-pretty text-2xl font-semibold leading-tight">{meta.titulo}</h2>
+            <button
+              type="button"
+              aria-label="editar la meta"
+              onClick={() => setEditando(true)}
+              className="press -mr-2 -mt-1 grid size-10 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-surface-2 hover:text-ink"
+            >
+              <Pencil className="size-4" />
+            </button>
+          </div>
+          {meta.descripcion && <p className="mt-1 text-pretty text-sm text-ink-soft">{meta.descripcion}</p>}
+          <div className="mt-2">
+            <Estado meta={meta} />
+          </div>
+        </>
       )}
 
-      {next && (
-        <div className="mt-6 rounded-3xl border border-accent/60 bg-surface p-5">
-          <p className="t-label text-accent">lo siguiente</p>
-          <div className="mt-3 flex items-center gap-4">
-            <CheckButton label={next.texto} onClick={() => complete(next.id)} />
-            <p className="flex-1 text-pretty text-lg font-medium leading-snug">{next.texto}</p>
-          </div>
-          <div className="mt-4 flex justify-end">
-            {next.enHoy ? (
-              <span className="t-label text-ink-soft">ya está en hoy</span>
+      {done && (
+        <p className="rise mt-5 text-pretty rounded-2xl border border-line bg-surface p-4">Cumpliste todos los pasos. Esta meta ya es parte de tu jardín.</p>
+      )}
+
+      <ul className={`mt-5 ${lista}`}>
+        {pasos.map((p) => (
+          <li key={p.id} className="flex min-h-14 items-center gap-3 py-2 pl-2 pr-3">
+            {p.hecho ? (
+              <span className="grid size-11 shrink-0 place-items-center">
+                <Check className="size-5 text-accent" />
+              </span>
             ) : (
+              <CheckButton label={p.texto} onClick={() => complete(p.id)} />
+            )}
+            <span className="min-w-0 flex-1">
+              {p.id === next?.id && <span className="block text-xs font-medium text-accent">lo siguiente</span>}
+              <span className={`block text-pretty leading-snug ${p.hecho ? "text-ink-soft" : p.id === next?.id ? "font-medium" : ""}`}>{p.texto}</span>
+            </span>
+            {p.enHoy ? (
+              <span className="shrink-0 text-xs text-ink-soft">en hoy</span>
+            ) : p.id === next?.id ? (
               <button
                 type="button"
                 disabled={hoyLleno}
-                onClick={() =>
-                  run({ k: "paso", meta: meta.id, id: next.id, to: "enHoy" }, () => pasoAHoy(meta.id, next.id), "listo, está en hoy")
-                }
-                className="press inline-flex items-center gap-2 rounded-full bg-accent px-5 py-2.5 font-semibold text-accent-ink disabled:opacity-50"
+                onClick={() => run({ k: "paso", meta: meta.id, id: p.id, to: "enHoy" }, () => pasoAHoy(meta.id, p.id), "listo, está en hoy")}
+                className="press inline-flex shrink-0 items-center gap-1.5 rounded-full bg-accent px-3.5 py-1.5 text-sm font-semibold text-accent-ink disabled:opacity-50"
               >
                 {hoyLleno ? (
-                  "hoy está lleno"
+                  "hoy lleno"
                 ) : (
                   <>
-                    <ArrowRight className="size-4" />
+                    <ArrowRight className="size-3.5" />
                     hoy
                   </>
                 )}
               </button>
+            ) : (
+              !p.hecho && (
+                <button
+                  type="button"
+                  onClick={() => run({ k: "paso", meta: meta.id, id: p.id, to: "fuera" }, () => borrarPaso(meta.id, p.id), undefined, { tipo: "paso", id: p.id, texto: p.texto })}
+                  className="press shrink-0 rounded-full px-2 py-1.5 text-xs font-medium text-ink-soft hover:text-ink"
+                >
+                  soltar
+                </button>
+              )
             )}
-          </div>
-        </div>
-      )}
+          </li>
+        ))}
+        {meta.pasos.length < MAX_PASOS && (
+          <li>
+            <form onSubmit={add} className="flex min-h-14 items-center gap-3 py-2 pl-4 pr-2 focus-within:bg-surface-2">
+              <Plus className="size-5 shrink-0 text-accent" />
+              <label htmlFor="paso" className="sr-only">
+                otro paso
+              </label>
+              <input
+                id="paso"
+                value={paso}
+                onChange={(e) => setPaso(e.target.value)}
+                maxLength={MAX_TEXTO}
+                placeholder={meta.pasos.length === 0 ? "el primer paso, pequeño" : "otro paso"}
+                autoComplete="off"
+                style={{ boxShadow: "none" }}
+                className={campo}
+              />
+              {paso.trim() && (
+                <button type="submit" className="rise press shrink-0 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-ink">
+                  agregar
+                </button>
+              )}
+            </form>
+          </li>
+        )}
+      </ul>
 
-      {done && (
-        <p className="rise mt-6 rounded-3xl border border-line bg-surface p-5 text-pretty text-lg">
-          Cumpliste todos los pasos. Esta meta ya es parte de tu jardín.
-        </p>
-      )}
-
-      {meta.pasos.length > 0 && (
-        <ul className="mt-6 space-y-1">
-          {meta.pasos.map((p) =>
-            p.id === next?.id ? null : (
-              <li key={p.id} className="flex items-center gap-3 py-1.5">
-                {p.hecho ? (
-                  <Check className="size-5 shrink-0 text-accent" />
-                ) : (
-                  <CheckButton small label={p.texto} onClick={() => complete(p.id)} />
-                )}
-                <span className={`flex-1 text-pretty ${p.hecho ? "text-ink-soft" : ""}`}>{p.texto}</span>
-                {p.enHoy && <span className="t-label text-ink-soft">en hoy</span>}
-                {!p.hecho && !p.enHoy && (
-                  <button
-                    type="button"
-                    onClick={() => run({ k: "paso", meta: meta.id, id: p.id, to: "fuera" }, () => borrarPaso(meta.id, p.id), undefined, { tipo: "paso", id: p.id, texto: p.texto })}
-                    className="press t-label rounded-full px-2 py-1 text-ink-soft hover:text-ink"
-                  >
-                    soltar
-                  </button>
-                )}
-              </li>
-            ),
-          )}
-        </ul>
-      )}
-
-      {meta.pasos.length < MAX_PASOS && (
-        <form onSubmit={add} className="mt-5 flex items-center gap-2 rounded-full border border-dashed border-line bg-surface p-1.5 pl-5">
-          <label htmlFor="paso" className="sr-only">
-            otro paso
-          </label>
-          <input
-            id="paso"
-            value={paso}
-            onChange={(e) => setPaso(e.target.value)}
-            maxLength={MAX_TEXTO}
-            placeholder={meta.pasos.length === 0 ? "el primer paso, pequeño" : "otro paso"}
-            autoComplete="off"
-            className="min-w-0 flex-1 bg-transparent py-2 text-lg placeholder:text-ink-soft focus:outline-none"
-          />
-          <button
-            type="submit"
-            disabled={!paso.trim()}
-            className="press shrink-0 rounded-full bg-accent px-5 py-2.5 font-semibold text-accent-ink disabled:opacity-50"
-          >
-            agregar
-          </button>
-        </form>
-      )}
-
-      {meta.pasos.length < MAX_PASOS && !done && <PartirEnPasos key={meta.pasos.length} metaId={meta.id} />}
-
-      <div className="mt-10 border-t border-dashed border-line pt-5">
+      <div className="mt-8">
         {seguro ? (
-          <p className="flex flex-wrap items-center gap-3 text-ink-soft">
+          <p className="flex flex-wrap items-center gap-3 text-sm text-ink-soft">
             ¿La sueltas? Sus pasos se van con ella, y vuelven si la recuperas.
-            <Link
-              href="/misiones?v=despues"
-              onClick={() => run({ k: "meta-", id: meta.id }, () => borrarMeta(meta.id), undefined, { tipo: "meta", id: meta.id, texto: meta.titulo })}
-              className="press t-label rounded-full border border-line px-3 py-1.5 text-ink hover:border-accent/60"
+            <button
+              type="button"
+              onClick={() => {
+                run({ k: "meta-", id: meta.id }, () => borrarMeta(meta.id), undefined, { tipo: "meta", id: meta.id, texto: meta.titulo });
+                cerrar();
+              }}
+              className="press rounded-full border border-line px-3 py-1.5 text-xs font-medium text-ink hover:border-accent/60"
             >
               sí, soltarla
-            </Link>
-            <button type="button" onClick={() => setSeguro(false)} className="press t-label px-2 py-1.5 hover:text-ink">
+            </button>
+            <button type="button" onClick={() => setSeguro(false)} className="press px-2 py-1.5 text-xs font-medium hover:text-ink">
               no
             </button>
           </p>
         ) : (
-          <button type="button" onClick={() => setSeguro(true)} className="press t-label rounded-full px-2 py-1.5 text-ink-soft hover:text-ink">
+          <button type="button" onClick={() => setSeguro(true)} className="press -ml-2 rounded-full px-2 py-1.5 text-xs font-medium text-ink-soft hover:text-ink">
             soltar esta meta
           </button>
         )}
       </div>
+
+      {/* room under the last line, so the assistant's floating button never sits on it */}
+      <div aria-hidden className="h-16" />
+      {meta.pasos.length < MAX_PASOS && !done && (
+        <AsistenteBoton label="asistente: te ayuda a partir esta meta en pasos">
+          <PartirEnPasos key={meta.pasos.length} metaId={meta.id} />
+        </AsistenteBoton>
+      )}
     </div>
   );
 }
 
-function CheckButton({ label, onClick, small = false }: { label: string; onClick: () => void; small?: boolean }) {
+function CheckButton({ label, onClick }: { label: string; onClick: () => void }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={`cumplir: ${label}`}
-      className={`press group grid shrink-0 place-items-center rounded-full border-2 border-accent/70 hover:bg-accent-soft ${
-        small ? "size-7" : "size-11"
-      }`}
-    >
-      <Check className={`text-accent opacity-0 transition-opacity duration-200 group-hover:opacity-100 ${small ? "size-3.5" : "size-5"}`} />
+    <button type="button" onClick={onClick} aria-label={`cumplir: ${label}`} className="press group grid size-11 shrink-0 place-items-center rounded-full">
+      <span className="grid size-6 place-items-center rounded-full border-2 border-accent/70 transition-colors group-hover:bg-accent-soft">
+        <Check className="size-3.5 text-accent opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+      </span>
     </button>
   );
 }

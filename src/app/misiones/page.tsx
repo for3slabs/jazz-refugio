@@ -7,10 +7,9 @@ import { deHoy, loadMisiones } from "@/lib/misiones";
 import { loadPendientes } from "@/lib/pendientes";
 import { currentRole } from "@/lib/session";
 import { loadSoltado } from "@/lib/soltado";
-import { LoSoltado } from "@/components/soltado";
 import { Board } from "./board";
 import { Later } from "./later";
-import { Tabs } from "./tabs";
+import { Vistas } from "./tabs";
 
 type Search = Promise<{ v?: string; meta?: string }>;
 
@@ -38,38 +37,41 @@ async function Missions({ searchParams }: { searchParams: Search }) {
   }
   const { v, meta } = await searchParams;
 
-  if (v === "despues") {
-    const [p, m, soltado] = await Promise.all([loadPendientes(), loadMisiones(), loadSoltado("despues").catch(() => [])]);
-    return (
-      <>
-        <Titulo vista="despues" />
-        <Later mente={p.mente} metas={p.metas} abierta={meta ?? null} hoyLleno={m.abiertas.length >= MAX_ABIERTAS} />
-        <LoSoltado items={soltado} />
-      </>
-    );
-  }
-
-  const [m, soltado] = await Promise.all([loadMisiones(), loadSoltado("hoy").catch(() => [])]);
+  // Both views load together, so the switch flips between them without a trip to the server.
+  const [m, p, soltadoHoy, soltadoDespues] = await Promise.all([
+    loadMisiones(),
+    loadPendientes(),
+    loadSoltado("hoy").catch(() => []),
+    loadSoltado("despues").catch(() => []),
+  ]);
   return (
-    <>
-      <Titulo vista="hoy" />
-      <h2 className="mt-8 text-lg font-semibold">tus 3 misiones de hoy</h2>
-      <p className="mt-0.5 text-pretty text-sm text-ink-soft">cada una que cumplas es una flor en tu jardín</p>
-      <Board abiertas={m.abiertas} hoy={deHoy(m.hechas)} total={m.total} soltado={soltado} />
-      {/* room under the last line, so the assistant's floating button never sits on it */}
-      <div aria-hidden className="h-16" />
-    </>
+    <Vistas
+      inicial={v === "despues" ? "despues" : "hoy"}
+      hoy={
+        <>
+          <h2 className="mt-8 text-lg font-semibold">tus 3 misiones de hoy</h2>
+          <p className="mt-0.5 text-pretty text-sm text-ink-soft">cada una que cumplas es una flor en tu jardín</p>
+          <Board abiertas={m.abiertas} hoy={deHoy(m.hechas)} total={m.total} soltado={soltadoHoy} />
+          {/* room under the last line, so the assistant's floating button never sits on it */}
+          <div aria-hidden className="h-16" />
+        </>
+      }
+      despues={
+        <Later
+          mente={p.mente}
+          metas={p.metas}
+          abierta={meta ?? null}
+          hoyLleno={m.abiertas.length >= MAX_ABIERTAS}
+          soltado={soltadoDespues}
+        />
+      }
+    />
   );
 }
 
-// The title leads and its two views sit on the same line — one row less before her list
-// (Brian, 2026-10-25: «hoy y más adelante al mismo nivel de misiones»).
-function Titulo({ vista }: { vista?: "hoy" | "despues" }) {
-  return (
-    <PageTitle icon={<Diamond className="size-7" />} aside={vista && <Tabs vista={vista} />}>
-      misiones
-    </PageTitle>
-  );
+// The title alone, for whoever is not Jazz.
+function Titulo() {
+  return <PageTitle icon={<Diamond className="size-7" />}>misiones</PageTitle>;
 }
 
 function BoardSkeleton() {

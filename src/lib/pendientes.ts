@@ -25,8 +25,8 @@ export async function loadPendientes(): Promise<Pendientes> {
   const [ideas, metas, pasos] = await Promise.all([
     db<{ id: string; texto: string; anotada_en: Date }[]>`
       select id, texto, anotada_en from idea where soltada_en is null and paso_a is null order by anotada_en desc`,
-    db<{ id: string; titulo: string; para: string | null; creada_en: Date }[]>`
-      select id, titulo, to_char(para, 'YYYY-MM-DD') as para, creada_en from meta
+    db<{ id: string; titulo: string; descripcion: string | null; para: string | null; creada_en: Date }[]>`
+      select id, titulo, descripcion, to_char(para, 'YYYY-MM-DD') as para, creada_en from meta
       where soltada_en is null order by creada_en desc`,
     db<{ id: string; meta_id: string; texto: string; hecho_en: Date | null; en_hoy: boolean }[]>`
       select p.id, p.meta_id, p.texto, p.hecho_en,
@@ -39,6 +39,7 @@ export async function loadPendientes(): Promise<Pendientes> {
       (m): Meta => ({
         id: m.id,
         titulo: m.titulo,
+        descripcion: m.descripcion,
         para: m.para,
         at: ms(m.creada_en)!,
         pasos: pasos
@@ -79,8 +80,17 @@ export const pasarIdeaAMeta = (id: string) =>
     }),
   );
 
-export const nuevaMeta = (titulo: string, para: string | null) =>
-  con(() => sql()`insert into meta (titulo, para) values (${titulo}, ${para})`);
+export const nuevaMeta = (titulo: string, para: string | null, descripcion: string | null = null) =>
+  con(() => sql()`insert into meta (titulo, para, descripcion) values (${titulo}, ${para}, ${descripcion})`);
+
+// Her goal's name, description and date, changed from its detail. False when it is no longer hers
+// to change (let go meanwhile).
+export async function editarMeta(id: string, titulo: string, descripcion: string | null, para: string | null): Promise<boolean> {
+  const rows = await sql()`
+    update meta set titulo = ${titulo}, descripcion = ${descripcion}, para = ${para}
+    where id = ${id} and soltada_en is null returning id`;
+  return rows.length > 0;
+}
 
 export async function soltarMeta(id: string): Promise<string | void> {
   await sql()`update meta set soltada_en = now() where id = ${id} and soltada_en is null`;
