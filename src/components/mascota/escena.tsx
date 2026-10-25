@@ -8,8 +8,9 @@ import type { Puestos } from "@/lib/objeto";
 import { Gato } from "./gato";
 
 // The stage: transparent, so what sits behind it gives the colour of her mode. A drag turns the
-// cat; let go and it keeps facing where she left it, swaying a little. With motion turned off
-// (her setting or the system's), the cat is drawn once and stays still.
+// cat; let go and it keeps facing where she left it, swaying a little. Only her own switch
+// («menos movimiento» in ajustes) stills it: many phones turn the system's reduced-motion on by
+// default, and a pet that never blinks there is not alive (Brian, 2026-10-24).
 
 function Sombra() {
   const tex = useMemo(() => {
@@ -46,9 +47,7 @@ function Giro({ angle, children }: { angle: React.RefObject<number>; children: R
 }
 
 function motionOff() {
-  return (
-    document.documentElement.dataset.motion === "off" || window.matchMedia("(prefers-reduced-motion: reduce)").matches
-  );
+  return document.documentElement.dataset.motion === "off";
 }
 const subscribe = () => () => {};
 
