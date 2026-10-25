@@ -55,8 +55,7 @@ async function Missions({ searchParams }: { searchParams: Search }) {
       <Titulo vista="hoy" />
       <h2 className="mt-8 text-lg font-semibold">tus 3 misiones de hoy</h2>
       <p className="mt-0.5 text-pretty text-sm text-ink-soft">cada una que cumplas es una flor en tu jardín</p>
-      <Board abiertas={m.abiertas} hoy={deHoy(m.hechas)} total={m.total} />
-      <LoSoltado items={soltado} />
+      <Board abiertas={m.abiertas} hoy={deHoy(m.hechas)} total={m.total} soltado={soltado} />
       {/* room under the last line, so the assistant's floating button never sits on it */}
       <div aria-hidden className="h-16" />
     </>

@@ -5,8 +5,10 @@ import { cumplirMision, estadoMision, nuevaMision, recuperarSoltado, soltarMisio
 import { Confetti } from "@/components/confetti";
 import { since, useNow } from "@/components/estado";
 import { Flower } from "@/components/flower";
+import { LoSoltado } from "@/components/soltado";
 import { Check, Chevron, More } from "@/components/icons";
 import { type EstadoMision, type Hecha, type Mision, MAX_ABIERTAS, MAX_TEXTO } from "@/lib/mision";
+import type { Soltado } from "@/lib/soltado";
 import { Asistente } from "./asistente";
 
 type View = { abiertas: Mision[]; hoy: Hecha[] };
@@ -42,7 +44,7 @@ function apply(v: View, c: Change): View {
 // One surface with rows, not three boxes — the page title leads, the list follows (Brian,
 // 2026-10-25: «las misiones están muy grandes»). Each row says how it is going; the circle gives the
 // flower, the ⋯ opens «haciendo · atorada · soltar» right there.
-export function Board({ abiertas, hoy, total }: View & { total: number }) {
+export function Board({ abiertas, hoy, total, soltado }: View & { total: number; soltado: Soltado[] }) {
   const [view, change] = useOptimistic<View, Change>({ abiertas, hoy }, apply);
   const [, start] = useTransition();
   const [texto, setTexto] = useState("");
@@ -254,7 +256,7 @@ export function Board({ abiertas, hoy, total }: View & { total: number }) {
         </p>
       )}
 
-      {view.hoy.length > 0 && <Historial hoy={view.hoy} total={total} />}
+      {(view.hoy.length > 0 || soltado.length > 0) && <Historial hoy={view.hoy} total={total} soltado={soltado} />}
 
       {view.abiertas.length > 0 && <Asistente abiertas={view.abiertas} />}
     </div>
@@ -271,31 +273,34 @@ function duracion(desde: number, hasta: number) {
   return min % 60 ? `${h} h ${min % 60} min` : `${h} h`;
 }
 
-// What she finished today, folded into one line so it rewards without crowding; open, each one
-// says when — and how long, if she marked it «haciendo» first.
-function Historial({ hoy, total }: { hoy: Hecha[]; total: number }) {
+// One quiet line, «historial» and a flower: what she finished today and what she let go, folded
+// so the page stays light but she knows there is more inside (Brian, 2026-10-25). Open, each done
+// mission says when — and how long, if she marked it «haciendo» first; each let-go one can return.
+function Historial({ hoy, total, soltado }: { hoy: Hecha[]; total: number; soltado: Soltado[] }) {
   return (
     <details className="group mt-8">
-      <summary className="press flex cursor-pointer list-none items-center gap-3 rounded-2xl py-2 [&::-webkit-details-marker]:hidden">
-        <span className="font-semibold">hoy cumpliste {hoy.length}</span>
-        <span aria-hidden className="flex -space-x-1">
-          {hoy.slice(0, 5).map((h, i) => (
-            <Flower key={h.id} n={total - i} className="size-5" />
-          ))}
-        </span>
+      <summary className="press flex cursor-pointer list-none items-center gap-2.5 rounded-2xl py-2 [&::-webkit-details-marker]:hidden">
+        <span className="font-semibold">historial</span>
+        <Flower n={total} className="size-5" />
         <Chevron className="ml-auto size-5 text-ink-soft transition-transform duration-200 group-open:rotate-180" />
       </summary>
-      <ul className="mt-2 space-y-2.5 border-l border-line pl-4">
-        {hoy.map((h) => (
-          <li key={h.id} className="flex items-baseline justify-between gap-3">
-            <span className="min-w-0 text-pretty text-sm">{h.texto}</span>
-            <span className="shrink-0 text-xs tabular-nums text-ink-soft">
-              {hora.format(h.hecha)}
-              {h.empezada && ` · ${duracion(h.empezada, h.hecha)}`}
-            </span>
-          </li>
-        ))}
-      </ul>
+      {hoy.length > 0 && (
+        <section className="mt-3">
+          <h3 className="text-sm font-semibold">hoy cumpliste · {hoy.length}</h3>
+          <ul className="mt-2 space-y-2.5 border-l border-line pl-4">
+            {hoy.map((h) => (
+              <li key={h.id} className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0 text-pretty text-sm">{h.texto}</span>
+                <span className="shrink-0 text-xs tabular-nums text-ink-soft">
+                  {hora.format(h.hecha)}
+                  {h.empezada && ` · ${duracion(h.empezada, h.hecha)}`}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+      <LoSoltado items={soltado} bare />
     </details>
   );
 }
