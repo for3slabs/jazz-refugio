@@ -16,8 +16,9 @@ export async function loadColeccion(de: Role = "jazz"): Promise<Coleccion> {
       select id, titulo, autor, nota, estado, creado from libro where de = ${de} and soltado_en is null order by creado desc`,
     db<{ id: string; titulo: string; donde: string; nota: string; creado: Date }[]>`
       select id, titulo, donde, nota, creado from aprendizaje where de = ${de} and soltado_en is null order by creado desc`,
-    db<{ id: string; lugar: string; cuando: string; nota: string; estado: EstadoViaje; creado: Date }[]>`
-      select id, lugar, cuando, nota, estado, creado from viaje where de = ${de} and soltado_en is null order by creado desc`,
+    db<{ id: string; lugar: string; cuando: string; nota: string; estado: EstadoViaje; creado: Date; desde: string | null; hasta: string | null; enlace: string }[]>`
+      select id, lugar, cuando, nota, estado, creado, to_char(desde, 'YYYY-MM-DD') as desde, to_char(hasta, 'YYYY-MM-DD') as hasta, enlace
+      from viaje where de = ${de} and soltado_en is null order by creado desc`,
   ]);
   return {
     libros: libros.map(({ creado, ...l }) => ({ ...l, at: ms(creado)! })),
@@ -69,8 +70,21 @@ export const agregarLibro = (de: Role, titulo: string, autor: string, estado: Es
 export const agregarAprendido = (de: Role, titulo: string, donde: string, nota: string) =>
   insertar(() => sql()`insert into aprendizaje (de, titulo, donde, nota) values (${de}, ${titulo}, ${donde}, ${nota})`);
 
-export const agregarViaje = (de: Role, lugar: string, cuando: string, estado: EstadoViaje, nota: string) =>
-  insertar(() => sql()`insert into viaje (de, lugar, cuando, estado, nota) values (${de}, ${lugar}, ${cuando}, ${estado}, ${nota})`);
+export const agregarViaje = (
+  de: Role,
+  lugar: string,
+  cuando: string,
+  estado: EstadoViaje,
+  nota: string,
+  desde: string | null = null,
+  hasta: string | null = null,
+  enlace = "",
+) =>
+  insertar(
+    () =>
+      sql()`insert into viaje (de, lugar, cuando, estado, nota, desde, hasta, enlace)
+            values (${de}, ${lugar}, ${cuando}, ${estado}, ${nota}, ${desde}, ${hasta}, ${enlace})`,
+  );
 
 // Moving a book or a trip to its next state («lo terminé», «¡ya fui!») keeps everything else.
 export async function moverLibro(de: Role, id: string, estado: EstadoLibro): Promise<string | void> {
