@@ -219,3 +219,22 @@ export const Lock = ({ className }: P) => (
     <path d="M8 11V8a4 4 0 0 1 8 0v3" />
   </svg>
 );
+
+// Her refuge's logo: a white cat's head — the same cat that lives in her app — with a thin ink
+// edge so it reads on the light theme too (Brian, 2026-10-25: «un ícono de gato blanco… el logo»).
+export const GatoLogo = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" className={className} aria-hidden>
+    <path
+      d="M4.2 3.6 L8.6 7.4 Q12 6.3 15.4 7.4 L19.8 3.6 Q20.9 8.4 19.9 11.4 Q21.2 13.4 20.6 15.8 Q19.2 20.6 12 20.6 Q4.8 20.6 3.4 15.8 Q2.8 13.4 4.1 11.4 Q3.1 8.4 4.2 3.6Z"
+      fill="#fff"
+      stroke="oklch(0.2 0.06 315)"
+      strokeWidth={1.2}
+      strokeLinejoin="round"
+    />
+    <path d="M5.2 5.4 L8 7.9 Q6.3 8.6 5.5 10 Q4.8 7.6 5.2 5.4Z" fill="oklch(0.86 0.07 55)" />
+    <ellipse cx="9.2" cy="13" rx="1.05" ry="1.35" fill="oklch(0.2 0.06 315)" />
+    <ellipse cx="14.8" cy="13" rx="1.05" ry="1.35" fill="oklch(0.2 0.06 315)" />
+    <path d="M11.2 15.4 h1.6 l-0.8 0.8z" fill="oklch(0.75 0.12 15)" />
+    <path d="M12 16.2 q-1 1.2 -2 0.4 M12 16.2 q1 1.2 2 0.4" fill="none" stroke="oklch(0.2 0.06 315)" strokeWidth={0.8} strokeLinecap="round" />
+  </svg>
+);
