@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 // 2026-10-25: «algo más íntimo… su recámara… el gato en el balcón pensando, de noche… el escritorio
 // con un libro donde apunte sus deseos… una paloma llega a su balcón»). The balcony doors are open
 // onto a sleeping city under the moon; her cat sits out there thinking; on the desk, the book of her
-// wishes under a warm lamp; above it a corkboard with what Brian wishes for; and when Brian sends
+// wishes under a warm lamp; above it a framed picture of her own beach; and when Brian sends
 // her a wish, a dove lands on the railing with a little alert. Vector code; no blue anywhere.
 
 const INK = "oklch(0.2 0.06 315)";
@@ -55,7 +55,6 @@ export function Recamara({
   paloma = false,
   vuela = 0,
   onLibro,
-  onCorcho,
   onPaloma,
   cielo = 0,
   className = "",
@@ -65,7 +64,6 @@ export function Recamara({
   paloma?: boolean;
   vuela?: number;
   onLibro?: () => void;
-  onCorcho?: () => void;
   onPaloma?: () => void;
   cielo?: number;
   className?: string;
@@ -134,26 +132,18 @@ export function Recamara({
           <path key={j} d={`M${198 + j * 20} 418 V 470`} stroke={INK} strokeWidth={2.2} />
         ))}
         <path d="M188 470 H 390" stroke={INK} strokeWidth={4} />
-        {/* the corkboard: what Brian wishes for, pinned for her */}
-        <g onClick={onCorcho} style={onCorcho ? { cursor: "pointer" } : undefined} role={onCorcho ? "button" : undefined} aria-label={onCorcho ? "lo que Brian desea" : undefined}>
-          <rect x="22" y="232" width="140" height="104" rx="4" fill="oklch(0.6 0.09 60)" stroke={INK} strokeWidth={3} />
-          <rect x="22" y="232" width="140" height="104" rx="4" fill="url(#rec-trama)" opacity={0.4} />
-          {[
-            [36, 246, -6, "oklch(0.95 0.03 330)"],
-            [86, 252, 5, "oklch(0.92 0.13 92)"],
-            [52, 290, 3, "oklch(0.86 0.1 345)"],
-            [106, 292, -4, "oklch(0.95 0.03 330)"],
-          ].map(([x, y, r, c], i) => (
-            <g key={i} transform={`translate(${x} ${y}) rotate(${r})`}>
-              <rect width="40" height="32" fill={c as string} stroke={INK} strokeWidth={1.6} />
-              <path d="M6 10 H 32 M6 17 H 28 M6 24 H 22" stroke={INK} strokeWidth={1} opacity={0.5} />
-              <circle cx="20" cy="2" r="3" fill="oklch(0.6 0.2 340)" stroke={INK} strokeWidth={1} />
-            </g>
+        {/* on her wall, a framed picture of her own sunset beach — her room holds only her things */}
+        <g transform="translate(40 240)" stroke={INK} strokeLinejoin="round">
+          <rect x="-6" y="-6" width="112" height="92" rx="3" fill="oklch(0.6 0.09 60)" strokeWidth={3} />
+          <rect x="0" y="0" width="100" height="80" fill="oklch(0.36 0.15 308)" strokeWidth={1.6} />
+          <path d="M0 28 Q 50 22 100 30 V 80 H0Z" fill="oklch(0.5 0.2 330)" stroke="none" />
+          <path d="M0 44 Q 50 40 100 46 V 80 H0Z" fill="oklch(0.7 0.16 30)" stroke="none" />
+          <circle cx="50" cy="50" r="13" fill="oklch(0.92 0.13 92)" strokeWidth={1.4} />
+          <rect x="0" y="52" width="100" height="14" fill="oklch(0.42 0.15 315)" strokeWidth={1.2} />
+          <path d="M0 66 Q 50 60 100 68 V 80 H0Z" fill="oklch(0.82 0.08 65)" strokeWidth={1.2} />
+          {[14, 30, 46, 64, 82].map((x, i) => (
+            <circle key={x} cx={x} cy={72 + (i % 2) * 3} r="3" fill={i % 2 ? "oklch(0.74 0.17 345)" : "oklch(0.66 0.21 312)"} strokeWidth={0.8} />
           ))}
-          <rect x="44" y="318" width="96" height="14" rx="3" fill="oklch(0.95 0.03 330)" stroke={INK} strokeWidth={1.4} />
-          <text x="92" y="328.5" textAnchor="middle" fontSize="8" fontWeight="800" fill={INK}>
-            LO QUE BRIAN DESEA
-          </text>
         </g>
         {/* the floor of her room, a round rug */}
         <rect y="472" width={W} height={H - 472} fill="oklch(0.4 0.07 40)" />
