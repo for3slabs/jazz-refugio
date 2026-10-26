@@ -101,7 +101,7 @@ function JardinVivo({ flores, vistas, gato }: { flores: number; vistas: number |
     }
     const s = SLOTS[nuevas[k]];
     // walk to the place, then the flower sprouts behind its paws
-    setPos({ x: s.x - 26, y: s.y + 6 });
+    setPos({ x: s.x - 22, y: s.y + 6 });
     const id = setTimeout(() => setK((n) => n + 1), paso * 0.75);
     return () => clearTimeout(id);
   }, [fase, k, nuevas, paso]);
@@ -147,8 +147,8 @@ function JardinVivo({ flores, vistas, gato }: { flores: number; vistas: number |
               style={{ cursor: "pointer" }}
             >
               {/* a larger, invisible target: a cat is small under a finger */}
-              <g transform="scale(1.5)">
-                <rect x="-30" y="-50" width="64" height="56" fill="transparent" />
+              <g transform="scale(1.35)">
+                <rect x="-26" y="-60" width="52" height="62" fill="transparent" />
                 <Gato conFlor={fase === "plantando" && k < nuevas.length} puestos={gato.puestos} />
               </g>
             </g>
