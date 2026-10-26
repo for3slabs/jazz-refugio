@@ -53,6 +53,7 @@ import { MAX_NOTE, addNote, marcarVistas, removeNote } from "@/lib/notes";
 import { currentRole } from "@/lib/session";
 import type { Moment } from "@/lib/local";
 import { anotarVuelta, subirVueltas } from "@/lib/vueltas";
+import { verFlores } from "@/lib/jardin";
 import { type Tipo as TipoSoltado, recuperar } from "@/lib/soltado";
 import { COOKIE, MAX_AGE_S, type Role, issueToken } from "@/lib/token";
 
@@ -638,4 +639,11 @@ export async function borrarNota(form: FormData) {
   const id = String(form.get("id") ?? "");
   if (id) await removeNote(role, id);
   refresh();
+}
+
+// Her cat finished planting: the flowers she just watched grow are seen, on every device.
+export async function floresVistas(n: number) {
+  if ((await currentRole()) !== "jazz") return;
+  if (!Number.isInteger(n) || n < 0 || n > 100_000) return;
+  await verFlores(n).catch(() => {});
 }

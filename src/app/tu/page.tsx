@@ -6,6 +6,8 @@ import { Tabs } from "@/components/tabs";
 import { loadColeccion, loadDeseos } from "@/lib/coleccion";
 import { loadMisiones } from "@/lib/misiones";
 import { loadVueltas } from "@/lib/vueltas";
+import { loadFloresVistas } from "@/lib/jardin";
+import { loadMascota } from "@/lib/mascota";
 import { currentRole } from "@/lib/session";
 import { Deseos } from "./deseos";
 import { Garden, MasDelJardin } from "./garden";
@@ -51,14 +53,20 @@ async function Content({ searchParams }: { searchParams: Search }) {
   const tabs = <Tabs label="colecciones" current={vista} items={items} />;
 
   if (vista === "jardin") {
-    const [m, vueltas] = await Promise.all([loadMisiones().catch(() => null), loadVueltas(role).catch(() => [])]);
+    // her pet walks into the garden to plant what she has not seen grow yet (0013)
+    const [m, vueltas, vistas, gato] = await Promise.all([
+      loadMisiones().catch(() => null),
+      loadVueltas(role).catch(() => []),
+      loadFloresVistas().catch(() => null),
+      loadMascota().catch(() => undefined),
+    ]);
     return (
       <>
         <PageTitle icon={<Star className="size-7" />} aside={<MasDelJardin misiones={m?.total ?? 0} vueltas={vueltas} />}>
           tu jardín
         </PageTitle>
         {tabs}
-        <Garden misiones={m?.total ?? 0} vueltas={vueltas} mejorDia={m?.mejorDia ?? 0} />
+        <Garden misiones={m?.total ?? 0} vueltas={vueltas} mejorDia={m?.mejorDia ?? 0} vistas={vistas} gato={gato} />
       </>
     );
   }

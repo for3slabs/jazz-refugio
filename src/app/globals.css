@@ -354,13 +354,45 @@ a {
 .carril-pista {
   animation: carril 24s linear infinite;
 }
-.carril:hover .carril-pista,
-.carril:active .carril-pista {
-  animation-play-state: paused;
+/* a mouse resting on it pauses it; a finger does not — on a phone «hover» sticks after a tap and
+   froze the carousel for good. While one sticker is open it waits too. */
+@media (hover: hover) {
+  .carril:hover .carril-pista { animation-play-state: paused; }
 }
+.carril-quieto { animation-play-state: paused; }
 @keyframes carril {
   to { transform: translateX(-50%); }
 }
+
+/* Her cat plants: each new flower grows up out of the sand with a bounce, the cat hops on its way,
+   a tap makes it jump, and the caption pops as it counts up. */
+@keyframes brotar {
+  0% { transform: scale(0, 0); }
+  60% { transform: scale(1.15, 1.25); }
+  80% { transform: scale(0.95, 0.92); }
+  100% { transform: scale(1, 1); }
+}
+.brotar {
+  animation: brotar 520ms var(--ease-out-strong) both;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+@keyframes gato-salto {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+.gato-salto { animation: gato-salto 260ms ease-in-out infinite; }
+@keyframes gato-brinco {
+  0%, 100% { transform: translateY(0) rotate(0); }
+  40% { transform: translateY(-26px) rotate(-8deg); }
+  70% { transform: translateY(0) rotate(4deg); }
+}
+.gato-brinco { animation: gato-brinco 520ms var(--ease-out-strong); }
+@keyframes cuenta-sube {
+  0% { transform: scale(1.35); }
+  100% { transform: scale(1); }
+}
+.cuenta-sube { animation: cuenta-sube 260ms var(--ease-out-strong); }
 
 @media (prefers-reduced-motion: reduce) {
   .rise { animation-name: fade; animation-duration: 200ms; }

@@ -7,6 +7,8 @@
 const INK = "oklch(0.2 0.06 315)";
 const W = 390;
 const H = 560;
+export const W_PLAYA = W;
+export const H_PLAYA = H;
 
 function rng(seed: number) {
   let s = seed >>> 0;
@@ -19,11 +21,11 @@ function rng(seed: number) {
 // the top edge of the sand at x
 const duna = (x: number) => 372 + 18 * Math.sin(x / 70 + 0.6) + 10 * Math.sin(x / 31);
 
-type Slot = { x: number; y: number; k: number; i: number };
+export type Slot = { x: number; y: number; k: number; i: number };
 
 // Every place a flower can grow, worked out once: spaced so petals touch but do not pile up,
 // ordered front edge first (with a little randomness) so the garden climbs toward the sea.
-const SLOTS: Slot[] = (() => {
+export const SLOTS: Slot[] = (() => {
   const r = rng(7);
   const out: { x: number; y: number; k: number }[] = [];
   for (let guard = 0; out.length < 260 && guard < 20000; guard++) {
@@ -49,7 +51,8 @@ const PETALOS = [
 ];
 const TALLO = "oklch(0.62 0.13 135)";
 
-function Flor({ x, y, k, i }: Slot) {
+// `nueva`: it sprouts in front of her — grows up out of the sand with a little bounce.
+function Flor({ x, y, k, i, nueva = false }: Slot & { nueva?: boolean }) {
   // nearer is bigger: the beach has depth
   const t = (y - 370) / (H - 370);
   const s = 0.85 + t * 0.95 + k * 0.2;
@@ -59,6 +62,7 @@ function Flor({ x, y, k, i }: Slot) {
   const tallo = `M0 0 Q ${(-3 + k * 6).toFixed(1)} ${(largo / 2).toFixed(1)} 0 ${largo.toFixed(1)}`;
   return (
     <g transform={`translate(${x.toFixed(1)} ${y.toFixed(1)}) scale(${s.toFixed(2)})`}>
+      <g className={nueva ? "brotar" : undefined}>
       <path d={tallo} stroke={INK} strokeWidth={3.2} fill="none" strokeLinecap="round" />
       <path d={tallo} stroke={TALLO} strokeWidth={1.6} fill="none" strokeLinecap="round" />
       <path d={`M0 ${(largo * 0.6).toFixed(1)} q 6 -4 8 -1 q -4 4 -8 1z`} fill={TALLO} stroke={INK} strokeWidth={1} />
@@ -68,6 +72,7 @@ function Flor({ x, y, k, i }: Slot) {
         ))}
         <circle r="3.4" fill="oklch(0.88 0.15 92)" stroke={INK} strokeWidth={1.3} />
         <circle r="1" cx="-1" cy="-1" fill={INK} opacity={0.5} />
+      </g>
       </g>
     </g>
   );
@@ -87,9 +92,27 @@ const RAYOS = Array.from({ length: 16 }, (_, j) => {
   return `M195 296 L${p(a1)} L${p(a2)}Z`;
 });
 
-export function Playa({ flores, className = "" }: { flores: number; className?: string }) {
+// `mostrar`: which places have a flower now (the first `flores` by default) — while her cat plants,
+// the garden shows only what has grown so far. `nuevas`: the ones that sprout as she watches.
+// `children`: drawn on top of the beach, inside the frame — her cat.
+export function Playa({
+  flores,
+  mostrar,
+  nuevas,
+  className = "",
+  children,
+}: {
+  flores: number;
+  mostrar?: number[];
+  nuevas?: Set<number>;
+  className?: string;
+  children?: React.ReactNode;
+}) {
   // back to front, so a nearer flower overlaps the one behind it
-  const crecidas = SLOTS.slice(0, Math.min(flores, SLOTS.length)).sort((a, b) => a.y - b.y);
+  const crecidas = (mostrar ?? SLOTS.slice(0, Math.min(flores, SLOTS.length)).map((s) => s.i))
+    .map((i) => SLOTS[i])
+    .filter(Boolean)
+    .sort((a, b) => a.y - b.y);
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className={className} role="img" aria-label={`tu jardín en la playa, con ${flores} ${flores === 1 ? "flor" : "flores"}`}>
       <defs>
@@ -169,8 +192,9 @@ export function Playa({ flores, className = "" }: { flores: number; className?: 
           <path d="M0 0 C 30 -16 58 -6 72 14 C 48 2 26 2 0 0Z" />
         </g>
         {crecidas.map((s) => (
-          <Flor key={s.i} {...s} />
+          <Flor key={s.i} {...s} nueva={nuevas?.has(s.i)} />
         ))}
+        {children}
       </g>
       <rect x="1.5" y="1.5" width={W - 3} height={H - 3} rx="21" fill="none" stroke={INK} strokeWidth={3} />
     </svg>
