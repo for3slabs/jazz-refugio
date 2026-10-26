@@ -54,6 +54,7 @@ import { currentRole } from "@/lib/session";
 import type { Moment } from "@/lib/local";
 import { anotarVuelta, subirVueltas } from "@/lib/vueltas";
 import { verFlores } from "@/lib/jardin";
+import { MAX_DESCRIPCION_DESEO, MAX_DESEO, crearDeseo, regalarDeseo, soltarDeseo, verDeseo } from "@/lib/deseos";
 import { type Tipo as TipoSoltado, recuperar } from "@/lib/soltado";
 import { COOKIE, MAX_AGE_S, type Role, issueToken } from "@/lib/token";
 
@@ -662,3 +663,31 @@ export async function floresVistas(n: number) {
   if (!Number.isInteger(n) || n < 0 || n > 100_000) return;
   await verFlores(n).catch(() => {});
 }
+
+// A wish in her book: hers, or one Brian sends her (it arrives as a dove). Title, what it is, a link.
+export const guardarDeseo = async (titulo: string, descripcion: string, enlace: string) =>
+  deCadaUno(async (role) => {
+    const t = texto(titulo, MAX_DESEO);
+    const d = opcional(descripcion, MAX_DESCRIPCION_DESEO);
+    for (const v of [t, d]) if (typeof v !== "string") return v.error;
+    const raw = enlace.trim();
+    const u = raw ? urlValida(/^[a-z][a-z0-9+.-]*:/i.test(raw) ? raw : `https://${raw}`) : null;
+    if (raw && (!u || u.href.length > 500)) return "Esa liga no se abre. Revisa la dirección.";
+    await crearDeseo(role, t as string, d as string, u?.href ?? "");
+  });
+
+// She opened the dove's wish.
+export async function deseoVisto(id: string) {
+  if ((await currentRole()) !== "jazz") return;
+  await verDeseo(id).catch(() => {});
+  revalidatePath("/tu");
+}
+
+// Brian's «ya se lo regalé» on one of her wishes.
+export const deseoRegalado = async (id: string, si: boolean) =>
+  deCadaUno(async (role) => {
+    if (role !== "brian") return "Esto es de Brian.";
+    await regalarDeseo(id, si);
+  });
+
+export const soltarElDeseo = async (id: string) => deCadaUno((role) => soltarDeseo(role, id));

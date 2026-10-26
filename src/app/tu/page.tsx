@@ -13,6 +13,9 @@ import { Deseos } from "./deseos";
 import { Garden, MasDelJardin } from "./garden";
 import { Librero } from "./librero";
 import { Cabecera } from "./cabecera";
+import { RecamaraDeseos } from "./recamara";
+import { SuLibro } from "./su-libro";
+import { loadLibroDeseos } from "@/lib/deseos";
 import { Viajes } from "./viajes";
 
 type Search = Promise<{ v?: string }>;
@@ -76,11 +79,22 @@ async function Content({ searchParams }: { searchParams: Search }) {
   }
 
   if (vista === "deseos") {
-    const d = await loadDeseos(otro).catch(() => null);
+    // hers: her bedroom at night, the book of her wishes, the dove, Brian's corkboard
+    if (role === "jazz") {
+      const [libro, suyos, gato] = await Promise.all([
+        loadLibroDeseos("jazz").catch(() => []),
+        loadDeseos("brian").catch(() => null),
+        loadMascota().catch(() => undefined),
+      ]);
+      return <RecamaraDeseos libro={libro} suyos={suyos} gato={gato} cabecera={<Cabecera titulo="tus deseos" items={items} current={vista} />} />;
+    }
+    // his: her book of wishes (to give), the dove he sends, and her books and trips she wants
+    const [d, libro] = await Promise.all([loadDeseos(otro).catch(() => null), loadLibroDeseos("brian").catch(() => [])]);
     return (
       <>
         <PageTitle icon={<Star className="size-7" />}>sus deseos</PageTitle>
         {tabs}
+        <SuLibro libro={libro} />
         {d ? <Deseos deseos={d} nombre={nombreOtro} /> : <p className="mt-8 text-ink-soft">No pude leerlos. Vuelve a abrir en un momento.</p>}
       </>
     );
