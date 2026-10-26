@@ -4,7 +4,19 @@ export type EstadoLibro = "leyendo" | "quiero" | "leido";
 export type EstadoViaje = "fui" | "quiero";
 export type Libro = { id: string; titulo: string; autor: string; estado: EstadoLibro; nota: string; at: number };
 export type Aprendido = { id: string; titulo: string; donde: string; nota: string; at: number };
-export type Viaje = { id: string; lugar: string; cuando: string; estado: EstadoViaje; nota: string; at: number };
+// `desde`/`hasta`: ISO days (yyyy-mm-dd) from the calendar, or null; `cuando`: the free text the
+// first trips were written with. `enlace`: optional link.
+export type Viaje = {
+  id: string;
+  lugar: string;
+  cuando: string;
+  estado: EstadoViaje;
+  nota: string;
+  at: number;
+  desde: string | null;
+  hasta: string | null;
+  enlace: string;
+};
 export type Coleccion = { libros: Libro[]; aprendido: Aprendido[]; viajes: Viaje[] };
 
 // What the other one may see: the wishes only — a title or a place, never a note.

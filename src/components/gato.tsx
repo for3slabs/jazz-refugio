@@ -15,17 +15,20 @@ const BOCA = "oklch(0.72 0.12 15)";
 const trazo = { stroke: INK, strokeWidth: 1.6, strokeLinejoin: "round" as const, strokeLinecap: "round" as const };
 
 // `sentado`: sitting, its feet tucked forward (on the library table). `pluma`: the waving paw holds
-// a quill instead of a flower — it writes what she learned in the big book.
+// a quill instead of a flower — it writes what she learned in the big book. `pasaporte`: it holds
+// her passport at the airport.
 export function Gato({
   conFlor = false,
   puestos = {},
   sentado = false,
   pluma = false,
+  pasaporte = false,
 }: {
   conFlor?: boolean;
   puestos?: Puestos;
   sentado?: boolean;
   pluma?: boolean;
+  pasaporte?: boolean;
 }) {
   return (
     <g transform={sentado ? "translate(0 5)" : undefined}>
@@ -63,6 +66,14 @@ export function Gato({
       <ellipse cx="0" cy="-25.8" rx="2.6" ry="1.4" fill={ROSA} />
       {/* the paw waving up beside the head — it holds the next flower */}
       <path d="M11.5 -20 C 17 -21 22.5 -25.5 23.5 -30 C 24.3 -33.5 20.5 -35 19 -31.5 C 17.8 -28.6 15 -26.2 12 -25" fill={PELO} {...trazo} />
+      {pasaporte && (
+        // her passport, held up in the waving paw: a plum booklet with a gold seal
+        <g transform="translate(22 -38) rotate(-10)">
+          <rect x="-7" y="-10" width="14" height="19" rx="2" fill="oklch(0.42 0.16 345)" stroke={INK} strokeWidth={1.4} />
+          <circle cx="0" cy="-2" r="3.4" fill="none" stroke="oklch(0.85 0.13 85)" strokeWidth={1.1} />
+          <path d="M-4 5 h 8" stroke="oklch(0.85 0.13 85)" strokeWidth={1.1} />
+        </g>
+      )}
       {pluma && (
         // a quill: a long feather with an ink tip
         <g transform="translate(21 -33) rotate(-28)">

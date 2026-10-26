@@ -569,13 +569,23 @@ export const guardarAprendido = async (titulo: string, donde: string, nota: stri
     return agregarAprendido(role, t as string, d as string, n as string);
   });
 
-export const guardarViaje = async (lugar: string, cuando: string, estado: string, nota: string) =>
+// A trip: the place, its days from the calendar (both optional, in order), a note, a link.
+const DIA = /^\d{4}-\d{2}-\d{2}$/;
+export const guardarViaje = async (lugar: string, cuando: string, estado: string, nota: string, desde = "", hasta = "", enlace = "") =>
   deCadaUno(async (role) => {
     const l = texto(lugar, MAX_TITULO_ESTANTE);
     const c = opcional(cuando, 40);
     const n = opcional(nota, MAX_NOTA_ESTANTE);
     for (const v of [l, c, n]) if (typeof v !== "string") return v.error;
-    return agregarViaje(role, l as string, c as string, estado === "fui" ? "fui" : "quiero", n as string);
+    const d = desde.trim() || null;
+    const h = hasta.trim() || null;
+    if ((d && !DIA.test(d)) || (h && !DIA.test(h))) return "Esa fecha no se entiende. Elígela en el calendario.";
+    if (d && h && h < d) return "El regreso va después de la ida.";
+    // like the board's links: «booking.com/…» works too, it gets its https://
+    const t = enlace.trim();
+    const u = t ? urlValida(/^[a-z][a-z0-9+.-]*:/i.test(t) ? t : `https://${t}`) : null;
+    if (t && (!u || u.href.length > 500)) return "Esa liga no se abre. Revisa la dirección.";
+    return agregarViaje(role, l as string, c as string, estado === "fui" ? "fui" : "quiero", n as string, d, h, u?.href ?? "");
   });
 
 export const cambiarLibro = async (id: string, estado: string) =>

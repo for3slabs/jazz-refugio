@@ -86,10 +86,14 @@ async function Content({ searchParams }: { searchParams: Search }) {
     );
   }
 
-  const [c, gato] = await Promise.all([loadColeccion(role).catch(() => null), vista === "librero" ? loadMascota().catch(() => undefined) : undefined]);
+  const [c, gato] = await Promise.all([loadColeccion(role).catch(() => null), loadMascota().catch(() => undefined)]);
   // the library is a scene of its own: its title and tabs ride on its wall
   if (vista === "librero" && c) {
     return <Librero libros={c.libros} aprendido={c.aprendido} otro={nombreOtro} gato={gato} cabecera={<Cabecera titulo="tu librero" items={items} current={vista} />} />;
+  }
+  // and the airport, for her trips
+  if (vista === "viajes" && c) {
+    return <Viajes viajes={c.viajes} otro={nombreOtro} gato={gato} cabecera={<Cabecera titulo="tus viajes" items={items} current={vista} />} />;
   }
   return (
     <>
