@@ -73,7 +73,7 @@ export function BrianTileView({
         </p>
       ) : (
         // the last notes both ways, newest first — a small panel of notices
-        <ul className="space-y-2">
+        <ul className="min-h-0 flex-1 space-y-2 overflow-hidden">
           {notas.map((n) => (
             <li key={n.id} className={`rounded-xl px-3 py-2 ${n.mia ? "ml-6 bg-surface-2" : "mr-6 bg-accent-soft"}`}>
               <p className="flex items-baseline justify-between gap-2 text-xs">
@@ -103,7 +103,10 @@ export function GardenTileView({ misiones = 0, vueltas = 0, abiertas = 0 }: { mi
       <TileHead icon={<Star className="size-4" />} title="tu jardín" />
       {n ? (
         // her beach as it is today, the front of it — the same scene she walks into (Brian, 2026-10-25)
-        <div className="relative h-52 overflow-hidden rounded-2xl">
+        // it fills the room the tile already had — never grows it (Brian, 2026-10-25: «respeta los
+        // tamaños que ya tiene»)
+        // the exact room the 4×3 grid of flowers took — 1.345:1, measured against the previous home
+        <div className="relative aspect-[1.345] w-full shrink-0 overflow-hidden rounded-2xl">
           <Playa flores={n} className="absolute inset-0 block h-full w-full" />
         </div>
       ) : (
