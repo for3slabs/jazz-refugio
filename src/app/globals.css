@@ -319,6 +319,33 @@ a {
   to { opacity: 1; }
 }
 
+/* A gift ready to open nudges now and then — a small tilt, then still for a while, so it
+   calls her without buzzing. */
+@keyframes wiggle {
+  0%, 84%, 100% { transform: rotate(0); }
+  88% { transform: rotate(-4deg); }
+  92% { transform: rotate(4deg); }
+  96% { transform: rotate(-2deg); }
+}
+.wiggle {
+  animation: wiggle 3.2s var(--ease-out-strong) infinite;
+  transform-origin: 50% 90%;
+}
+
+/* A «papelito»: a note on paper with its top-right corner folded. */
+.papel {
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
+}
+.papel::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(225deg, transparent 50%, var(--line) 50%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rise { animation-name: fade; animation-duration: 200ms; }
   .orb-idle, .animate-ping { animation: none; }
@@ -326,6 +353,7 @@ a {
   .confetti { display: none; }
   .press:active { transform: none; }
   .sheet, .sheet:not([open]) { transform: none; }
+  .wiggle { animation: none; }
 }
 
 :root[data-motion="off"] .rise { animation-name: fade; animation-duration: 200ms; }
@@ -334,6 +362,7 @@ a {
 :root[data-motion="off"] .orb-idle,
 :root[data-motion="off"] .animate-ping { animation: none; }
 :root[data-motion="off"] .confetti { display: none; }
+:root[data-motion="off"] .wiggle { animation: none; }
 :root[data-motion="off"] .press:active { transform: none; }
 :root[data-motion="off"] .sheet,
 :root[data-motion="off"] .sheet:not([open]) { transform: none; }
