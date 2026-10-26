@@ -82,7 +82,7 @@ async function Content({ searchParams }: { searchParams: Search }) {
     );
   }
 
-  const c = await loadColeccion(role).catch(() => null);
+  const [c, gato] = await Promise.all([loadColeccion(role).catch(() => null), vista === "librero" ? loadMascota().catch(() => undefined) : undefined]);
   return (
     <>
       <PageTitle icon={<Star className="size-7" />}>{vista === "librero" ? "tu librero" : "tus viajes"}</PageTitle>
@@ -90,7 +90,7 @@ async function Content({ searchParams }: { searchParams: Search }) {
       {!c ? (
         <p className="mt-8 text-ink-soft">No pude leer esta parte. Vuelve a abrir en un momento.</p>
       ) : vista === "librero" ? (
-        <Librero libros={c.libros} aprendido={c.aprendido} otro={nombreOtro} />
+        <Librero libros={c.libros} aprendido={c.aprendido} otro={nombreOtro} gato={gato} />
       ) : (
         <Viajes viajes={c.viajes} otro={nombreOtro} />
       )}

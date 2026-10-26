@@ -14,15 +14,33 @@ const BOCA = "oklch(0.72 0.12 15)";
 
 const trazo = { stroke: INK, strokeWidth: 1.6, strokeLinejoin: "round" as const, strokeLinecap: "round" as const };
 
-export function Gato({ conFlor = false, puestos = {} }: { conFlor?: boolean; puestos?: Puestos }) {
+// `sentado`: sitting, its feet tucked forward (on the library table). `pluma`: the waving paw holds
+// a quill instead of a flower — it writes what she learned in the big book.
+export function Gato({
+  conFlor = false,
+  puestos = {},
+  sentado = false,
+  pluma = false,
+}: {
+  conFlor?: boolean;
+  puestos?: Puestos;
+  sentado?: boolean;
+  pluma?: boolean;
+}) {
   return (
-    <g>
+    <g transform={sentado ? "translate(0 5)" : undefined}>
       {/* legs, then the body over them */}
-      <path d="M-9 -7 v4.5 q 0 3 3.5 3 q 3.5 0 3.5 -3 V -7Z M2 -7 v4.5 q 0 3 3.5 3 q 3.5 0 3.5 -3 V -7Z" fill={PELO} {...trazo} />
+      {!sentado && (
+        <path d="M-9 -7 v4.5 q 0 3 3.5 3 q 3.5 0 3.5 -3 V -7Z M2 -7 v4.5 q 0 3 3.5 3 q 3.5 0 3.5 -3 V -7Z" fill={PELO} {...trazo} />
+      )}
       <path d="M-12 -23 C -16 -13 -14.5 -5 -7 -4.5 H 7 C 14.5 -5 16 -13 12 -23Z" fill={PELO} {...trazo} />
       {puestos.cuerpo === "mandil" && (
         // the lilac apron over its belly
         <path d="M-7.5 -18 h 15 l 1 10 q -8.5 3.5 -17 0z" fill="oklch(0.78 0.11 310)" {...trazo} strokeWidth={1.6} />
+      )}
+      {sentado && (
+        // sitting: two feet poking out in front
+        <path d="M-10.5 -5 a 4.5 3 0 1 0 9 0 a 4.5 3 0 1 0 -9 0Z M1.5 -5 a 4.5 3 0 1 0 9 0 a 4.5 3 0 1 0 -9 0Z" fill={PELO} {...trazo} />
       )}
       {/* the arm at rest — the waving one is drawn after the head, so it shows */}
       <path d="M-11.5 -20 C -17 -19 -19.5 -13 -16.5 -11 C -14 -9.5 -12 -12.5 -11.8 -15" fill={PELO} {...trazo} />
@@ -45,6 +63,14 @@ export function Gato({ conFlor = false, puestos = {} }: { conFlor?: boolean; pue
       <ellipse cx="0" cy="-25.8" rx="2.6" ry="1.4" fill={ROSA} />
       {/* the paw waving up beside the head — it holds the next flower */}
       <path d="M11.5 -20 C 17 -21 22.5 -25.5 23.5 -30 C 24.3 -33.5 20.5 -35 19 -31.5 C 17.8 -28.6 15 -26.2 12 -25" fill={PELO} {...trazo} />
+      {pluma && (
+        // a quill: a long feather with an ink tip
+        <g transform="translate(21 -33) rotate(-28)">
+          <path d="M0 0 C -3 -8 -2 -18 2 -24 C 5 -16 4 -7 0 0Z" fill="oklch(0.95 0.03 330)" stroke={INK} strokeWidth={1.2} strokeLinejoin="round" />
+          <path d="M0 0 L 1.5 -21" stroke={INK} strokeWidth={0.8} />
+          <path d="M0 0 l -0.8 4" stroke={INK} strokeWidth={1.6} strokeLinecap="round" />
+        </g>
+      )}
       {conFlor && (
         <g transform="translate(22 -36)">
           <path d="M0 0 L 0.5 4" stroke="oklch(0.62 0.13 135)" strokeWidth={1.6} strokeLinecap="round" />
