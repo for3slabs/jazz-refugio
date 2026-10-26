@@ -1,81 +1,83 @@
 import type { Puestos } from "@/lib/objeto";
 
-// Her cat in the comic style of the beach — cream, ink outline, pink ears — drawn facing right with
-// its paws at (0, 0), so the garden can walk it from flower to flower. It wears what her pet wears
-// (Brian, 2026-10-25: not the 3D one — the same clothes, in the style of the flowers) and carries a
-// flower in its mouth while there are more to plant. Vector code.
+// Her cat as Brian drew the reference (2026-10-25): standing up, a big round head with one peach
+// ear, an open happy mouth, a small body, one paw waving and two short legs — in the beach's comic
+// ink, wearing what her pet wears (bow, mariachi hat, chef's hat, apron). Its feet are at (0, 0) so
+// the garden can walk it from flower to flower; the waving paw carries the next flower to plant.
+// Vector code.
 
 const INK = "oklch(0.2 0.06 315)";
-const PELO = "oklch(0.93 0.045 80)";
-const SOMBRA = "oklch(0.82 0.06 70)";
-const ROSA = "oklch(0.8 0.11 355)";
+const PELO = "oklch(0.97 0.02 85)";
+const DURAZNO = "oklch(0.86 0.07 55)";
+const ROSA = "oklch(0.8 0.1 15)";
+const BOCA = "oklch(0.72 0.12 15)";
 
-export function Gato({ conFlor = false, mirando = 1, puestos = {} }: { conFlor?: boolean; mirando?: 1 | -1; puestos?: Puestos }) {
+const trazo = { stroke: INK, strokeWidth: 1.6, strokeLinejoin: "round" as const, strokeLinecap: "round" as const };
+
+export function Gato({ conFlor = false, puestos = {} }: { conFlor?: boolean; puestos?: Puestos }) {
   return (
-    <g transform={`scale(${mirando} 1)`}>
-      {/* tail */}
-      <path d="M-16 -14 C -30 -16 -32 -34 -22 -38" fill="none" stroke={INK} strokeWidth={7} strokeLinecap="round" />
-      <path d="M-16 -14 C -30 -16 -32 -34 -22 -38" fill="none" stroke={PELO} strokeWidth={4} strokeLinecap="round" />
-      {/* body and paws */}
-      <ellipse cx="-2" cy="-13" rx="17" ry="11" fill={PELO} stroke={INK} strokeWidth={2.4} />
-      <path d="M-12 -4 v4 M-4 -3 v3 M6 -3 v3 M12 -4 v4" stroke={INK} strokeWidth={4.6} strokeLinecap="round" />
-      <path d="M-12 -4 v4 M-4 -3 v3 M6 -3 v3 M12 -4 v4" stroke={PELO} strokeWidth={2.4} strokeLinecap="round" />
-      <path d="M-10 -18 q 6 3 12 0" fill="none" stroke={SOMBRA} strokeWidth={2.4} strokeLinecap="round" />
+    <g>
+      {/* legs, then the body over them */}
+      <path d="M-9 -7 v4.5 q 0 3 3.5 3 q 3.5 0 3.5 -3 V -7Z M2 -7 v4.5 q 0 3 3.5 3 q 3.5 0 3.5 -3 V -7Z" fill={PELO} {...trazo} />
+      <path d="M-12 -23 C -16 -13 -14.5 -5 -7 -4.5 H 7 C 14.5 -5 16 -13 12 -23Z" fill={PELO} {...trazo} />
       {puestos.cuerpo === "mandil" && (
-        // the lilac apron over its chest, with its strap
-        <g stroke={INK} strokeWidth={1.8} strokeLinejoin="round">
-          <path d="M2 -21 h 13 l 1 12 q -7 4 -15 0z" fill="oklch(0.78 0.11 310)" />
-          <path d="M4 -14 h 9" fill="none" opacity={0.6} />
-          <path d="M2 -21 q 6 -5 13 0" fill="none" />
+        // the lilac apron over its belly
+        <path d="M-7.5 -18 h 15 l 1 10 q -8.5 3.5 -17 0z" fill="oklch(0.78 0.11 310)" {...trazo} strokeWidth={1.6} />
+      )}
+      {/* the arm at rest — the waving one is drawn after the head, so it shows */}
+      <path d="M-11.5 -20 C -17 -19 -19.5 -13 -16.5 -11 C -14 -9.5 -12 -12.5 -11.8 -15" fill={PELO} {...trazo} />
+      {/* ears behind the head: the left one peach */}
+      <path d="M-15.5 -37 L -14 -52.5 L -3.5 -45.5Z" fill={DURAZNO} {...trazo} />
+      <path d="M15.5 -37 L 14 -52.5 L 3.5 -45.5Z" fill={PELO} {...trazo} />
+      {/* the head, with the peach patch spilling from that ear */}
+      <ellipse cx="0" cy="-34" rx="18" ry="14.5" fill={PELO} />
+      <clipPath id="gato-cabeza">
+        <ellipse cx="0" cy="-34" rx="18" ry="14.5" />
+      </clipPath>
+      <path d="M-20 -52 C -10 -52 -2.5 -47 -2 -41 C -6 -36.5 -14 -33.5 -20 -31Z" fill={DURAZNO} clipPath="url(#gato-cabeza)" />
+      <path d="M-2 -41 C -6 -36.5 -14 -33.5 -20 -31" fill="none" stroke={INK} strokeWidth={1.2} clipPath="url(#gato-cabeza)" />
+      <ellipse cx="0" cy="-34" rx="18" ry="14.5" fill="none" {...trazo} />
+      {/* the face: two dots, a small nose, a wide open smile */}
+      <circle cx="-7" cy="-35.5" r="1.9" fill={INK} />
+      <circle cx="7" cy="-35.5" r="1.9" fill={INK} />
+      <path d="M-1.6 -32.2 h 3.2 l -1.6 1.6z" fill={ROSA} stroke={INK} strokeWidth={0.9} strokeLinejoin="round" />
+      <path d="M-5 -29.6 Q -2.5 -28.4 0 -30.2 Q 2.5 -28.4 5 -29.6 Q 3 -24.2 0 -24.2 Q -3 -24.2 -5 -29.6Z" fill={BOCA} stroke={INK} strokeWidth={1.2} strokeLinejoin="round" />
+      <ellipse cx="0" cy="-25.8" rx="2.6" ry="1.4" fill={ROSA} />
+      {/* the paw waving up beside the head — it holds the next flower */}
+      <path d="M11.5 -20 C 17 -21 22.5 -25.5 23.5 -30 C 24.3 -33.5 20.5 -35 19 -31.5 C 17.8 -28.6 15 -26.2 12 -25" fill={PELO} {...trazo} />
+      {conFlor && (
+        <g transform="translate(22 -36)">
+          <path d="M0 0 L 0.5 4" stroke="oklch(0.62 0.13 135)" strokeWidth={1.6} strokeLinecap="round" />
+          {[0, 72, 144, 216, 288].map((a) => (
+            <ellipse key={a} cx="0" cy="-3" rx="2" ry="3.2" transform={`rotate(${a})`} fill="oklch(0.74 0.17 345)" stroke={INK} strokeWidth={0.8} />
+          ))}
+          <circle r="1.7" fill="oklch(0.88 0.15 92)" stroke={INK} strokeWidth={0.8} />
         </g>
       )}
-      {/* head */}
-      <g transform="translate(13 -26)">
-        <path d="M-9 -6 L -11 -19 L -2 -11Z M9 -6 L 11 -19 L 2 -11Z" fill={PELO} stroke={INK} strokeWidth={2.2} strokeLinejoin="round" />
-        <path d="M-8.6 -8 L -9.6 -15 L -4.5 -10.5Z M8.6 -8 L 9.6 -15 L 4.5 -10.5Z" fill={ROSA} />
-        <circle r="11" fill={PELO} stroke={INK} strokeWidth={2.4} />
-        <ellipse cx="-4" cy="-1" rx="1.7" ry="2.3" fill={INK} />
-        <ellipse cx="4.5" cy="-1" rx="1.7" ry="2.3" fill={INK} />
-        <circle cx="-3.5" cy="-1.8" r="0.6" fill="#fff" />
-        <circle cx="5" cy="-1.8" r="0.6" fill="#fff" />
-        <path d="M-0.8 2.6 l 1.3 1 1.3 -1z" fill={ROSA} stroke={INK} strokeWidth={0.8} strokeLinejoin="round" />
-        <path d="M0.5 3.6 q -1.6 2 -3.2 0.6 M0.5 3.6 q 1.6 2 3.2 0.6" fill="none" stroke={INK} strokeWidth={1} strokeLinecap="round" />
-        <ellipse cx="-7.5" cy="3" rx="2.2" ry="1.3" fill={ROSA} opacity={0.8} />
-        <ellipse cx="8" cy="3" rx="2.2" ry="1.3" fill={ROSA} opacity={0.8} />
-        {puestos.cabeza === "sombrero" && (
-          // a mariachi hat: wide brim, tall crown, a magenta band
-          <g transform="translate(0 -9)" stroke={INK} strokeWidth={2} strokeLinejoin="round">
-            <ellipse cx="0" cy="0" rx="19" ry="4.5" fill="oklch(0.8 0.13 75)" />
-            <path d="M-8 -1 C -8 -14 8 -14 8 -1Z" fill="oklch(0.8 0.13 75)" />
-            <path d="M-7.6 -4 h 15.2" stroke="oklch(0.55 0.21 345)" strokeWidth={3} />
-            <ellipse cx="0" cy="0" rx="19" ry="4.5" fill="none" strokeDasharray="2 3" stroke="oklch(0.55 0.21 345)" strokeWidth={1.2} />
-          </g>
-        )}
-        {puestos.cabeza === "gorro-chef" && (
-          // a chef's hat: a band and a puffy top
-          <g transform="translate(0 -9)" stroke={INK} strokeWidth={2} strokeLinejoin="round" fill="oklch(0.98 0.01 330)">
-            <path d="M-8 2 v -5 h 16 v 5z" />
-            <path d="M-9 -3 C -15 -6 -12 -15 -6 -13 C -5 -19 5 -19 6 -13 C 12 -15 15 -6 9 -3Z" />
-          </g>
-        )}
-        {puestos.cuello === "mono" && (
-          // the pink bow under its chin
-          <g transform="translate(0 11)" stroke={INK} strokeWidth={1.6} strokeLinejoin="round" fill="oklch(0.74 0.17 350)">
-            <path d="M0 0 L -7 -4 L -7 4Z" />
-            <path d="M0 0 L 7 -4 L 7 4Z" />
-            <circle r="2" />
-          </g>
-        )}
-        {conFlor && (
-          <g transform="translate(9 6) rotate(20)">
-            <path d="M0 0 L 6 5" stroke="oklch(0.62 0.13 135)" strokeWidth={1.6} strokeLinecap="round" />
-            {[0, 72, 144, 216, 288].map((a) => (
-              <ellipse key={a} cx="0" cy="-3" rx="2" ry="3.2" transform={`rotate(${a})`} fill="oklch(0.74 0.17 345)" stroke={INK} strokeWidth={0.8} />
-            ))}
-            <circle r="1.7" fill="oklch(0.88 0.15 92)" stroke={INK} strokeWidth={0.8} />
-          </g>
-        )}
-      </g>
+      {puestos.cuello === "mono" && (
+        // the pink bow under its chin
+        <g transform="translate(0 -20.5)" stroke={INK} strokeWidth={1.4} strokeLinejoin="round" fill="oklch(0.74 0.17 350)">
+          <path d="M0 0 L -6.5 -3.5 L -6.5 3.5Z" />
+          <path d="M0 0 L 6.5 -3.5 L 6.5 3.5Z" />
+          <circle r="1.8" />
+        </g>
+      )}
+      {puestos.cabeza === "sombrero" && (
+        // a mariachi hat: wide brim, tall crown, a magenta band
+        <g transform="translate(0 -46)" stroke={INK} strokeWidth={2} strokeLinejoin="round">
+          <ellipse cx="0" cy="0" rx="24" ry="5" fill="oklch(0.8 0.13 75)" />
+          <path d="M-9 -1 C -9 -15 9 -15 9 -1Z" fill="oklch(0.8 0.13 75)" />
+          <path d="M-8.6 -4 h 17.2" stroke="oklch(0.55 0.21 345)" strokeWidth={3} />
+          <ellipse cx="0" cy="0" rx="24" ry="5" fill="none" strokeDasharray="2 3" stroke="oklch(0.55 0.21 345)" strokeWidth={1.2} />
+        </g>
+      )}
+      {puestos.cabeza === "gorro-chef" && (
+        // a chef's hat: a band and a puffy top
+        <g transform="translate(0 -46)" stroke={INK} strokeWidth={2} strokeLinejoin="round" fill="oklch(0.98 0.01 330)">
+          <path d="M-9 2 v -5 h 18 v 5z" />
+          <path d="M-10 -3 C -17 -6 -14 -16 -7 -14 C -6 -21 6 -21 7 -14 C 14 -16 17 -6 10 -3Z" />
+        </g>
+      )}
     </g>
   );
 }
