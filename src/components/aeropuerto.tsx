@@ -15,7 +15,11 @@ const H = H_AERO;
 
 export const ASIENTO = { x: 196, y: 452 };
 export const PASAPORTE = { x: 196 + 28, y: 452 - 50 };
-const TABLERO = { x: 46, y: 18, w: 298, h: 64 };
+// the window starts below the floating title and tabs; the board hangs beside it like a framed
+// screen (Brian, 2026-10-25: «el letrero no se ve… más del lado de la ventana, como un cuadro»)
+const VENTANA = { x: 16, y: 156, w: 262, h: 190 };
+const TABLERO = { x: 286, y: 170, w: 94, h: 150 };
+const PISTA = { x: 72, y: 318 };
 
 function Avion({ escala = 1 }: { escala?: number }) {
   return (
@@ -71,7 +75,7 @@ export function Aeropuerto({
           <rect y={-cielo} width={W} height={H + cielo} rx={cielo ? 0 : 22} />
         </clipPath>
         <clipPath id="aero-ventana">
-          <rect x="18" y="96" width="354" height="250" />
+          <rect x={VENTANA.x} y={VENTANA.y} width={VENTANA.w} height={VENTANA.h} />
         </clipPath>
       </defs>
       <g clipPath="url(#aero-marco)">
@@ -80,64 +84,69 @@ export function Aeropuerto({
         <rect y={-cielo} width={W} height={400 + cielo} fill="url(#aero-trama)" opacity={0.45} />
         {/* the big window onto the runway at sunset */}
         <g clipPath="url(#aero-ventana)">
-          <rect x="18" y="96" width="354" height="250" fill="oklch(0.36 0.15 308)" />
-          <path d="M18 160 Q 195 148 372 162 V 346 H18Z" fill="oklch(0.5 0.2 330)" />
-          <path d="M18 220 Q 195 210 372 222 V 346 H18Z" fill="oklch(0.66 0.18 10)" />
-          <path d="M18 262 Q 195 256 372 264 V 346 H18Z" fill="oklch(0.78 0.15 55)" />
-          <rect x="18" y="160" width="354" height="110" fill="url(#aero-trama)" opacity={0.5} />
-          <circle cx="290" cy="276" r="34" fill="oklch(0.92 0.13 92)" stroke={INK} strokeWidth={2.4} />
+          <rect x={VENTANA.x} y={VENTANA.y} width={VENTANA.w} height={VENTANA.h} fill="oklch(0.36 0.15 308)" />
+          <path d="M16 200 Q 150 190 278 202 V 346 H16Z" fill="oklch(0.5 0.2 330)" />
+          <path d="M16 238 Q 150 230 278 240 V 346 H16Z" fill="oklch(0.66 0.18 10)" />
+          <path d="M16 266 Q 150 262 278 268 V 346 H16Z" fill="oklch(0.78 0.15 55)" />
+          <rect x="16" y="200" width="262" height="80" fill="url(#aero-trama)" opacity={0.5} />
+          <circle cx="206" cy="280" r="28" fill="oklch(0.92 0.13 92)" stroke={INK} strokeWidth={2.4} />
           {/* hills, the control tower, the runway */}
-          <path d="M18 290 Q 80 270 140 288 T 260 284 T 372 280 V 346 H18Z" fill="oklch(0.45 0.12 330)" stroke={INK} strokeWidth={2} />
+          <path d="M16 292 Q 70 276 120 290 T 210 286 T 278 282 V 346 H16Z" fill="oklch(0.45 0.12 330)" stroke={INK} strokeWidth={2} />
           <g stroke={INK} strokeWidth={2} strokeLinejoin="round">
-            <rect x="330" y="230" width="12" height="62" fill="oklch(0.7 0.05 320)" />
-            <path d="M322 216 H 350 L 346 232 H 326Z" fill="oklch(0.85 0.1 85)" />
+            <rect x="246" y="246" width="10" height="50" fill="oklch(0.7 0.05 320)" />
+            <path d="M240 234 H 262 L 259 248 H 243Z" fill="oklch(0.85 0.1 85)" />
           </g>
-          <path d="M18 304 H 372 V 346 H18Z" fill="oklch(0.4 0.05 320)" stroke={INK} strokeWidth={2} />
-          <path d="M30 325 H 372" stroke="oklch(0.95 0.03 85)" strokeWidth={3} strokeDasharray="16 12" />
-          {/* a plane waiting on the runway */}
-          <g transform="translate(90 312)">
-            <Avion escala={0.9} />
-          </g>
-          {/* the one that leaves when she adds a place she wants to go */}
+          <path d="M16 304 H 278 V 346 H16Z" fill="oklch(0.4 0.05 320)" stroke={INK} strokeWidth={2} />
+          <path d="M26 327 H 278" stroke="oklch(0.95 0.03 85)" strokeWidth={3} strokeDasharray="16 12" />
+          {/* ONE plane on the runway: when she adds a wish THIS one takes off, and once it is in the
+              air a new one rolls in to wait for the next trip */}
           {despegues > 0 && (
-            <g key={despegues} className="despegue">
-              <Avion escala={1.1} />
+            <g key={`sale-${despegues}`} className="despegue">
+              <Avion escala={0.9} />
             </g>
           )}
+          <g key={`espera-${despegues}`} className={despegues > 0 ? "llega" : undefined} style={despegues > 0 ? undefined : { transform: `translate(${PISTA.x}px, ${PISTA.y}px)` }}>
+            <Avion escala={0.9} />
+          </g>
         </g>
-        <rect x="18" y="96" width="354" height="250" fill="none" stroke={INK} strokeWidth={5} />
-        <path d="M136 96 V 346 M254 96 V 346" stroke={INK} strokeWidth={4} />
-        <rect x="10" y="344" width="370" height="12" fill="oklch(0.5 0.06 320)" stroke={INK} strokeWidth={2.4} />
-        {/* the departures board: her wished places, the score */}
+        <rect x={VENTANA.x} y={VENTANA.y} width={VENTANA.w} height={VENTANA.h} fill="none" stroke={INK} strokeWidth={5} />
+        <path d="M103 156 V 346 M190 156 V 346" stroke={INK} strokeWidth={4} />
+        <rect x="8" y="344" width="278" height="12" fill="oklch(0.5 0.06 320)" stroke={INK} strokeWidth={2.4} />
+        {/* the departures board, a framed screen beside the window: her wished places, the score */}
         <g
           onClick={onTablero}
           style={onTablero ? { cursor: "pointer" } : undefined}
           role={onTablero ? "button" : undefined}
           aria-label={onTablero ? `salidas: ${quiero.length} ${quiero.length === 1 ? "vuelo" : "vuelos"} que quieres tomar` : undefined}
         >
-          <path d={`M${TABLERO.x + 40} 0 V ${TABLERO.y} M${TABLERO.x + TABLERO.w - 40} 0 V ${TABLERO.y}`} stroke={INK} strokeWidth={2.4} />
-          <rect x={TABLERO.x} y={TABLERO.y} width={TABLERO.w} height={TABLERO.h} rx="6" fill="oklch(0.22 0.05 315)" stroke={INK} strokeWidth={3} />
-          <text x={TABLERO.x + 10} y={TABLERO.y + 14} fontSize="9" fontWeight="800" letterSpacing="2" fill="oklch(0.92 0.13 92)">
+          <path d={`M${TABLERO.x + 20} ${TABLERO.y - 40} V ${TABLERO.y} M${TABLERO.x + TABLERO.w - 20} ${TABLERO.y - 40} V ${TABLERO.y}`} stroke={INK} strokeWidth={2.4} />
+          <rect x={TABLERO.x - 4} y={TABLERO.y - 4} width={TABLERO.w + 8} height={TABLERO.h + 8} rx="8" fill="oklch(0.5 0.06 320)" stroke={INK} strokeWidth={3} />
+          <rect x={TABLERO.x} y={TABLERO.y} width={TABLERO.w} height={TABLERO.h} rx="5" fill="oklch(0.22 0.05 315)" stroke={INK} strokeWidth={2} />
+          <text x={TABLERO.x + TABLERO.w / 2} y={TABLERO.y + 15} textAnchor="middle" fontSize="9" fontWeight="800" letterSpacing="1.5" fill="oklch(0.92 0.13 92)">
             SALIDAS
           </text>
-          <text x={TABLERO.x + TABLERO.w - 10} y={TABLERO.y + 14} fontSize="9" fontWeight="800" textAnchor="end" fill="oklch(0.92 0.13 92)">
-            {quiero.length} {quiero.length === 1 ? "VUELO" : "VUELOS"}
+          <text x={TABLERO.x + TABLERO.w / 2} y={TABLERO.y + 40} textAnchor="middle" fontSize="22" fontWeight="900" fill="oklch(0.92 0.13 92)">
+            {quiero.length}
           </text>
+          <text x={TABLERO.x + TABLERO.w / 2} y={TABLERO.y + 51} textAnchor="middle" fontSize="7" fontWeight="700" letterSpacing="1" fill="oklch(0.85 0.05 320)">
+            {quiero.length === 1 ? "VUELO" : "VUELOS"}
+          </text>
+          <path d={`M${TABLERO.x + 8} ${TABLERO.y + 58} H ${TABLERO.x + TABLERO.w - 8}`} stroke="oklch(0.4 0.05 320)" strokeWidth={1} />
           {filas.length === 0 ? (
-            <text x={TABLERO.x + 10} y={TABLERO.y + 34} fontSize="9" fontFamily="ui-monospace, monospace" fill="oklch(0.85 0.05 320)">
-              — sin vuelos todavía —
+            <text x={TABLERO.x + TABLERO.w / 2} y={TABLERO.y + 80} textAnchor="middle" fontSize="7" fontFamily="ui-monospace, monospace" fill="oklch(0.85 0.05 320)">
+              sin vuelos aún
             </text>
           ) : (
             filas.map((v, i) => (
-              <g key={v.id} fontFamily="ui-monospace, monospace" fontSize="9" fontWeight="700">
-                <text x={TABLERO.x + 10} y={TABLERO.y + 29 + i * 12} fill="oklch(0.92 0.13 92)">
+              <g key={v.id} fontFamily="ui-monospace, monospace" fontWeight="700">
+                <text x={TABLERO.x + 8} y={TABLERO.y + 74 + i * 24} fontSize="7" fill="oklch(0.92 0.13 92)">
                   {`JZ ${String(101 + i)}`}
                 </text>
-                <text x={TABLERO.x + 52} y={TABLERO.y + 29 + i * 12} fill="oklch(0.97 0.02 330)">
-                  {v.lugar.toUpperCase().slice(0, 24)}
-                </text>
-                <text x={TABLERO.x + TABLERO.w - 10} y={TABLERO.y + 29 + i * 12} textAnchor="end" fill="oklch(0.8 0.15 150)">
+                <text x={TABLERO.x + TABLERO.w - 8} y={TABLERO.y + 74 + i * 24} textAnchor="end" fontSize="6" fill="oklch(0.8 0.15 150)">
                   A TIEMPO
+                </text>
+                <text x={TABLERO.x + 8} y={TABLERO.y + 84 + i * 24} fontSize="8" fill="oklch(0.97 0.02 330)">
+                  {v.lugar.toUpperCase().slice(0, 12)}
                 </text>
               </g>
             ))
@@ -182,11 +191,15 @@ export function Aeropuerto({
         >
           {children}
           {fui > 0 && (
-            <g transform={`translate(${PASAPORTE.x + 18} ${PASAPORTE.y - 16})`} key={sello} className={sello ? "brotar" : undefined}>
-              <circle r="10" fill="oklch(0.92 0.13 92)" stroke={INK} strokeWidth={2} />
-              <text textAnchor="middle" dy="3.5" fontSize="10" fontWeight="800" fill={INK}>
-                {fui}
-              </text>
+            // the bounce lives on an inner group: on the outer one it replaced the translate and sent
+            // the badge to the corner of the screen
+            <g transform={`translate(${PASAPORTE.x + 18} ${PASAPORTE.y - 16})`}>
+              <g key={sello} className={sello ? "brotar" : undefined}>
+                <circle r="10" fill="oklch(0.92 0.13 92)" stroke={INK} strokeWidth={2} />
+                <text textAnchor="middle" dy="3.5" fontSize="10" fontWeight="800" fill={INK}>
+                  {fui}
+                </text>
+              </g>
             </g>
           )}
         </g>
