@@ -411,13 +411,30 @@ a {
    an ink edge, ink icons, the door she is in a tilted yellow label; the assistant a yellow comic
    badge with a hard shadow. */
 .marco:has([data-escena]) .puertas {
-  background: oklch(0.97 0.02 330);
   border-top: 3px solid oklch(0.2 0.06 315);
   backdrop-filter: none;
+}
+/* the bar carries the ground of its scene, halftone dots and all (Brian, 2026-10-25: «que no
+   esté en blanco… impregnado con el fondo»): her beach's sand, her library's wooden floor */
+.marco:has([data-escena="playa"]) .puertas {
+  background:
+    radial-gradient(oklch(0.2 0.06 315 / 0.16) 1.2px, transparent 1.4px) 0 0 / 7px 7px,
+    oklch(0.82 0.08 65);
+}
+.marco:has([data-escena="biblioteca"]) .puertas {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 25px, oklch(0.2 0.06 315 / 0.45) 25px 26.5px),
+    radial-gradient(oklch(0.2 0.06 315 / 0.2) 1.2px, transparent 1.4px) 0 0 / 7px 7px,
+    oklch(0.42 0.07 40);
 }
 .marco:has([data-escena]) .puertas a,
 .marco:has([data-escena]) .puertas a svg {
   color: oklch(0.2 0.06 315);
+}
+/* on the dark wood the doors read in paper ink */
+.marco:has([data-escena="biblioteca"]) .puertas a:not([aria-current="page"]),
+.marco:has([data-escena="biblioteca"]) .puertas a:not([aria-current="page"]) svg {
+  color: oklch(0.97 0.02 330);
 }
 .marco:has([data-escena]) .puertas a[aria-current="page"] {
   background: oklch(0.92 0.13 92);
@@ -426,6 +443,11 @@ a {
   box-shadow: 2px 2px 0 oklch(0.2 0.06 315);
   transform: rotate(-2deg);
   font-weight: 800;
+  /* inside its column, never past the screen's edge */
+  margin-inline: 0.2rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .marco:has([data-escena]) .asistente {
   background: oklch(0.92 0.13 92);
