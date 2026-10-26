@@ -34,7 +34,10 @@ export function Garden({
   const flores = list.length + misiones;
   return (
     <div className="mt-6">
-      <JardinVivo flores={flores} vistas={vistas} gato={gato} />
+      {/* Next keeps this page alive, hidden, after she leaves it: coming back with more flowers must
+          start the planting over, not resume the old one (Brian, 2026-10-25: «ver mi jardín» showed
+          no cat until a reload). A new count is a new garden. */}
+      <JardinVivo key={`${flores}:${vistas}`} flores={flores} vistas={vistas} gato={gato} />
 
       {flores === 0 && (
         <div className="mt-6 space-y-4">

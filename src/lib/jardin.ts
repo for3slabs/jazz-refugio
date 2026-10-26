@@ -14,3 +14,15 @@ export async function verFlores(n: number) {
     insert into jardin_inicial (persona, flores, flores_vistas) values ('jazz', 0, ${n})
     on conflict (persona) do update set flores_vistas = greatest(jardin_inicial.flores_vistas, excluded.flores_vistas)`;
 }
+
+// Her garden's size — the ONE count every screen shows: the times she came back, the missions she
+// completed, and the flowers she brought from before. «volver» said «ya son 17» while the garden
+// held 30, because it counted only the returns (Brian, 2026-10-25).
+export async function contarFlores(): Promise<number> {
+  if (!hayBase()) return 0;
+  const [r] = await sql()<{ n: number }[]>`
+    select ((select count(*) from momento where persona = 'jazz')
+          + (select count(*) from mision where hecha_en is not null)
+          + coalesce((select flores from jardin_inicial where persona = 'jazz'), 0))::int as n`;
+  return r.n;
+}
