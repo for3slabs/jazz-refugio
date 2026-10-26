@@ -18,11 +18,11 @@ export default function Mascota() {
   );
 }
 
-// Her pet is hers to dress; Brian gives objects from his side («mensajes» › regalos).
+// Her pet is hers to dress; Brian gives objects from «regalos».
 async function Content() {
   const role = await currentRole();
   if (!role) redirect("/entrar");
-  if (role === "brian") redirect("/brian?v=regalos");
+  if (role !== "jazz") redirect("/regalos");
   const [mascota, regalados, m, estado] = await Promise.all([
     loadMascota().catch(() => ({ nombre: NOMBRE_INICIAL, puestos: {} })),
     loadRegalados().catch(() => []),

@@ -19,12 +19,6 @@ export type Viaje = {
 };
 export type Coleccion = { libros: Libro[]; aprendido: Aprendido[]; viajes: Viaje[] };
 
-// What the other one may see: the wishes only — a title or a place, never a note.
-// `regalado`: the other one already gave it — shown only to the one who gave it.
-export type Deseos = {
-  libros: (Pick<Libro, "id" | "titulo" | "autor"> & { regalado: number | null })[];
-  viajes: (Pick<Viaje, "id" | "lugar" | "cuando"> & { regalado: number | null })[];
-};
 
 export const MAX_TITULO = 80;
 export const MAX_NOTA = 280;

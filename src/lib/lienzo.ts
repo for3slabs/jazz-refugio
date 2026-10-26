@@ -91,9 +91,6 @@ export async function borrarTablero(id: string): Promise<string | void> {
   await sql()`update tablero set soltado_en = now() where id = ${id} and soltado_en is null`;
 }
 
-export async function compartir(id: string, si: boolean): Promise<string | void> {
-  await sql()`update tablero set compartido = ${si}, editado = now() where id = ${id}`;
-}
 
 export async function agregar(tableroId: string, nuevo: Omit<Item, "id" | "at">): Promise<string | void> {
   const [t] = await sql()`select 1 from tablero where id = ${tableroId} and soltado_en is null`;
@@ -214,26 +211,22 @@ export async function subir(file: Blob, type: string): Promise<string> {
   return path;
 }
 
-// Who may see an image: she always; Brian only when its board is shared.
-export async function imagenPara(itemId: string, role: "jazz" | "brian") {
+// Only she sees her images and docs: the routes let only her session through.
+export async function imagenPara(itemId: string) {
   const [i] = await sql()<{ archivo: string }[]>`
     select i.archivo from item i join tablero t on t.id = i.tablero_id
-    where i.id = ${itemId} and i.archivo is not null and i.soltado_en is null and t.soltado_en is null
-      and (${role} = 'jazz' or t.compartido)`;
+    where i.id = ${itemId} and i.archivo is not null and i.soltado_en is null and t.soltado_en is null`;
   return i ? get(i.archivo, { access: "private" }) : null;
 }
 
-// A doc, with what the download needs: she always; Brian only when its board is shared.
-export async function docPara(itemId: string, role: "jazz" | "brian") {
+// A doc, with what the download needs.
+export async function docPara(itemId: string) {
   if (!esId(itemId)) return null;
   const [i] = await sql()<{ archivo: string; nombre: string; mime: string | null }[]>`
     select i.archivo, i.nombre, i.mime from item i join tablero t on t.id = i.tablero_id
-    where i.id = ${itemId} and i.tipo = 'doc' and i.soltado_en is null and t.soltado_en is null
-      and (${role} = 'jazz' or t.compartido)`;
+    where i.id = ${itemId} and i.tipo = 'doc' and i.soltado_en is null and t.soltado_en is null`;
   if (!i) return null;
   const res = await get(i.archivo, { access: "private" });
   return res ? { res, nombre: i.nombre, mime: i.mime } : null;
 }
 
-// What each one may see of the boards.
-export const visibles = (list: Tablero[], role: "jazz" | "brian") => (role === "jazz" ? list : list.filter((t) => t.compartido));

@@ -9,7 +9,6 @@ import {
   agregarColor,
   agregarLiga,
   agregarNota,
-  compartirTablero,
   editarNotaDelTablero,
   editarTablero,
   ordenarTablero,
@@ -18,7 +17,7 @@ import {
   registrarDoc,
   soltarTablero,
 } from "@/app/actions";
-import { ArrowLeft, ArrowRight, Close, Pencil, Plus, Share, Star, Trash } from "@/components/icons";
+import { ArrowLeft, ArrowRight, Close, Pencil, Plus, Star, Trash } from "@/components/icons";
 import { type Item, type Tablero, MAX_DESCRIPCION, MAX_DOC, MAX_LADO, MAX_NOMBRE, MAX_NOTA, docSrc, imgSrc } from "@/lib/tablero";
 
 // Shrunk on her device before it travels: 1600 px on the long side, WebP where the browser
@@ -54,9 +53,9 @@ class Subida extends Error {}
 export const enPalabras = (e: unknown, otro: string) => (e instanceof Subida ? e.message : otro);
 
 // One board: an inspiration wall that settles into columns. She adds images (or drags them
-// in), colours, notes and drawings; Brian, on a board she shared, only looks.
+// in), colours, notes and drawings. It is hers alone: nobody else ever sees a board.
 // `docs`: the Blob folder for her docs, chosen by the server (the upload route only allows that one).
-export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tablero; isBrian: boolean; docs: string }) {
+export function Board({ tablero, docs: carpetaDocs }: { tablero: Tablero; docs: string }) {
   const router = useRouter();
   // what she sees changes at once; the server's answer follows
   const [items, cambiar] = useOptimistic(
@@ -78,7 +77,6 @@ export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tabler
   const [nombre, setNombre] = useState(tablero.nombre);
   const [descripcion, setDescripcion] = useState(tablero.descripcion);
   const [ordenando, setOrdenando] = useState(false);
-  const [compartido, setCompartido] = useOptimistic(tablero.compartido);
   const [, start] = useTransition();
   const [msg, setMsg] = useState<string | null>(null);
   const [subiendo, setSubiendo] = useState<string | null>(null);
@@ -158,13 +156,11 @@ export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tabler
     <div
       className="relative mt-6"
       onDragOver={(e) => {
-        if (isBrian) return;
         e.preventDefault();
         setDrag(true);
       }}
       onDragLeave={() => setDrag(false)}
       onDrop={(e) => {
-        if (isBrian) return;
         e.preventDefault();
         setDrag(false);
         void addFiles(e.dataTransfer.files);
@@ -230,7 +226,7 @@ export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tabler
         <>
           <div className="mt-2 flex items-start gap-1">
             <h1 className="t-display min-w-0 flex-1 text-3xl [overflow-wrap:anywhere]">{tablero.nombre}</h1>
-            {!isBrian && (
+            <>
               <>
                 <button
                   type="button"
@@ -239,23 +235,6 @@ export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tabler
                   className="press grid size-10 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-surface-2 hover:text-ink"
                 >
                   <Pencil className="size-4" />
-                </button>
-                {/* sharing is an icon in the same row (Brian, 2026-10-25): lit when Brian can see it */}
-                <button
-                  type="button"
-                  aria-pressed={compartido}
-                  aria-label={compartido ? "dejar de compartir con Brian" : "compartir con Brian (solo verlo)"}
-                  onClick={() => {
-                    const si = !compartido;
-                    start(async () => {
-                      setCompartido(si);
-                      const r = await compartirTablero(tablero.id, si);
-                      setMsg(r.ok ? (si ? "listo, Brian puede verlo" : "listo, ya es solo tuyo") : r.error);
-                    });
-                  }}
-                  className={`press grid size-10 shrink-0 place-items-center rounded-full hover:bg-surface-2 ${compartido ? "text-accent" : "text-ink-soft hover:text-ink"}`}
-                >
-                  <Share className="size-4" />
                 </button>
                 <button
                   type="button"
@@ -267,7 +246,7 @@ export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tabler
                   <Trash className="size-4" />
                 </button>
               </>
-            )}
+            </>
           </div>
           {seguro && (
             <div className="rise mt-2 flex flex-wrap items-center gap-2 rounded-2xl border border-line bg-surface px-4 py-3 text-sm">
@@ -285,17 +264,10 @@ export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tabler
             </div>
           )}
           {tablero.descripcion && <p className="mt-1 max-w-prose whitespace-pre-line text-pretty text-sm text-ink-soft">{tablero.descripcion}</p>}
-          {!isBrian && compartido && (
-            <p className="mt-1 flex items-center gap-1.5 text-xs text-accent">
-              <Share className="size-3" />
-              compartido con Brian · solo puede verlo
-            </p>
-          )}
         </>
       )}
-      {isBrian && <p className="mt-2 text-sm text-ink-soft">Jazz lo compartió contigo. Solo puedes verlo.</p>}
 
-      {!isBrian && (
+      <>
         <div className="mt-5 flex flex-wrap gap-2">
           <button type="button" onClick={() => hoja.current?.showModal()} className="press inline-flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-semibold text-accent-ink">
             <Plus className="size-4" />
@@ -328,7 +300,7 @@ export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tabler
             }}
           />
         </div>
-      )}
+      </>
 
       {panel === "color" && (
         <form
@@ -437,13 +409,13 @@ export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tabler
 
       {items.length === 0 ? (
         <p className="mt-6 text-pretty text-ink-soft">
-          {isBrian ? "Este tablero está vacío por ahora." : "Un tablero vacío es un buen comienzo: agrega algo o dibuja."}
+          {"Un tablero vacío es un buen comienzo: agrega algo o dibuja."}
         </p>
       ) : (
         <>
           <div className="mt-6 flex items-center justify-between">
             <p className="text-sm text-ink-soft">{items.length === 1 ? "1 cosa" : `${items.length} cosas`}</p>
-            {!isBrian && items.length > 1 && (
+            {items.length > 1 && (
               <button
                 type="button"
                 onClick={() => setOrdenando(!ordenando)}
@@ -454,7 +426,7 @@ export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tabler
               </button>
             )}
           </div>
-          {ordenando && !isBrian ? (
+          {ordenando ? (
             <Ordenar
               items={items}
               guardar={(ids) =>
@@ -524,7 +496,6 @@ export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tabler
         <Visor
           it={actual}
           esPortada={portada === actual.id}
-          isBrian={isBrian}
           cerrar={() => setAbierto(null)}
           editarNota={(t) =>
             start(async () => {
@@ -669,7 +640,6 @@ const extension = (n?: string) => (n?.includes(".") ? n.split(".").pop()!.slice(
 function Visor({
   it,
   esPortada,
-  isBrian,
   cerrar,
   portada,
   quitar,
@@ -677,7 +647,6 @@ function Visor({
 }: {
   it: Item;
   esPortada: boolean;
-  isBrian: boolean;
   cerrar: () => void;
   portada: () => void;
   quitar: () => void;
@@ -778,7 +747,7 @@ function Visor({
             </a>
           )}
         </div>
-        {!isBrian && (
+        <>
           <div className="flex items-center justify-center gap-3">
             {imagen && (
               <button
@@ -802,7 +771,7 @@ function Visor({
               quitar
             </button>
           </div>
-        )}
+        </>
       </div>
     </dialog>
   );

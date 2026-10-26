@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { notFound, redirect } from "next/navigation";
 import { Shell } from "@/components/shell";
-import { PREFIX, loadTableros, visibles } from "@/lib/lienzo";
+import { PREFIX, loadTableros } from "@/lib/lienzo";
 import { currentRole } from "@/lib/session";
 import { Board } from "./board";
 
@@ -20,9 +20,10 @@ export default function TableroPage({ params }: { params: Params }) {
 async function Content({ params }: { params: Params }) {
   const role = await currentRole();
   if (!role) redirect("/entrar");
+  // her boards are hers alone: Brian's word opens «regalos» and nothing else
+  if (role !== "jazz") redirect("/regalos");
   const { id } = await params;
-  // Brian reaches a board only if she shared it — otherwise it does not exist for him.
-  const t = visibles(await loadTableros(), role).find((x) => x.id === id);
+  const t = (await loadTableros()).find((x) => x.id === id);
   if (!t) notFound();
-  return <Board tablero={t} isBrian={role === "brian"} docs={`${PREFIX}/doc`} />;
+  return <Board tablero={t} docs={`${PREFIX}/doc`} />;
 }

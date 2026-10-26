@@ -13,11 +13,9 @@ import { type Item, type Tablero, MAX_TABLEROS, imgSrc } from "@/lib/tablero";
 // card, not a field after every board), and every card the same height with one line under it.
 export function Lista({
   tableros,
-  isBrian,
   soltado = null,
 }: {
   tableros: Tablero[];
-  isBrian: boolean;
   soltado?: { id: string; nombre: string } | null;
 }) {
   const router = useRouter();
@@ -27,9 +25,9 @@ export function Lista({
 
   return (
     <div className="mt-8">
-      <h2 className="text-lg font-semibold">{isBrian ? "lo que Jazz comparte" : "tus tableros"}</h2>
+      <h2 className="text-lg font-semibold">{"tus tableros"}</h2>
       <p className="mt-0.5 text-pretty text-sm text-ink-soft">
-        {isBrian ? "sus tableros, solo para ver" : "imágenes, colores, notas y dibujos"}
+        {"imágenes, colores, notas y dibujos"}
       </p>
       <div className="mt-3">
       {soltado && !deshecho && !tableros.some((t) => t.id === soltado.id) && (
@@ -55,16 +53,13 @@ export function Lista({
           </button>
         </p>
       )}
-      {isBrian && tableros.length === 0 && (
-        <p className="text-pretty text-ink-soft">Jazz no ha compartido ningún tablero todavía. Cuando lo haga, aparecerá aquí.</p>
-      )}
 
       <ul className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        {!isBrian && (
+        <>
           <li>
             <Nuevo lleno={tableros.length >= MAX_TABLEROS} />
           </li>
-        )}
+        </>
         {tableros.map((t, i) => (
           <li key={t.id} className="rise" style={{ animationDelay: `${Math.min(i, 6) * 40}ms` }}>
             <Link
@@ -76,7 +71,6 @@ export function Lista({
                 <span className="block truncate font-medium">{t.nombre}</span>
                 <span className="mt-0.5 block truncate text-xs text-ink-soft">
                   {t.items.length === 1 ? "1 cosa" : `${t.items.length} cosas`}
-                  {!isBrian && t.compartido && " · compartido"}
                 </span>
               </span>
             </Link>

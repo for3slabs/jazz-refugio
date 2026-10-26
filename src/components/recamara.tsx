@@ -4,8 +4,7 @@ import type { ReactNode } from "react";
 // 2026-10-25: «algo más íntimo… su recámara… el gato en el balcón pensando, de noche… el escritorio
 // con un libro donde apunte sus deseos… una paloma llega a su balcón»). The balcony doors are open
 // onto a sleeping city under the moon; her cat sits out there thinking; on the desk, the book of her
-// wishes under a warm lamp; above it a framed picture of her own beach; and when Brian sends
-// her a wish, a dove lands on the railing with a little alert. Vector code; no blue anywhere.
+// wishes under a warm lamp; above it a framed picture of her own beach. Vector code; no blue anywhere.
 
 const INK = "oklch(0.2 0.06 315)";
 export const W_RECAMARA = 390;
@@ -14,7 +13,6 @@ const W = W_RECAMARA;
 const H = H_RECAMARA;
 
 export const BALCON = { x: 292, y: 470 };
-const PALOMA = { x: 352, y: 426 };
 
 function rng(seed: number) {
   let s = seed >>> 0;
@@ -52,19 +50,13 @@ const ESTRELLAS = [
 
 export function Recamara({
   deseos,
-  paloma = false,
-  vuela = 0,
   onLibro,
-  onPaloma,
   cielo = 0,
   className = "",
   children,
 }: {
   deseos: number;
-  paloma?: boolean;
-  vuela?: number;
   onLibro?: () => void;
-  onPaloma?: () => void;
   cielo?: number;
   className?: string;
   children?: ReactNode;
@@ -181,38 +173,6 @@ export function Recamara({
         </g>
         {/* her cat out on the balcony, thinking */}
         {children}
-        {/* the dove Brian sends: lands on the railing with a little alert; tapping it opens the wish */}
-        {paloma && (
-          <g
-            key={vuela}
-            className="paloma"
-            onClick={onPaloma}
-            style={onPaloma ? { cursor: "pointer" } : undefined}
-            role={onPaloma ? "button" : undefined}
-            aria-label={onPaloma ? "una paloma trae un deseo" : undefined}
-          >
-            <g transform={`translate(${PALOMA.x} ${PALOMA.y})`} stroke={INK} strokeWidth={1.8} strokeLinejoin="round">
-              <rect x="-26" y="-50" width="52" height="56" fill="transparent" stroke="none" />
-              <path d="M-16 -4 C -18 -18 -4 -24 6 -18 C 14 -14 16 -6 12 0 C 4 4 -10 4 -16 -4Z" fill="oklch(0.97 0.01 330)" />
-              <path d="M-4 -14 C 4 -24 16 -22 18 -14 C 10 -14 4 -10 -2 -8Z" fill="oklch(0.92 0.02 330)" />
-              <circle cx="10" cy="-20" r="7" fill="oklch(0.97 0.01 330)" />
-              <circle cx="12" cy="-21" r="1.4" fill={INK} stroke="none" />
-              <path d="M16 -19 l 6 1.5 -6 1.5z" fill="oklch(0.8 0.13 70)" strokeWidth={1.2} />
-              <path d="M-16 -4 l -8 3 7 2z" fill="oklch(0.92 0.02 330)" />
-              <path d="M-2 2 v 4 M4 2 v 4" stroke="oklch(0.65 0.18 20)" strokeWidth={2} />
-              {/* a little envelope in its beak */}
-              <rect x="19" y="-20" width="11" height="8" rx="1" fill="oklch(0.95 0.03 330)" strokeWidth={1.2} />
-              <path d="M19 -20 l 5.5 4.5 5.5 -4.5" fill="none" strokeWidth={1} />
-              {/* the alert */}
-              <g transform="translate(-2 -40)" className="vela">
-                <circle r="9" fill="oklch(0.92 0.13 92)" />
-                <text textAnchor="middle" dy="4" fontSize="12" fontWeight="900" fill={INK} stroke="none">
-                  !
-                </text>
-              </g>
-            </g>
-          </g>
-        )}
       </g>
       {!cielo && <rect x="1.5" y="1.5" width={W - 3} height={H - 3} rx="21" fill="none" stroke={INK} strokeWidth={3} />}
     </svg>

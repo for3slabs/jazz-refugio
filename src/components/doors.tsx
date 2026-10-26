@@ -3,14 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Diamond, Letter, Palette, Star } from "./icons";
+import { Diamond, Gift, Palette, Star } from "./icons";
 
 // Her four places, equal — «colecciones» is a place like the others (Brian, 2026-10-25).
 // «superpoderes» left the doors — on a wide screen its tile still opens it.
 const doors = [
   { href: "/misiones", label: "misiones", Icon: Diamond },
   { href: "/lienzo", label: "inspiración", Icon: Palette },
-  { href: "/brian", label: "mensajes", Icon: Letter },
+  { href: "/regalos", label: "regalos", Icon: Gift },
   { href: "/tu", label: "colecciones", Icon: Star },
 ];
 
@@ -18,8 +18,7 @@ const doors = [
 // dozen function calls each time (measured after creating a board); the pages are dynamic, so a
 // tap fetches them anyway.
 
-// «If I don't see it, it doesn't exist»: a note she has not read, or a gift ready to open,
-// makes its door glow —
+// «If I don't see it, it doesn't exist»: a gift ready to open makes its door glow —
 // warm, no number, no "you have unread messages".
 function useUnreadNote() {
   const [unread, setUnread] = useState(false);
@@ -27,8 +26,8 @@ function useUnreadNote() {
     let alive = true;
     fetch("/api/ultima", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : null))
-      .then((d: { nuevo?: boolean; regalo?: boolean } | null) => {
-        if (alive && d) setUnread(!!d.regalo || !!d.nuevo);
+      .then((d: { regalo?: boolean } | null) => {
+        if (alive && d) setUnread(!!d.regalo);
       })
       .catch(() => {});
     return () => {
@@ -55,7 +54,7 @@ export function Doors({ bar = false, path = null }: { bar?: boolean; path?: stri
       }
     >
       {doors.map(({ href, label, Icon }) => {
-        const glow = unread && href === "/brian";
+        const glow = unread && href === "/regalos";
         const here = !!path && (path === href || path.startsWith(`${href}/`));
         return (
           <Link prefetch={false}
@@ -80,7 +79,7 @@ export function Doors({ bar = false, path = null }: { bar?: boolean; path?: stri
               )}
             </span>
             {label}
-            {glow && <span className="sr-only">(hay algo nuevo de Brian)</span>}
+            {glow && <span className="sr-only">(hay un regalo listo)</span>}
           </Link>
         );
       })}

@@ -553,13 +553,6 @@ html[data-escena] .marco .suelo .text-ink-soft { color: inherit; opacity: 0.85; 
 }
 .llega { animation: llega 1.4s 1.8s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
 
-/* the dove Brian sends flies in from the night and lands on her balcony railing */
-@keyframes paloma {
-  0% { transform: translate(120px, -160px) rotate(-12deg); opacity: 0; }
-  20% { opacity: 1; }
-  100% { transform: translate(0, 0) rotate(0); opacity: 1; }
-}
-.paloma { animation: paloma 1.6s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
 
 @media (prefers-reduced-motion: reduce) {
   .rise { animation-name: fade; animation-duration: 200ms; }
@@ -573,7 +566,6 @@ html[data-escena] .marco .suelo .text-ink-soft { color: inherit; opacity: 0.85; 
   .carril { overflow-x: auto; }
   .despegue { display: none; }
   .llega { animation: none; transform: translate(72px, 318px); }
-  .paloma { animation: none; }
 }
 
 :root[data-motion="off"] .rise { animation-name: fade; animation-duration: 200ms; }

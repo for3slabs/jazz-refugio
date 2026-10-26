@@ -1,7 +1,7 @@
 "use client";
 
-import { type ReactNode, useEffect, useId, useRef, useState, useTransition } from "react";
-import { deseoVisto, guardarDeseo, soltarElDeseo } from "@/app/actions";
+import { type ReactNode, useId, useRef, useState, useTransition } from "react";
+import { guardarDeseo, soltarElDeseo } from "@/app/actions";
 import { Gato } from "@/components/gato";
 import { Close, Plus } from "@/components/icons";
 import { BALCON, Pensamiento, Recamara } from "@/components/recamara";
@@ -10,13 +10,12 @@ import { type Mascota, NOMBRE_INICIAL } from "@/lib/objeto";
 import { escenario } from "./cabecera";
 import { MarcaEscena } from "@/components/marca-escena";
 
-type Hoja = "libro" | "paloma" | "nuevo" | null;
+type Hoja = "libro" | "nuevo" | null;
 const cuando = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "long", timeZone: "America/Mexico_City" });
 
 // Her wishes, in her bedroom at night (Brian, 2026-10-25): her cat sits out on the balcony thinking;
 // on the desk, under the lamp, the book where she writes what she wishes for — her room holds only
-// her things (Brian, 2026-10-25: «es de ella»). When Brian sends her a wish, a dove lands
-// on the railing with a little alert; she taps it, reads it, and it stays in her book «de Brian».
+// her things (Brian, 2026-10-25: «es de ella»).
 export function RecamaraDeseos({
   libro,
   gato = { nombre: NOMBRE_INICIAL, puestos: {} },
@@ -31,12 +30,6 @@ export function RecamaraDeseos({
   const [hoja, setHoja] = useState<Hoja>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, start] = useTransition();
-  // the wish the dove brings: the oldest one Brian sent that she has not opened
-  const [leidos, setLeidos] = useState<string[]>([]);
-  const porLeer = libro.filter((d) => d.de === "brian" && d.visto === null && !leidos.includes(d.id)).reverse();
-  const carta = porLeer[0];
-  const [abierta, setAbierta] = useState<Deseo | null>(null);
-  const [vuela, setVuela] = useState(0);
 
   function abrir(h: Hoja) {
     setMsg(null);
@@ -53,22 +46,6 @@ export function RecamaraDeseos({
       } else setMsg(r.error);
     });
 
-  function leerPaloma() {
-    if (!carta) return;
-    setAbierta(carta);
-    abrir("paloma");
-    void deseoVisto(carta.id);
-  }
-
-  // once she closed the dove's sheet, the dove flies off (and the next one, if any, lands)
-  useEffect(() => {
-    if (hoja !== null || !abierta) return;
-    const id = abierta.id;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- closing the letter sends the dove away
-    setLeidos((l) => [...l, id]);
-    setAbierta(null);
-    setVuela((v) => v + 1);
-  }, [hoja, abierta]);
 
   return (
     <div>
@@ -76,10 +53,7 @@ export function RecamaraDeseos({
       <MarcaEscena nombre="recamara" />
         <Recamara
           deseos={libro.length}
-          paloma={!!carta}
-          vuela={vuela}
           onLibro={() => abrir("libro")}
-          onPaloma={leerPaloma}
           cielo={320}
           className="absolute inset-0 block h-full w-full"
         >
@@ -101,7 +75,7 @@ export function RecamaraDeseos({
       </div>
 
       <p className="suelo mt-3 text-pretty text-sm text-ink-soft">
-        Toca tu libro para ver tus deseos. Cuando llegue una paloma a tu balcón, tócala.
+        Toca tu libro para ver tus deseos.
       </p>
       <div aria-hidden className="h-16" />
 
@@ -135,15 +109,12 @@ export function RecamaraDeseos({
                         <div className="min-w-0">
                           <p className="font-semibold">{d.titulo}</p>
                           <p className="text-sm text-ink-soft">
-                            {d.de === "brian" ? "llegó con una paloma · " : ""}
                             {cuando.format(d.at)}
                           </p>
                         </div>
-                        {d.de === "jazz" && (
-                          <button type="button" disabled={pending} onClick={() => run(() => soltarElDeseo(d.id))} className="press shrink-0 rounded-full px-2 py-1.5 text-xs font-medium text-ink-soft hover:text-ink">
-                            soltar
-                          </button>
-                        )}
+                        <button type="button" disabled={pending} onClick={() => run(() => soltarElDeseo(d.id))} className="press shrink-0 rounded-full px-2 py-1.5 text-xs font-medium text-ink-soft hover:text-ink">
+                          soltar
+                        </button>
                       </div>
                       {d.descripcion && <p className="mt-2 whitespace-pre-line text-pretty leading-relaxed">{d.descripcion}</p>}
                       {d.enlace && (
@@ -161,22 +132,6 @@ export function RecamaraDeseos({
             </section>
           )}
 
-          {hoja === "paloma" && abierta && (
-            // the dove's letter: Brian's wish for her
-            <article className="text-center">
-              <p className="text-sm font-semibold text-accent">una paloma te trajo un deseo</p>
-              <h2 id={titulo} className="t-display mt-3 text-pretty text-3xl leading-tight">
-                {abierta.titulo}
-              </h2>
-              {abierta.descripcion && <p className="mt-4 whitespace-pre-line text-pretty text-lg leading-relaxed">{abierta.descripcion}</p>}
-              {abierta.enlace && (
-                <a href={abierta.enlace} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block break-all text-sm font-semibold text-accent underline underline-offset-4">
-                  {new URL(abierta.enlace).hostname.replace(/^www\./, "")}
-                </a>
-              )}
-              <p className="mt-5 text-sm text-ink-soft">se queda en tu libro de deseos</p>
-            </article>
-          )}
 
           {hoja === "nuevo" && <Nuevo titulo={titulo} pending={pending} run={run} cancel={cerrar} />}
 
@@ -198,19 +153,17 @@ const accion = "press rounded-full bg-accent px-5 py-2.5 font-semibold text-acce
 const field =
   "block w-full rounded-2xl border border-line bg-canvas px-4 py-3 text-lg text-ink placeholder:text-ink-soft/70 focus:border-accent focus:outline-none";
 
-// A wish: its title, what it is, a link — the last two optional. Brian's own form sends it as a dove.
+// A wish: its title, what it is, a link — the last two optional.
 export function Nuevo({
   titulo: tituloId,
   pending,
   run,
   cancel,
-  paraJazz = false,
 }: {
   titulo: string;
   pending: boolean;
   run: (op: () => Promise<{ ok: boolean; error: string | null }>) => void;
   cancel?: () => void;
-  paraJazz?: boolean;
 }) {
   const [titulo, setTitulo] = useState("");
   const [descripcion, setDescripcion] = useState("");
@@ -221,18 +174,13 @@ export function Nuevo({
       onSubmit={(e) => {
         e.preventDefault();
         run(() => guardarDeseo(titulo, descripcion, enlace));
-        if (paraJazz) {
-          setTitulo("");
-          setDescripcion("");
-          setEnlace("");
-        }
       }}
     >
       <h2 id={tituloId} className="t-display text-3xl">
-        {paraJazz ? "mandarle un deseo" : "un deseo"}
+        un deseo
       </h2>
-      <p className="text-sm text-ink-soft">{paraJazz ? "le llega en una paloma a su balcón" : "se queda en tu libro de deseos"}</p>
-      <input autoFocus={!paraJazz} required value={titulo} onChange={(e) => setTitulo(e.target.value)} maxLength={MAX_DESEO} placeholder="el título" aria-label="título" className={field} />
+      <p className="text-sm text-ink-soft">se queda en tu libro de deseos</p>
+      <input autoFocus required value={titulo} onChange={(e) => setTitulo(e.target.value)} maxLength={MAX_DESEO} placeholder="el título" aria-label="título" className={field} />
       <textarea
         rows={3}
         value={descripcion}
@@ -250,7 +198,7 @@ export function Nuevo({
           </button>
         )}
         <button type="submit" disabled={!titulo.trim() || pending} className={accion}>
-          {pending ? "guardando…" : paraJazz ? "mandarlo" : "guardar"}
+          {pending ? "guardando…" : "guardar"}
         </button>
       </div>
     </form>

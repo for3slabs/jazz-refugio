@@ -6,12 +6,12 @@ export { MAX_DESCRIPCION_DESEO, MAX_DESEO, type Deseo } from "./deseo";
 
 const esId = (id: string) => /^[0-9a-f-]{36}$/i.test(id);
 
-export async function loadLibroDeseos(quien: Role): Promise<Deseo[]> {
+export async function loadLibroDeseos(): Promise<Deseo[]> {
   if (!hayBase()) return [];
   const rows = await sql()<
     { id: string; de: Role; titulo: string; descripcion: string; enlace: string; creado: Date; visto_en: Date | null; regalado_en: Date | null }[]
   >`select id, de, titulo, descripcion, enlace, creado, visto_en, regalado_en
-    from deseo where para = 'jazz' and soltado_en is null order by creado desc`;
+    from deseo where de = 'jazz' and soltado_en is null order by creado desc`;
   return rows.map((r) => ({
     id: r.id,
     de: r.de,
@@ -20,7 +20,7 @@ export async function loadLibroDeseos(quien: Role): Promise<Deseo[]> {
     enlace: r.enlace,
     at: ms(r.creado)!,
     visto: ms(r.visto_en),
-    regalado: quien === "brian" ? ms(r.regalado_en) : null,
+    regalado: null,
   }));
 }
 
@@ -28,17 +28,7 @@ export async function crearDeseo(de: Role, titulo: string, descripcion: string, 
   await sql()`insert into deseo (de, titulo, descripcion, enlace) values (${de}, ${titulo}, ${descripcion}, ${enlace})`;
 }
 
-// She opened the dove: Brian's wish is seen (only hers to mark).
-export async function verDeseo(id: string) {
-  if (!esId(id)) return;
-  await sql()`update deseo set visto_en = coalesce(visto_en, now()) where id = ${id} and de = 'brian' and para = 'jazz'`;
-}
 
-// «ya se lo regalé»: Brian's mark on HER wishes.
-export async function regalarDeseo(id: string, si: boolean) {
-  if (!esId(id)) return;
-  await sql()`update deseo set regalado_en = ${si ? sql()`now()` : null} where id = ${id} and de = 'jazz'`;
-}
 
 // Each one lets go only of what they wrote.
 export async function soltarDeseo(de: Role, id: string) {

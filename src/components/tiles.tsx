@@ -1,38 +1,24 @@
 import Link from "next/link";
 import { loadMisiones } from "@/lib/misiones";
 import { loadVueltas } from "@/lib/vueltas";
-import { hayNuevas, loadDejadas, loadNotes } from "@/lib/notes";
 import { hayParaAbrir, loadRegalos } from "@/lib/regalos";
 import { currentRole } from "@/lib/session";
-import type { Estado } from "@/lib/modos";
-import { BrianTileView, GardenTileView, JazzTileView, PowerTileView } from "./tiles-live";
+import { GardenTileView, PowerTileView, RegalosTileView } from "./tiles-live";
 
 const tile =
   "press group flex-col gap-6 rounded-[1.75rem] border border-line bg-surface p-6 hover:border-accent/60 hover:bg-surface-2";
 
-// The last notes between the two, both ways, like a little panel of notices (Brian, 2026-10-25) —
-// and whether one is new; read on the server, the same on every device. A gift ready to open
-// lights the tile too.
-export async function BrianTile({ className = "" }: { className?: string }) {
+// Her gifts, on the home: whether one is ready to open — read on the server, the same on every device.
+export async function RegalosTile({ className = "" }: { className?: string }) {
   const role = await currentRole();
-  const [suyas, mias] = role ? await Promise.all([loadNotes(role).catch(() => []), loadDejadas(role).catch(() => [])]) : [[], []];
-  const notas = [...suyas.map((n) => ({ id: n.id, mia: false, texto: n.texto.slice(0, 160), at: n.at })), ...mias.map((n) => ({ id: n.id, mia: true, texto: n.texto.slice(0, 160), at: n.at }))]
-    .sort((a, b) => b.at - a.at)
-    .slice(0, 3);
-  const nuevo = role ? await hayNuevas(role).catch(() => false) : false;
-  const regalo =
+  const listo =
     !!role &&
     (await Promise.all([loadRegalos(role), role === "jazz" ? loadMisiones() : null])
       .then(([list, m]) => hayParaAbrir(list, m?.total ?? 0))
       .catch(() => false));
   return (
-    <Link href="/brian" className={`${tile} ${className}`}>
-      <BrianTileView
-        isBrian={role === "brian"}
-        regalo={regalo}
-        nuevo={nuevo}
-        notas={notas}
-      />
+    <Link href="/regalos" className={`${tile} ${className}`}>
+      <RegalosTileView listo={listo} />
     </Link>
   );
 }
@@ -57,14 +43,6 @@ export function PowerTile({ className = "" }: { className?: string }) {
   );
 }
 
-// Her mode, for Brian — it leads to «mensajes», where he can write to her.
-export function JazzTile({ estado, failed, className = "" }: { estado: Estado | null; failed: boolean; className?: string }) {
-  return (
-    <Link href="/brian" className={`${tile} ${className}`}>
-      <JazzTileView estado={estado} failed={failed} />
-    </Link>
-  );
-}
 
 export function TileSkeleton({ className = "" }: { className?: string }) {
   return <div aria-hidden className={`min-h-56 animate-pulse rounded-[1.75rem] bg-surface ${className}`} />;
