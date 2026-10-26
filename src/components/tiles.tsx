@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { loadMisiones } from "@/lib/misiones";
 import { loadVueltas } from "@/lib/vueltas";
-import { hayNuevas, loadNotes } from "@/lib/notes";
+import { hayNuevas, loadDejadas, loadNotes } from "@/lib/notes";
 import { hayParaAbrir, loadRegalos } from "@/lib/regalos";
 import { currentRole } from "@/lib/session";
 import type { Estado } from "@/lib/modos";
@@ -10,11 +10,15 @@ import { BrianTileView, GardenTileView, JazzTileView, PowerTileView } from "./ti
 const tile =
   "press group flex-col gap-6 rounded-[1.75rem] border border-line bg-surface p-6 hover:border-accent/60 hover:bg-surface-2";
 
-// The newest note the other left for whoever is looking, and whether it is new — both read on
-// the server, the same on every device. A gift ready to open lights the tile too.
+// The last notes between the two, both ways, like a little panel of notices (Brian, 2026-10-25) —
+// and whether one is new; read on the server, the same on every device. A gift ready to open
+// lights the tile too.
 export async function BrianTile({ className = "" }: { className?: string }) {
   const role = await currentRole();
-  const [newest] = role ? await loadNotes(role).catch(() => []) : [];
+  const [suyas, mias] = role ? await Promise.all([loadNotes(role).catch(() => []), loadDejadas(role).catch(() => [])]) : [[], []];
+  const notas = [...suyas.map((n) => ({ id: n.id, mia: false, texto: n.texto.slice(0, 160), at: n.at })), ...mias.map((n) => ({ id: n.id, mia: true, texto: n.texto.slice(0, 160), at: n.at }))]
+    .sort((a, b) => b.at - a.at)
+    .slice(0, 3);
   const nuevo = role ? await hayNuevas(role).catch(() => false) : false;
   const regalo =
     !!role &&
@@ -27,8 +31,7 @@ export async function BrianTile({ className = "" }: { className?: string }) {
         isBrian={role === "brian"}
         regalo={regalo}
         nuevo={nuevo}
-        at={newest?.at ?? null}
-        preview={newest ? newest.texto.slice(0, 180) : null}
+        notas={notas}
       />
     </Link>
   );
