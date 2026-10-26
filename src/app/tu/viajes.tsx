@@ -8,6 +8,7 @@ import { Close, Plus } from "@/components/icons";
 import { type Viaje, MAX_NOTA, MAX_TITULO } from "@/lib/estante";
 import { type Mascota, NOMBRE_INICIAL } from "@/lib/objeto";
 import { escenario } from "./cabecera";
+import { MarcaEscena } from "@/components/marca-escena";
 
 type Hoja = { tipo: "pasaporte" } | { tipo: "tablero" } | { tipo: "nuevo"; estado: "fui" | "quiero" } | null;
 
@@ -93,6 +94,7 @@ export function Viajes({
   return (
     <div>
       <div data-escena="aeropuerto" className={`rise ${escenario}`}>
+      <MarcaEscena nombre="aeropuerto" />
         <Aeropuerto
           quiero={quiero}
           fui={fui.length}

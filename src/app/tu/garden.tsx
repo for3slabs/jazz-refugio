@@ -9,6 +9,7 @@ import { Gato } from "@/components/gato";
 import { H_PLAYA, Playa, SLOTS, W_PLAYA } from "@/components/playa";
 import type { Moment } from "@/lib/local";
 import { botonComic, escenario } from "./cabecera";
+import { MarcaEscena } from "@/components/marca-escena";
 import { type Mascota, NOMBRE_INICIAL } from "@/lib/objeto";
 
 const when = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
@@ -144,6 +145,7 @@ function JardinVivo({ flores, vistas, gato, cabecera }: { flores: number; vistas
 
   return (
     <div data-escena="playa" className={`rise ${escenario}`}>
+      <MarcaEscena nombre="playa" />
       <Playa flores={flores} mostrar={mostrar} nuevas={new Set(nuevas)} cielo={320} className="absolute inset-0 block h-full w-full">
         {enEscena && (
           <g

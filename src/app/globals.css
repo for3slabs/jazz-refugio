@@ -397,12 +397,12 @@ a {
 /* A page that draws a scene under the top bar (her garden, her library — `data-escena`) gets the
    bar floating over the scene's sky in light ink: she walks into a place, not a web page
    (Brian, 2026-10-25). Every other page keeps its bar as it was. */
-.marco:has([data-escena]) > header {
+html[data-escena] .marco > header {
   position: relative;
   z-index: 20;
   filter: drop-shadow(0 1px 1px oklch(0.2 0.06 315));
 }
-.marco:has([data-escena]) > header :is(a, button) {
+html[data-escena] .marco > header :is(a, button) {
   color: oklch(0.97 0.02 330);
 }
 
@@ -410,33 +410,33 @@ a {
    menú de abajo y la IA tengan el mismo estilo, que no se note el cambio»): a strip of paper with
    an ink edge, ink icons, the door she is in a tilted yellow label; the assistant a yellow comic
    badge with a hard shadow. */
-.marco:has([data-escena]) .puertas {
+html[data-escena] .marco .puertas {
   border-top: 3px solid oklch(0.2 0.06 315);
   backdrop-filter: none;
 }
 /* the bar carries the ground of its scene, halftone dots and all (Brian, 2026-10-25: «que no
    esté en blanco… impregnado con el fondo»): her beach's sand, her library's wooden floor */
-.marco:has([data-escena="playa"]) .puertas {
+html[data-escena="playa"] .marco .puertas {
   background:
     radial-gradient(oklch(0.2 0.06 315 / 0.16) 1.2px, transparent 1.4px) 0 0 / 7px 7px,
     oklch(0.82 0.08 65);
 }
-.marco:has([data-escena="biblioteca"]) .puertas {
+html[data-escena="biblioteca"] .marco .puertas {
   background:
     repeating-linear-gradient(0deg, transparent 0 25px, oklch(0.2 0.06 315 / 0.45) 25px 26.5px),
     radial-gradient(oklch(0.2 0.06 315 / 0.2) 1.2px, transparent 1.4px) 0 0 / 7px 7px,
     oklch(0.42 0.07 40);
 }
-.marco:has([data-escena]) .puertas a,
-.marco:has([data-escena]) .puertas a svg {
+html[data-escena] .marco .puertas a,
+html[data-escena] .marco .puertas a svg {
   color: oklch(0.2 0.06 315);
 }
 /* on the dark wood the doors read in paper ink */
-.marco:has([data-escena="biblioteca"]) .puertas a:not([aria-current="page"]),
-.marco:has([data-escena="biblioteca"]) .puertas a:not([aria-current="page"]) svg {
+html[data-escena="biblioteca"] .marco .puertas a:not([aria-current="page"]),
+html[data-escena="biblioteca"] .marco .puertas a:not([aria-current="page"]) svg {
   color: oklch(0.97 0.02 330);
 }
-.marco:has([data-escena]) .puertas a[aria-current="page"] {
+html[data-escena] .marco .puertas a[aria-current="page"] {
   background: oklch(0.92 0.13 92);
   border: 2.5px solid oklch(0.2 0.06 315);
   border-radius: 0.6rem;
@@ -449,7 +449,7 @@ a {
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.marco:has([data-escena]) .asistente {
+html[data-escena] .marco .asistente {
   background: oklch(0.92 0.13 92);
   color: oklch(0.2 0.06 315);
   border: 3px solid oklch(0.2 0.06 315);
@@ -459,7 +459,7 @@ a {
 /* …and so do the sheets that rise from them — a book, what she learned, a form (Brian,
    2026-10-25: «que no tenga doble estilo»): paper, an ink edge, ink words, fields with an ink
    border, the chosen option and the main button in yellow with a hard shadow. */
-.marco:has([data-escena]) dialog.sheet {
+html[data-escena] .marco dialog.sheet {
   --tinta: oklch(0.2 0.06 315);
   background: oklch(0.97 0.02 330);
   color: var(--tinta);
@@ -467,19 +467,19 @@ a {
   border-bottom: 0;
 }
 @media (min-width: 1024px) {
-  .marco:has([data-escena]) dialog.sheet { border-bottom: 3px solid var(--tinta); box-shadow: 5px 5px 0 var(--tinta); }
+  html[data-escena] .marco dialog.sheet { border-bottom: 3px solid var(--tinta); box-shadow: 5px 5px 0 var(--tinta); }
 }
-.marco:has([data-escena]) dialog.sheet :is(.text-ink, .text-ink-soft, .t-display, h2, h3) { color: var(--tinta); }
-.marco:has([data-escena]) dialog.sheet .text-ink-soft { opacity: 0.72; }
-.marco:has([data-escena]) dialog.sheet .text-accent { color: oklch(0.48 0.2 330); }
-.marco:has([data-escena]) dialog.sheet :is(input, textarea) {
+html[data-escena] .marco dialog.sheet :is(.text-ink, .text-ink-soft, .t-display, h2, h3) { color: var(--tinta); }
+html[data-escena] .marco dialog.sheet .text-ink-soft { opacity: 0.72; }
+html[data-escena] .marco dialog.sheet .text-accent { color: oklch(0.48 0.2 330); }
+html[data-escena] .marco dialog.sheet :is(input, textarea) {
   background: oklch(0.995 0.005 330);
   color: var(--tinta);
   border: 2.5px solid var(--tinta);
 }
-.marco:has([data-escena]) dialog.sheet :is(input, textarea)::placeholder { color: oklch(0.45 0.05 315); }
-.marco:has([data-escena]) dialog.sheet :is(input, textarea):focus { box-shadow: 3px 3px 0 var(--tinta); }
-.marco:has([data-escena]) dialog.sheet [role="radio"] {
+html[data-escena] .marco dialog.sheet :is(input, textarea)::placeholder { color: oklch(0.45 0.05 315); }
+html[data-escena] .marco dialog.sheet :is(input, textarea):focus { box-shadow: 3px 3px 0 var(--tinta); }
+html[data-escena] .marco dialog.sheet [role="radio"] {
   background: oklch(0.995 0.005 330);
   color: var(--tinta);
   border: 2.5px solid var(--tinta);
@@ -487,15 +487,15 @@ a {
 /* the chosen option carries Tailwind's `!` classes from its own page, and a layered !important
    beats an unlayered one — so this lives in the same layer, where the more specific rule wins */
 @layer utilities {
-  .marco:has([data-escena]) dialog.sheet [role="radio"][aria-checked="true"],
-  .marco:has([data-escena]) dialog.sheet .bg-accent {
+  html[data-escena] .marco dialog.sheet [role="radio"][aria-checked="true"],
+  html[data-escena] .marco dialog.sheet .bg-accent {
     background: oklch(0.92 0.13 92) !important;
     color: oklch(0.2 0.06 315) !important;
     border: 2.5px solid oklch(0.2 0.06 315) !important;
     box-shadow: 2px 2px 0 oklch(0.2 0.06 315);
   }
 }
-.marco:has([data-escena]) dialog.sheet :is(.border-line, .border-accent\/60, .bg-surface-2\/60) {
+html[data-escena] .marco dialog.sheet :is(.border-line, .border-accent\/60, .bg-surface-2\/60) {
   border-color: var(--tinta);
   background: oklch(0.995 0.005 330);
 }
@@ -503,40 +503,40 @@ a {
 /* …and the ground goes on below the scene, down to the doors (Brian, 2026-10-25: «si hace scroll
    se dará cuenta que no es todo el fondo»): the whole page wears her beach's sand or her
    library's wood, and what lives down there (her stickers, a line of help) reads on it. */
-:is(html, body):has([data-escena="playa"]) {
+html[data-escena="playa"], html[data-escena="playa"] body {
   background:
     radial-gradient(oklch(0.2 0.06 315 / 0.16) 1.2px, transparent 1.4px) 0 0 / 7px 7px,
     oklch(0.82 0.08 65);
 }
-:is(html, body):has([data-escena="biblioteca"]) {
+html[data-escena="biblioteca"], html[data-escena="biblioteca"] body {
   background:
     repeating-linear-gradient(0deg, transparent 0 25px, oklch(0.2 0.06 315 / 0.45) 25px 26.5px),
     radial-gradient(oklch(0.2 0.06 315 / 0.2) 1.2px, transparent 1.4px) 0 0 / 7px 7px,
     oklch(0.42 0.07 40);
 }
-:is(html, body):has([data-escena="aeropuerto"]),
-.marco:has([data-escena="aeropuerto"]) .puertas {
+html[data-escena="aeropuerto"], html[data-escena="aeropuerto"] body,
+html[data-escena="aeropuerto"] .marco .puertas {
   background:
     radial-gradient(oklch(0.2 0.06 315 / 0.12) 1.2px, transparent 1.4px) 0 0 / 7px 7px,
     repeating-linear-gradient(90deg, transparent 0 29px, oklch(0.2 0.06 315 / 0.35) 29px 30px),
     repeating-linear-gradient(0deg, transparent 0 29px, oklch(0.2 0.06 315 / 0.35) 29px 30px),
     oklch(0.78 0.05 320);
 }
-:is(html, body):has([data-escena="recamara"]),
-.marco:has([data-escena="recamara"]) .puertas {
+html[data-escena="recamara"], html[data-escena="recamara"] body,
+html[data-escena="recamara"] .marco .puertas {
   background:
     repeating-linear-gradient(0deg, transparent 0 25px, oklch(0.2 0.06 315 / 0.45) 25px 26.5px),
     radial-gradient(oklch(0.2 0.06 315 / 0.2) 1.2px, transparent 1.4px) 0 0 / 7px 7px,
     oklch(0.4 0.07 40);
 }
-.marco:has([data-escena="recamara"]) .suelo { color: oklch(0.97 0.02 330); }
-.marco:has([data-escena="recamara"]) .puertas a:not([aria-current="page"]),
-.marco:has([data-escena="recamara"]) .puertas a:not([aria-current="page"]) svg { color: oklch(0.97 0.02 330); }
-.marco:has([data-escena="aeropuerto"]) .suelo { color: oklch(0.2 0.06 315); }
-.marco:has([data-escena="playa"]) .suelo { color: oklch(0.2 0.06 315); }
-.marco:has([data-escena="biblioteca"]) .suelo { color: oklch(0.97 0.02 330); }
-.marco:has([data-escena]) .suelo.text-ink-soft,
-.marco:has([data-escena]) .suelo .text-ink-soft { color: inherit; opacity: 0.85; }
+html[data-escena="recamara"] .marco .suelo { color: oklch(0.97 0.02 330); }
+html[data-escena="recamara"] .marco .puertas a:not([aria-current="page"]),
+html[data-escena="recamara"] .marco .puertas a:not([aria-current="page"]) svg { color: oklch(0.97 0.02 330); }
+html[data-escena="aeropuerto"] .marco .suelo { color: oklch(0.2 0.06 315); }
+html[data-escena="playa"] .marco .suelo { color: oklch(0.2 0.06 315); }
+html[data-escena="biblioteca"] .marco .suelo { color: oklch(0.97 0.02 330); }
+html[data-escena] .marco .suelo.text-ink-soft,
+html[data-escena] .marco .suelo .text-ink-soft { color: inherit; opacity: 0.85; }
 
 /* a plane leaves the runway and climbs out of the window, once per new wish */
 /* the plane that was waiting on the runway rolls, lifts and climbs out of the window; once it is
