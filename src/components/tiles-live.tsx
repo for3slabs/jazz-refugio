@@ -3,16 +3,8 @@
 import { useEffect, useState } from "react";
 import { powerOfTheDay } from "@/lib/content";
 import { Playa } from "./playa";
-import { ArrowRight, Bloom, Letter, Star } from "./icons";
+import { ArrowRight, Bloom, Gift, Star } from "./icons";
 
-const rel = new Intl.RelativeTimeFormat("es-MX", { numeric: "auto" });
-function ago(at: number) {
-  const min = Math.round((at - Date.now()) / 60_000);
-  if (Math.abs(min) < 60) return rel.format(min, "minute");
-  const h = Math.round(min / 60);
-  if (Math.abs(h) < 24) return rel.format(h, "hour");
-  return rel.format(Math.round(h / 24), "day");
-}
 
 function TileHead({ icon, title, dot = false }: { icon: React.ReactNode; title: string; dot?: boolean }) {
   return (
@@ -22,7 +14,7 @@ function TileHead({ icon, title, dot = false }: { icon: React.ReactNode; title: 
         {title}
       </h2>
       {dot && (
-        <span aria-label="hay algo nuevo de Brian" className="relative grid size-3 place-items-center">
+        <span aria-label="hay un regalo listo" className="relative grid size-3 place-items-center">
           <span className="absolute size-3 animate-ping rounded-full bg-accent opacity-60" />
           <span className="size-2.5 rounded-full bg-accent" />
         </span>
@@ -40,51 +32,16 @@ function Go({ children }: { children: React.ReactNode }) {
   );
 }
 
-export type NotaTile = { id: string; mia: boolean; texto: string; at: number };
-
-export function BrianTileView({
-  isBrian,
-  notas,
-  regalo = false,
-  nuevo = false,
-}: {
-  isBrian: boolean;
-  notas: NotaTile[];
-  regalo?: boolean;
-  nuevo?: boolean;
-}) {
-  const [unread, setUnread] = useState(false);
-  const [when, setWhen] = useState<Record<string, string>>({});
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- «hace 2 h» is measured on her clock
-    setWhen(Object.fromEntries(notas.map((n) => [n.id, ago(n.at)])));
-    setUnread(regalo || nuevo);
-  }, [notas, regalo, nuevo]);
-  const otro = isBrian ? "Jazz" : "Brian";
-
+// Her gifts: a warm dot and one line when one is ready, a quiet line when none is.
+export function RegalosTileView({ listo }: { listo: boolean }) {
   return (
     <>
-      <TileHead icon={<Letter className="size-4" />} title="mensajes" dot={unread} />
-      {notas.length === 0 ? (
-        <p className="line-clamp-4 text-pretty text-xl font-medium leading-snug">
-          {isBrian ? "Cuando Jazz te deje una nota, aparecerá aquí." : "Aquí aparecerá lo que Brian te escriba."}
-        </p>
-      ) : (
-        // the last notes both ways, newest first — a small panel of notices
-        <ul className="min-h-0 flex-1 space-y-2 overflow-hidden">
-          {notas.map((n) => (
-            <li key={n.id} className={`rounded-xl px-3 py-2 ${n.mia ? "ml-6 bg-surface-2" : "mr-6 bg-accent-soft"}`}>
-              <p className="flex items-baseline justify-between gap-2 text-xs">
-                <span className={`font-semibold ${n.mia ? "text-ink-soft" : "text-accent"}`}>{n.mia ? "tú" : otro}</span>
-                <span className="text-ink-soft">{when[n.id] ?? ""}</span>
-              </p>
-              <p className="mt-0.5 line-clamp-2 text-pretty text-sm leading-snug">{n.texto}</p>
-            </li>
-          ))}
-        </ul>
-      )}
+      <TileHead icon={<Gift className="size-4" />} title="regalos" dot={listo} />
+      <p className="line-clamp-4 text-pretty text-xl font-medium leading-snug">
+        {listo ? "Hay un regalo listo para abrir." : "Cartas y cupones envueltos. Algunos esperan tus misiones."}
+      </p>
       <div className="mt-auto flex items-center justify-end text-sm text-ink-soft">
-        <Go>{isBrian ? "escribir" : "abrir"}</Go>
+        <Go>abrir</Go>
       </div>
     </>
   );

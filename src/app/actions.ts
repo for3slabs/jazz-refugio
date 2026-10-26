@@ -4,14 +4,13 @@ import { createHash, timingSafeEqual } from "node:crypto";
 import { refresh, revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { RedirectType, redirect } from "next/navigation";
-import { agregarAprendido, agregarLibro, agregarViaje, marcarRegalado, moverLibro, moverViaje, soltarDe } from "@/lib/coleccion";
+import { agregarAprendido, agregarLibro, agregarViaje, moverLibro, moverViaje, soltarDe } from "@/lib/coleccion";
 import { MAX_NOTA as MAX_NOTA_ESTANTE, MAX_TITULO as MAX_TITULO_ESTANTE } from "@/lib/estante";
 import { partirEnPasos, porDondeEmpiezo } from "@/lib/ayudantes";
 import { loadEstado, saveEstado } from "@/lib/estado";
 import {
   agregar as agregarAlTablero,
   borrarTablero,
-  compartir,
   crearTablero,
   editarTablero as guardarTablero,
   elegirPortada,
@@ -24,8 +23,6 @@ import {
 } from "@/lib/lienzo";
 import { MAX_DESCRIPCION, MAX_DOC, MAX_NOMBRE, MAX_NOTA, isHex } from "@/lib/tablero";
 import { head } from "@vercel/blob";
-import { MAX_RESPUESTA } from "@/lib/entre";
-import { contestar } from "@/lib/presente";
 import { type Abierto, MAX_REGALO, MAX_TITULO, MAX_TRAS } from "@/lib/regalo";
 import { abrir, borrar, crear, usar } from "@/lib/regalos";
 import { type ObjetoId, isObjeto, limpiarPuestos } from "@/lib/objeto";
@@ -49,12 +46,11 @@ import {
   soltarPaso,
 } from "@/lib/pendientes";
 import { isModo } from "@/lib/modos";
-import { MAX_NOTE, addNote, marcarVistas, removeNote } from "@/lib/notes";
 import { currentRole } from "@/lib/session";
 import type { Moment } from "@/lib/local";
 import { anotarVuelta, subirVueltas } from "@/lib/vueltas";
 import { verFlores } from "@/lib/jardin";
-import { MAX_DESCRIPCION_DESEO, MAX_DESEO, crearDeseo, regalarDeseo, soltarDeseo, verDeseo } from "@/lib/deseos";
+import { MAX_DESCRIPCION_DESEO, MAX_DESEO, crearDeseo, soltarDeseo } from "@/lib/deseos";
 import { type Tipo as TipoSoltado, recuperar } from "@/lib/soltado";
 import { COOKIE, MAX_AGE_S, type Role, issueToken } from "@/lib/token";
 
@@ -72,7 +68,7 @@ export type EntrarState = { error: string | null };
 
 export async function entrar(_: EntrarState, form: FormData): Promise<EntrarState> {
   if (!process.env.REFUGIO_CLAVE || !process.env.REFUGIO_SECRETO) {
-    return { error: "Tu refugio todavía no está listo. Avísale a Brian." };
+    return { error: "Tu refugio todavía no está listo. Inténtalo en un rato." };
   }
 
   const given = digest(String(form.get("clave") ?? ""));
@@ -94,30 +90,13 @@ export async function entrar(_: EntrarState, form: FormData): Promise<EntrarStat
     path: "/",
     maxAge: MAX_AGE_S,
   });
-  redirect("/");
+  // Brian's word opens «regalos» and nothing else
+  redirect(role === "brian" ? "/regalos" : "/");
 }
 
 export async function salir() {
   (await cookies()).delete(COOKIE);
   redirect("/entrar");
-}
-
-export type NotaState = { ok: boolean; error: string | null };
-
-// Notes go both ways: each one leaves notes for the other (never a thread).
-export async function dejarNota(_: NotaState, form: FormData): Promise<NotaState> {
-  const role = await currentRole();
-  if (!role) return { ok: false, error: "Entra primero." };
-  const texto = String(form.get("texto") ?? "").trim();
-  if (!texto) return { ok: false, error: "Escribe algo primero." };
-  if (texto.length > MAX_NOTE) return { ok: false, error: `Máximo ${MAX_NOTE} caracteres.` };
-  try {
-    await addNote(role, texto);
-  } catch {
-    return { ok: false, error: "No se pudo guardar. Inténtalo de nuevo en un momento." };
-  }
-  refresh();
-  return { ok: true, error: null };
 }
 
 export type EstadoResult = { ok: boolean; error: string | null };
@@ -138,7 +117,7 @@ export async function marcarEstado(modo: string | null): Promise<EstadoResult> {
 // A return («volver»): one more flower, the same on every device. Returns how many there are.
 export async function volviste(paso: string): Promise<number | null> {
   const role = await currentRole();
-  if (!role) return null;
+  if (role !== "jazz") return null;
   try {
     const n = await anotarVuelta(role, paso.trim());
     // her garden has one more flower: «ver mi jardín» must load it fresh, so her cat plants it
@@ -152,7 +131,7 @@ export async function volviste(paso: string): Promise<number | null> {
 // The flowers a browser kept before the DB: uploaded once; the same one twice counts once.
 export async function subirMisVueltas(list: Moment[]): Promise<boolean> {
   const role = await currentRole();
-  if (!role || !Array.isArray(list)) return false;
+  if (role !== "jazz" || !Array.isArray(list)) return false;
   try {
     await subirVueltas(role, list);
     return true;
@@ -308,16 +287,6 @@ export const cumplirPaso = async (metaId: string, pasoId: string) =>
     return marcarPaso(metaId, pasoId, "hecho");
   });
 
-// Opening «notas» is what reading means — the same on every device.
-export async function marcarNotasVistas() {
-  const role = await currentRole();
-  if (!role) return;
-  try {
-    await marcarVistas(role);
-  } catch {
-    /* seen is a nicety: never an error on her screen */
-  }
-}
 
 // Gifts go both ways: each one leaves and lets go their own; the other opens and uses them.
 export type RegaloState = { ok: boolean; error: string | null };
@@ -406,22 +375,6 @@ export async function usarCupon(id: string): Promise<EstadoResult> {
   return { ok: true, error: null };
 }
 
-// «Entre los dos»: either of them answers the question of the day; only Brian marks «aquí estoy».
-export async function contestarPregunta(t: string): Promise<EstadoResult> {
-  const role = await currentRole();
-  if (!role) return { ok: false, error: "Entra primero." };
-  const v = texto(t, MAX_RESPUESTA);
-  if (typeof v !== "string") return { ok: false, error: v.error };
-  try {
-    const err = await contestar(role, v);
-    if (err) return { ok: false, error: err };
-  } catch {
-    return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
-  }
-  refresh();
-  return { ok: true, error: null };
-}
-
 
 // Her boards: only she changes them (images and drawings arrive through /api/lienzo/subir).
 // The new board's id comes back: the list opens it at once, so naming it is the only step
@@ -459,8 +412,6 @@ export async function crearYAbrirTablero(t: string): Promise<EstadoResult> {
 }
 
 export const soltarTablero = async (id: string) => deJazz(() => borrarTablero(id));
-
-export const compartirTablero = async (id: string, si: boolean) => deJazz(() => compartir(id, si));
 
 export const agregarColor = async (tablero: string, color: string) =>
   deJazz(async () => (isHex(color) ? agregarAlTablero(tablero, { tipo: "color", color: color.toLowerCase() }) : "Ese color no es válido."));
@@ -522,11 +473,11 @@ export const moverEnTablero = async (id: string, item: string, paso: -1 | 1) =>
 
 export const deshacerTablero = async (id: string) => deJazz(() => restaurarTablero(id));
 
-// A shelf and trips each: whoever is in writes their own. Optional fields may be empty; the rest
-// are short.
+// Her shelf, her trips, her wishes: only her session writes them — Brian's word opens «regalos»
+// and nothing else. Optional fields may be empty; the rest are short.
 async function deCadaUno(op: (role: Role) => Promise<string | void>): Promise<EstadoResult> {
   const role = await currentRole();
-  if (!role) return { ok: false, error: "Entra primero." };
+  if (role !== "jazz") return { ok: false, error: "Entra primero." };
   try {
     const err = await op(role);
     if (err) return { ok: false, error: err };
@@ -588,10 +539,6 @@ export const cambiarViaje = async (id: string, estado: string) =>
 export const soltarDelEstante = async (lista: string, id: string) =>
   deCadaUno((role) => soltarDe(role, lista === "aprendido" ? "aprendido" : lista === "viajes" ? "viajes" : "libros", id));
 
-// «ya se lo regalé»: only on the OTHER one's wishes, and only the giver ever sees it.
-export const regaladoDeseo = async (tipo: string, id: string, si: boolean) =>
-  deCadaUno((role) => marcarRegalado(role === "jazz" ? "brian" : "jazz", tipo === "viaje" ? "viaje" : "libro", id, si));
-
 // The helpers (block agentes). What they send is read here, on the server, from her own
 // stores — never taken from the browser — and only her session may call them.
 export async function proponerPasos(metaId: string): Promise<EstadoResult & { pasos: string[] }> {
@@ -639,13 +586,6 @@ export async function destrabarMision(id: string): Promise<EstadoResult & { paso
   return r.ok ? { ok: true, error: null, pasos: r.data } : { ok: false, error: r.error, pasos: [] };
 }
 
-export async function borrarNota(form: FormData) {
-  const role = await currentRole();
-  if (!role) return;
-  const id = String(form.get("id") ?? "");
-  if (id) await removeNote(role, id);
-  refresh();
-}
 
 // Her cat finished planting: the flowers she just watched grow are seen, on every device.
 export async function floresVistas(n: number) {
@@ -654,7 +594,7 @@ export async function floresVistas(n: number) {
   await verFlores(n).catch(() => {});
 }
 
-// A wish in her book: hers, or one Brian sends her (it arrives as a dove). Title, what it is, a link.
+// A wish in her book: title, what it is, a link.
 export const guardarDeseo = async (titulo: string, descripcion: string, enlace: string) =>
   deCadaUno(async (role) => {
     const t = texto(titulo, MAX_DESEO);
@@ -666,18 +606,6 @@ export const guardarDeseo = async (titulo: string, descripcion: string, enlace: 
     await crearDeseo(role, t as string, d as string, u?.href ?? "");
   });
 
-// She opened the dove's wish.
-export async function deseoVisto(id: string) {
-  if ((await currentRole()) !== "jazz") return;
-  await verDeseo(id).catch(() => {});
-  revalidatePath("/tu");
-}
 
-// Brian's «ya se lo regalé» on one of her wishes.
-export const deseoRegalado = async (id: string, si: boolean) =>
-  deCadaUno(async (role) => {
-    if (role !== "brian") return "Esto es de Brian.";
-    await regalarDeseo(id, si);
-  });
 
 export const soltarElDeseo = async (id: string) => deCadaUno((role) => soltarDeseo(role, id));

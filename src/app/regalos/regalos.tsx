@@ -13,10 +13,10 @@ const when = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "long", t
 
 // What became of a gift you gave, in words — on its box's tag. Never whether it was opened: what
 // she does in her refuge is hers (Brian, 2026-10-25); a coupon used is one she asked for.
-function etiqueta(r: Regalo, total: number) {
+// Nor how far along her missions are: a gift that waits for them says only that it waits.
+function etiqueta(r: Regalo) {
   if (r.usado) return `usó tu cupón el ${when.format(r.usado)}`;
-  if (total >= r.desde) return "ya lo puede abrir";
-  return `envuelto · en ${misionesWord(r.desde - total)}`;
+  return r.desde > 0 ? "envuelto · espera sus misiones" : "ya lo puede abrir";
 }
 
 // «regalos» as wrapped boxes, nothing folded away (Brian, 2026-10-25: «ocultarlo siendo un regalo
@@ -30,14 +30,12 @@ export function Regalos({
   abiertos,
   de = "Brian",
   dados,
-  total,
   regalados = null,
 }: {
   envueltos: Envuelto[];
   abiertos: Abierto[];
   de?: string;
   dados: Regalo[];
-  total: number;
   regalados?: Regalado[] | null;
 }) {
   const [list, markUsed] = useOptimistic(abiertos, (l: Abierto[], id: string) =>
@@ -173,7 +171,7 @@ export function Regalos({
           <li key={r.id} className="relative flex h-full min-h-48 flex-col items-center gap-2 rounded-2xl border border-line bg-surface p-4 pt-3 text-center">
             <Caja abierta={!!r.abierto} className="w-20" />
             <span className="line-clamp-2 text-pretty text-sm font-semibold leading-snug">{r.titulo}</span>
-            <span className="text-xs text-ink-soft">{etiqueta(r, total)}</span>
+            <span className="text-xs text-ink-soft">{etiqueta(r)}</span>
             <form action={borrarRegalo} className="absolute right-1 top-1">
               <input type="hidden" name="id" value={r.id} />
               <button

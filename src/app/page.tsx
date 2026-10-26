@@ -6,7 +6,7 @@ import { Doors } from "@/components/doors";
 import { DailyLine, RunningTimer } from "@/components/home-live";
 import { AvisoSlot } from "@/components/aviso-slot";
 import { EstadoSlot } from "@/components/estado-slot";
-import { BrianTile, GardenTile, PowerTile, TileSkeleton } from "@/components/tiles";
+import { GardenTile, PowerTile, RegalosTile, TileSkeleton } from "@/components/tiles";
 import { Sparkle } from "@/components/icons";
 
 // Phone: one column, the way Brian liked it. Wide screen: the same pieces as a bento —
@@ -47,7 +47,7 @@ export default function Home() {
         </section>
 
         <Suspense fallback={<TileSkeleton className="hidden lg:block" />}>
-          <BrianTile className="hidden lg:flex" />
+          <RegalosTile className="hidden lg:flex" />
         </Suspense>
         <Suspense fallback={<TileSkeleton className="hidden lg:block" />}>
           <GardenTile className="hidden lg:flex" />

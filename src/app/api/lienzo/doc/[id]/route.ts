@@ -11,8 +11,8 @@ const EN_LINEA = /^(application\/pdf|image\/(png|jpe?g|gif|webp|avif)|audio\/|vi
 
 export async function GET(_: Request, { params }: { params: Promise<{ id: string }> }) {
   const role = await currentRole();
-  if (!role) return new NextResponse(null, { status: 401 });
-  const d = await docPara((await params).id, role).catch(() => null);
+  if (role !== "jazz") return new NextResponse(null, { status: 401 });
+  const d = await docPara((await params).id).catch(() => null);
   if (!d || d.res.statusCode !== 200) return new NextResponse(null, { status: 404 });
   const tipo = d.mime || d.res.blob.contentType || "application/octet-stream";
   const nombre = encodeURIComponent(d.nombre);

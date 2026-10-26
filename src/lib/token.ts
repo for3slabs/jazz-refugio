@@ -5,7 +5,7 @@
 export const COOKIE = "refugio";
 export const MAX_AGE_S = 60 * 60 * 24 * 180; // 180 days: she should not have to log in again
 
-// jazz opens her place; brian also writes in it (notes).
+// jazz opens her place; brian's word opens only «regalos» (the proxy keeps him there).
 export type Role = "jazz" | "brian";
 const ROLES: readonly Role[] = ["jazz", "brian"];
 

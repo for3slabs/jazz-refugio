@@ -16,7 +16,7 @@ Lo pequeño y concreto es mejor que lo grande y vago: cada paso empieza con un v
 
 export type Resultado<T> = { ok: true; data: T } | { ok: false; error: string };
 
-const NO_LISTO = "Los ayudantes todavía no están listos. Avísale a Brian.";
+const NO_LISTO = "Los ayudantes todavía no están listos. Inténtalo en un rato.";
 
 // The daily count — the only thing this block stores: one row per use, never what she asked.
 // Counted before the call, and the DB caps it at 20 a day under a lock, so a burst of taps

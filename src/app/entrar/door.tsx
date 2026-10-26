@@ -9,7 +9,7 @@ export function Door() {
   return (
     <form action={action} className="w-full space-y-3">
       <label htmlFor="clave" className="block text-center text-sm text-ink-soft">
-        la palabra que te dio Brian
+        tu palabra
       </label>
       <div className="flex gap-2">
         <input

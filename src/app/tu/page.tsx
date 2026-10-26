@@ -3,18 +3,16 @@ import { redirect } from "next/navigation";
 import { PageTitle, Shell } from "@/components/shell";
 import { Star } from "@/components/icons";
 import { Tabs } from "@/components/tabs";
-import { loadColeccion, loadDeseos } from "@/lib/coleccion";
+import { loadColeccion } from "@/lib/coleccion";
 import { loadMisiones } from "@/lib/misiones";
 import { loadVueltas } from "@/lib/vueltas";
 import { loadFloresVistas } from "@/lib/jardin";
 import { loadMascota } from "@/lib/mascota";
 import { currentRole } from "@/lib/session";
-import { Deseos } from "./deseos";
 import { Garden, MasDelJardin } from "./garden";
 import { Librero } from "./librero";
 import { Cabecera } from "./cabecera";
 import { RecamaraDeseos } from "./recamara";
-import { SuLibro } from "./su-libro";
 import { loadLibroDeseos } from "@/lib/deseos";
 import { Viajes } from "./viajes";
 
@@ -30,29 +28,21 @@ export default function Tu({ searchParams }: { searchParams: Search }) {
   );
 }
 
-// Each one's own space. Hers: the garden, her shelf, her trips, and his wishes. His: her wishes,
-// his shelf and his trips. The other one's wishes carry «ya se lo regalé», seen only by the giver.
+// Her own space: the garden, her shelf, her trips, her wishes. Nobody else reads it — Brian's
+// word opens «regalos» and nothing else (Brian, 2026-10-25: «es su lugar seguro de ella»).
 async function Content({ searchParams }: { searchParams: Search }) {
   const role = await currentRole();
   if (!role) redirect("/entrar");
-  const otro = role === "jazz" ? "brian" : "jazz";
-  const nombreOtro = role === "jazz" ? "Brian" : "Jazz";
+  if (role !== "jazz") redirect("/regalos");
   const { v } = await searchParams;
 
-  const items =
-    role === "jazz"
-      ? [
-          { key: "jardin", href: "/tu", label: "jardín" },
-          { key: "librero", href: "/tu?v=librero", label: "librero" },
-          { key: "viajes", href: "/tu?v=viajes", label: "viajes" },
-          // «deseos», not «sus deseos»: four tabs fit one line on a phone; the title says whose
-          { key: "deseos", href: "/tu?v=deseos", label: "deseos" },
-        ]
-      : [
-          { key: "deseos", href: "/tu", label: "sus deseos" },
-          { key: "librero", href: "/tu?v=librero", label: "tu librero" },
-          { key: "viajes", href: "/tu?v=viajes", label: "tus viajes" },
-        ];
+  const items = [
+    { key: "jardin", href: "/tu", label: "jardín" },
+    { key: "librero", href: "/tu?v=librero", label: "librero" },
+    { key: "viajes", href: "/tu?v=viajes", label: "viajes" },
+    // «deseos», not «sus deseos»: four tabs fit one line on a phone
+    { key: "deseos", href: "/tu?v=deseos", label: "deseos" },
+  ];
   const vista = items.some((i) => i.key === v) ? v! : items[0].key;
   const tabs = <Tabs label="colecciones" current={vista} items={items} />;
 
@@ -79,21 +69,9 @@ async function Content({ searchParams }: { searchParams: Search }) {
   }
 
   if (vista === "deseos") {
-    // hers: her bedroom at night, the book of her wishes, the dove
-    if (role === "jazz") {
-      const [libro, gato] = await Promise.all([loadLibroDeseos("jazz").catch(() => []), loadMascota().catch(() => undefined)]);
-      return <RecamaraDeseos libro={libro} gato={gato} cabecera={<Cabecera titulo="tus deseos" items={items} current={vista} />} />;
-    }
-    // his: her book of wishes (to give), the dove he sends, and her books and trips she wants
-    const [d, libro] = await Promise.all([loadDeseos(otro).catch(() => null), loadLibroDeseos("brian").catch(() => [])]);
-    return (
-      <>
-        <PageTitle icon={<Star className="size-7" />}>sus deseos</PageTitle>
-        {tabs}
-        <SuLibro libro={libro.map((d) => ({ ...d, visto: null }))} />
-        {d ? <Deseos deseos={d} nombre={nombreOtro} /> : <p className="mt-8 text-ink-soft">No pude leerlos. Vuelve a abrir en un momento.</p>}
-      </>
-    );
+    // her bedroom at night, the book of her wishes
+    const [libro, gato] = await Promise.all([loadLibroDeseos().catch(() => []), loadMascota().catch(() => undefined)]);
+    return <RecamaraDeseos libro={libro} gato={gato} cabecera={<Cabecera titulo="tus deseos" items={items} current={vista} />} />;
   }
 
   const [c, gato] = await Promise.all([loadColeccion(role).catch(() => null), loadMascota().catch(() => undefined)]);

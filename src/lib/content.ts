@@ -1,5 +1,4 @@
 // Content that is not personal and can live in a public repo.
-// Brian's notes are personal: they come from REFUGIO_NOTAS, never from here.
 
 // One line a day, the same all day — picked by the date, so coming back shows the same one.
 export const dailyLines = [
@@ -61,41 +60,4 @@ export const powers: Power[] = [
 // One strength a day for the home tile — the same all day, a different one tomorrow.
 export function powerOfTheDay(date = new Date()): Power {
   return powers[dayOfYear(date) % powers.length];
-}
-
-// «Entre los dos»: one human question a day — the same for both, nothing about work.
-export const preguntas = [
-  "¿Qué te hizo reír hoy?",
-  "¿Qué canción traes en la cabeza?",
-  "¿Qué comiste rico últimamente?",
-  "Si hoy tuvieras una tarde libre, ¿qué harías?",
-  "¿Qué color describiría tu día?",
-  "¿Qué es algo pequeño que te gustó hoy?",
-  "¿A dónde te irías de viaje mañana mismo?",
-  "¿Qué serie, libro o video te tiene enganchado?",
-  "¿Qué te gustaría aprender solo por gusto?",
-  "¿Cuál es tu antojo de hoy?",
-  "¿Qué recuerdo bonito te llegó esta semana?",
-  "¿Qué diseño, foto o cosa viste hoy que te pareció hermosa?",
-  "¿Qué te daría energía en este momento?",
-  "¿Qué sonido te calma?",
-  "Si tu día fuera una película, ¿cómo se llamaría?",
-  "¿Qué agradeces de hoy, aunque sea chiquito?",
-  "¿Qué planta, animal u objeto serías hoy?",
-  "¿Qué te gustaría que pasara este fin de semana?",
-  "¿Qué idea loca se te ocurrió últimamente?",
-  "¿Cuál es tu lugar favorito para estar en calma?",
-  "¿Qué hiciste hace poco que te dio orgullo?",
-  "¿Qué olor te transporta a algún lugar?",
-  "¿Qué te gustaría decirle a tu yo de hace un año?",
-  "¿Qué es lo mejor que escuchaste esta semana?",
-  "¿Con qué emoji resumirías hoy?",
-  "¿Qué te gustaría que te regalaran sin motivo?",
-  "¿Qué cosa haces que te hace perder la noción del tiempo?",
-  "¿Cuál es tu bebida perfecta ahora mismo?",
-];
-
-// The question of a calendar day (YYYY-MM-DD): the same all day, for both of them.
-export function preguntaDe(dia: string): string {
-  return preguntas[Math.floor(Date.parse(dia) / 86_400_000) % preguntas.length];
 }

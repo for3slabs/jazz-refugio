@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { PageTitle, Shell } from "@/components/shell";
 import { Palette } from "@/components/icons";
-import { loadTableros, tableroSoltado, visibles } from "@/lib/lienzo";
+import { loadTableros, tableroSoltado } from "@/lib/lienzo";
 import { currentRole } from "@/lib/session";
 import { Lista } from "./lista";
 
@@ -20,9 +20,10 @@ export default function Lienzo({ searchParams }: PageProps<"/lienzo">) {
 async function Boards({ searchParams }: { searchParams: PageProps<"/lienzo">["searchParams"] }) {
   const role = await currentRole();
   if (!role) redirect("/entrar");
-  const list = visibles(await loadTableros(), role);
+  if (role !== "jazz") redirect("/regalos");
+  const list = await loadTableros();
   // a board she just let go: offered back with «deshacer» (it stays recoverable for 30 days)
   const { soltado } = await searchParams;
-  const recien = role === "jazz" && typeof soltado === "string" ? await tableroSoltado(soltado).catch(() => null) : null;
-  return <Lista tableros={list} isBrian={role === "brian"} soltado={recien} />;
+  const recien = typeof soltado === "string" ? await tableroSoltado(soltado).catch(() => null) : null;
+  return <Lista tableros={list} soltado={recien} />;
 }
