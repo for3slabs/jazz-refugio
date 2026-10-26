@@ -1,11 +1,11 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { Suspense, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import * as THREE from "three";
 import type { ModoId } from "@/lib/modos";
 import type { Puestos } from "@/lib/objeto";
-import { Gato } from "./gato";
+import { Modelo } from "./modelo";
 
 // The stage: transparent, so what sits behind it gives the colour of her mode. A drag turns the
 // cat; let go and it keeps facing where she left it, swaying a little. Only her own switch
@@ -51,8 +51,8 @@ function motionOff() {
 }
 const subscribe = () => () => {};
 
+// `modo`: her mode — it colours the orb behind the canvas; the sculpted pet keeps one happy face.
 export default function Escena({
-  modo,
   puestos,
   className = "",
   interactive = true,
@@ -100,7 +100,10 @@ export default function Escena({
         <directionalLight position={[3, 5, 6]} intensity={1.6} color="#fff3e8" />
         <directionalLight position={[-4, 3, -5]} intensity={0.9} color="#f6d9ff" />
         <Giro angle={angle}>
-          <Gato modo={modo} puestos={puestos} />
+          {/* the sculpted pet loads after the page; until then the orb just shows its colour */}
+          <Suspense fallback={null}>
+            <Modelo puestos={puestos} />
+          </Suspense>
         </Giro>
         <Sombra />
       </Canvas>
