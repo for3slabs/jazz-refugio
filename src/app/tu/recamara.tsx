@@ -9,6 +9,7 @@ import { type Deseo, MAX_DESCRIPCION_DESEO, MAX_DESEO } from "@/lib/deseo";
 import type { Deseos as SusDeseos } from "@/lib/estante";
 import { type Mascota, NOMBRE_INICIAL } from "@/lib/objeto";
 import { escenario } from "./cabecera";
+import { MarcaEscena } from "@/components/marca-escena";
 import { Deseos } from "./deseos";
 
 type Hoja = "libro" | "paloma" | "corcho" | "nuevo" | null;
@@ -78,6 +79,7 @@ export function RecamaraDeseos({
   return (
     <div>
       <div data-escena="recamara" className={`rise ${escenario}`}>
+      <MarcaEscena nombre="recamara" />
         <Recamara
           deseos={libro.length}
           paloma={!!carta}

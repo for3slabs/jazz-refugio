@@ -8,6 +8,7 @@ import { Close, Plus } from "@/components/icons";
 import { type Aprendido, type EstadoLibro, type Libro, MAX_NOTA, MAX_TITULO } from "@/lib/estante";
 import { type Mascota, NOMBRE_INICIAL } from "@/lib/objeto";
 import { escenario } from "./cabecera";
+import { MarcaEscena } from "@/components/marca-escena";
 
 const ESTADOS: Record<EstadoLibro, string> = { leyendo: "leyendo", quiero: "quiero leer", leido: "leído" };
 const when = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Mexico_City" });
@@ -164,6 +165,7 @@ export function Librero({
     <div>
       {/* the room fills the screen above the doors; title, tabs and the two «＋» float on its wall */}
       <div data-escena="biblioteca" className={`rise ${escenario}`}>
+      <MarcaEscena nombre="biblioteca" />
         <Biblioteca
           libros={libros}
           aprendidos={vistos}
