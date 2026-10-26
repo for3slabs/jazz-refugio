@@ -88,7 +88,7 @@ export function Doors({ bar = false, path = null }: { bar?: boolean; path?: stri
   );
   if (!bar) return nav;
   return (
-    <div className="fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas/90 backdrop-blur-md">{nav}</div>
+    <div className="puertas fixed inset-x-0 bottom-0 z-30 border-t border-line bg-canvas/90 backdrop-blur-md">{nav}</div>
   );
 }
 

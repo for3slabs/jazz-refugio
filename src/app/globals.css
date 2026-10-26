@@ -406,6 +406,78 @@ a {
   color: oklch(0.97 0.02 330);
 }
 
+/* …and so do the doors at the bottom and her assistant's button (Brian, 2026-10-25: «que el
+   menú de abajo y la IA tengan el mismo estilo, que no se note el cambio»): a strip of paper with
+   an ink edge, ink icons, the door she is in a tilted yellow label; the assistant a yellow comic
+   badge with a hard shadow. */
+.marco:has([data-escena]) .puertas {
+  background: oklch(0.97 0.02 330);
+  border-top: 3px solid oklch(0.2 0.06 315);
+  backdrop-filter: none;
+}
+.marco:has([data-escena]) .puertas a,
+.marco:has([data-escena]) .puertas a svg {
+  color: oklch(0.2 0.06 315);
+}
+.marco:has([data-escena]) .puertas a[aria-current="page"] {
+  background: oklch(0.92 0.13 92);
+  border: 2.5px solid oklch(0.2 0.06 315);
+  border-radius: 0.6rem;
+  box-shadow: 2px 2px 0 oklch(0.2 0.06 315);
+  transform: rotate(-2deg);
+  font-weight: 800;
+}
+.marco:has([data-escena]) .asistente {
+  background: oklch(0.92 0.13 92);
+  color: oklch(0.2 0.06 315);
+  border: 3px solid oklch(0.2 0.06 315);
+  box-shadow: 3px 3px 0 oklch(0.2 0.06 315);
+}
+
+/* …and so do the sheets that rise from them — a book, what she learned, a form (Brian,
+   2026-10-25: «que no tenga doble estilo»): paper, an ink edge, ink words, fields with an ink
+   border, the chosen option and the main button in yellow with a hard shadow. */
+.marco:has([data-escena]) dialog.sheet {
+  --tinta: oklch(0.2 0.06 315);
+  background: oklch(0.97 0.02 330);
+  color: var(--tinta);
+  border: 3px solid var(--tinta);
+  border-bottom: 0;
+}
+@media (min-width: 1024px) {
+  .marco:has([data-escena]) dialog.sheet { border-bottom: 3px solid var(--tinta); box-shadow: 5px 5px 0 var(--tinta); }
+}
+.marco:has([data-escena]) dialog.sheet :is(.text-ink, .text-ink-soft, .t-display, h2, h3) { color: var(--tinta); }
+.marco:has([data-escena]) dialog.sheet .text-ink-soft { opacity: 0.72; }
+.marco:has([data-escena]) dialog.sheet .text-accent { color: oklch(0.48 0.2 330); }
+.marco:has([data-escena]) dialog.sheet :is(input, textarea) {
+  background: oklch(0.995 0.005 330);
+  color: var(--tinta);
+  border: 2.5px solid var(--tinta);
+}
+.marco:has([data-escena]) dialog.sheet :is(input, textarea)::placeholder { color: oklch(0.45 0.05 315); }
+.marco:has([data-escena]) dialog.sheet :is(input, textarea):focus { box-shadow: 3px 3px 0 var(--tinta); }
+.marco:has([data-escena]) dialog.sheet [role="radio"] {
+  background: oklch(0.995 0.005 330);
+  color: var(--tinta);
+  border: 2.5px solid var(--tinta);
+}
+/* the chosen option carries Tailwind's `!` classes from its own page, and a layered !important
+   beats an unlayered one — so this lives in the same layer, where the more specific rule wins */
+@layer utilities {
+  .marco:has([data-escena]) dialog.sheet [role="radio"][aria-checked="true"],
+  .marco:has([data-escena]) dialog.sheet .bg-accent {
+    background: oklch(0.92 0.13 92) !important;
+    color: oklch(0.2 0.06 315) !important;
+    border: 2.5px solid oklch(0.2 0.06 315) !important;
+    box-shadow: 2px 2px 0 oklch(0.2 0.06 315);
+  }
+}
+.marco:has([data-escena]) dialog.sheet :is(.border-line, .border-accent\/60, .bg-surface-2\/60) {
+  border-color: var(--tinta);
+  background: oklch(0.995 0.005 330);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rise { animation-name: fade; animation-duration: 200ms; }
   .orb-idle, .animate-ping { animation: none; }
