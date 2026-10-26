@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // three.js's Draco decoder, copied as-is from three/examples so the pet loads from our own
+    // origin — third-party minified code, not ours to lint
+    "public/draco/**",
   ]),
 ]);
 
