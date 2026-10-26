@@ -15,10 +15,11 @@ const H = H_AERO;
 
 export const ASIENTO = { x: 196, y: 452 };
 export const PASAPORTE = { x: 196 + 28, y: 452 - 50 };
-// the window starts below the floating title and tabs; the board hangs beside it like a framed
-// screen (Brian, 2026-10-25: «el letrero no se ve… más del lado de la ventana, como un cuadro»)
-const VENTANA = { x: 16, y: 156, w: 262, h: 190 };
-const TABLERO = { x: 286, y: 170, w: 94, h: 150 };
+// the window spans the whole wall below the floating title and tabs, and the board hangs IN FRONT
+// of its right side (Brian, 2026-10-25: «la ventana que abarque todo el espacio horizontal…
+// enfrente el cartel»): the window stays the biggest thing, the board reads over it
+const VENTANA = { x: 16, y: 156, w: 358, h: 190 };
+const TABLERO = { x: 272, y: 168, w: 94, h: 150 };
 const PISTA = { x: 72, y: 318 };
 
 function Avion({ escala = 1 }: { escala?: number }) {
@@ -85,19 +86,19 @@ export function Aeropuerto({
         {/* the big window onto the runway at sunset */}
         <g clipPath="url(#aero-ventana)">
           <rect x={VENTANA.x} y={VENTANA.y} width={VENTANA.w} height={VENTANA.h} fill="oklch(0.36 0.15 308)" />
-          <path d="M16 200 Q 150 190 278 202 V 346 H16Z" fill="oklch(0.5 0.2 330)" />
-          <path d="M16 238 Q 150 230 278 240 V 346 H16Z" fill="oklch(0.66 0.18 10)" />
-          <path d="M16 266 Q 150 262 278 268 V 346 H16Z" fill="oklch(0.78 0.15 55)" />
-          <rect x="16" y="200" width="262" height="80" fill="url(#aero-trama)" opacity={0.5} />
-          <circle cx="206" cy="280" r="28" fill="oklch(0.92 0.13 92)" stroke={INK} strokeWidth={2.4} />
+          <path d="M16 200 Q 195 190 374 202 V 346 H16Z" fill="oklch(0.5 0.2 330)" />
+          <path d="M16 238 Q 195 230 374 240 V 346 H16Z" fill="oklch(0.66 0.18 10)" />
+          <path d="M16 266 Q 195 262 374 268 V 346 H16Z" fill="oklch(0.78 0.15 55)" />
+          <rect x="16" y="200" width="358" height="80" fill="url(#aero-trama)" opacity={0.5} />
+          <circle cx="170" cy="280" r="28" fill="oklch(0.92 0.13 92)" stroke={INK} strokeWidth={2.4} />
           {/* hills, the control tower, the runway */}
-          <path d="M16 292 Q 70 276 120 290 T 210 286 T 278 282 V 346 H16Z" fill="oklch(0.45 0.12 330)" stroke={INK} strokeWidth={2} />
+          <path d="M16 292 Q 80 276 140 290 T 260 286 T 374 282 V 346 H16Z" fill="oklch(0.45 0.12 330)" stroke={INK} strokeWidth={2} />
           <g stroke={INK} strokeWidth={2} strokeLinejoin="round">
-            <rect x="246" y="246" width="10" height="50" fill="oklch(0.7 0.05 320)" />
-            <path d="M240 234 H 262 L 259 248 H 243Z" fill="oklch(0.85 0.1 85)" />
+            <rect x="226" y="246" width="10" height="50" fill="oklch(0.7 0.05 320)" />
+            <path d="M220 234 H 242 L 239 248 H 223Z" fill="oklch(0.85 0.1 85)" />
           </g>
-          <path d="M16 304 H 278 V 346 H16Z" fill="oklch(0.4 0.05 320)" stroke={INK} strokeWidth={2} />
-          <path d="M26 327 H 278" stroke="oklch(0.95 0.03 85)" strokeWidth={3} strokeDasharray="16 12" />
+          <path d="M16 304 H 374 V 346 H16Z" fill="oklch(0.4 0.05 320)" stroke={INK} strokeWidth={2} />
+          <path d="M26 327 H 374" stroke="oklch(0.95 0.03 85)" strokeWidth={3} strokeDasharray="16 12" />
           {/* ONE plane on the runway: when she adds a wish THIS one takes off, and once it is in the
               air a new one rolls in to wait for the next trip */}
           {despegues > 0 && (
@@ -110,8 +111,8 @@ export function Aeropuerto({
           </g>
         </g>
         <rect x={VENTANA.x} y={VENTANA.y} width={VENTANA.w} height={VENTANA.h} fill="none" stroke={INK} strokeWidth={5} />
-        <path d="M103 156 V 346 M190 156 V 346" stroke={INK} strokeWidth={4} />
-        <rect x="8" y="344" width="278" height="12" fill="oklch(0.5 0.06 320)" stroke={INK} strokeWidth={2.4} />
+        <path d="M135 156 V 346 M254 156 V 346" stroke={INK} strokeWidth={4} />
+        <rect x="8" y="344" width="374" height="12" fill="oklch(0.5 0.06 320)" stroke={INK} strokeWidth={2.4} />
         {/* the departures board, a framed screen beside the window: her wished places, the score */}
         <g
           onClick={onTablero}
@@ -119,7 +120,9 @@ export function Aeropuerto({
           role={onTablero ? "button" : undefined}
           aria-label={onTablero ? `salidas: ${quiero.length} ${quiero.length === 1 ? "vuelo" : "vuelos"} que quieres tomar` : undefined}
         >
-          <path d={`M${TABLERO.x + 20} ${TABLERO.y - 40} V ${TABLERO.y} M${TABLERO.x + TABLERO.w - 20} ${TABLERO.y - 40} V ${TABLERO.y}`} stroke={INK} strokeWidth={2.4} />
+          {/* hanging from the ceiling, in front of the glass */}
+          <path d={`M${TABLERO.x + 20} ${TABLERO.y - 60} V ${TABLERO.y} M${TABLERO.x + TABLERO.w - 20} ${TABLERO.y - 60} V ${TABLERO.y}`} stroke={INK} strokeWidth={2.4} />
+          <rect x={TABLERO.x - 2} y={TABLERO.y + 4} width={TABLERO.w + 8} height={TABLERO.h + 8} rx="8" fill={INK} opacity={0.35} />
           <rect x={TABLERO.x - 4} y={TABLERO.y - 4} width={TABLERO.w + 8} height={TABLERO.h + 8} rx="8" fill="oklch(0.5 0.06 320)" stroke={INK} strokeWidth={3} />
           <rect x={TABLERO.x} y={TABLERO.y} width={TABLERO.w} height={TABLERO.h} rx="5" fill="oklch(0.22 0.05 315)" stroke={INK} strokeWidth={2} />
           <text x={TABLERO.x + TABLERO.w / 2} y={TABLERO.y + 15} textAnchor="middle" fontSize="9" fontWeight="800" letterSpacing="1.5" fill="oklch(0.92 0.13 92)">
