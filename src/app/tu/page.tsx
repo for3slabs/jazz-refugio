@@ -12,6 +12,7 @@ import { currentRole } from "@/lib/session";
 import { Deseos } from "./deseos";
 import { Garden, MasDelJardin } from "./garden";
 import { Librero } from "./librero";
+import { Cabecera } from "./cabecera";
 import { Viajes } from "./viajes";
 
 type Search = Promise<{ v?: string }>;
@@ -61,13 +62,16 @@ async function Content({ searchParams }: { searchParams: Search }) {
       loadMascota().catch(() => undefined),
     ]);
     return (
-      <>
-        <PageTitle icon={<Star className="size-7" />} aside={<MasDelJardin misiones={m?.total ?? 0} vueltas={vueltas} />}>
-          tu jardín
-        </PageTitle>
-        {tabs}
-        <Garden misiones={m?.total ?? 0} vueltas={vueltas} mejorDia={m?.mejorDia ?? 0} vistas={vistas} gato={gato} />
-      </>
+      <Garden
+        misiones={m?.total ?? 0}
+        vueltas={vueltas}
+        mejorDia={m?.mejorDia ?? 0}
+        vistas={vistas}
+        gato={gato}
+        cabecera={
+          <Cabecera titulo="tu jardín" items={items} current={vista} aside={<MasDelJardin misiones={m?.total ?? 0} vueltas={vueltas} />} />
+        }
+      />
     );
   }
 
@@ -83,6 +87,10 @@ async function Content({ searchParams }: { searchParams: Search }) {
   }
 
   const [c, gato] = await Promise.all([loadColeccion(role).catch(() => null), vista === "librero" ? loadMascota().catch(() => undefined) : undefined]);
+  // the library is a scene of its own: its title and tabs ride on its wall
+  if (vista === "librero" && c) {
+    return <Librero libros={c.libros} aprendido={c.aprendido} otro={nombreOtro} gato={gato} cabecera={<Cabecera titulo="tu librero" items={items} current={vista} />} />;
+  }
   return (
     <>
       <PageTitle icon={<Star className="size-7" />}>{vista === "librero" ? "tu librero" : "tus viajes"}</PageTitle>

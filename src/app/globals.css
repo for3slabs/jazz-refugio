@@ -394,6 +394,18 @@ a {
 }
 .cuenta-sube { animation: cuenta-sube 260ms var(--ease-out-strong); }
 
+/* A page that draws a scene under the top bar (her garden, her library — `data-escena`) gets the
+   bar floating over the scene's sky in light ink: she walks into a place, not a web page
+   (Brian, 2026-10-25). Every other page keeps its bar as it was. */
+.marco:has([data-escena]) > header {
+  position: relative;
+  z-index: 20;
+  filter: drop-shadow(0 1px 1px oklch(0.2 0.06 315));
+}
+.marco:has([data-escena]) > header :is(a, button) {
+  color: oklch(0.97 0.02 330);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .rise { animation-name: fade; animation-duration: 200ms; }
   .orb-idle, .animate-ping { animation: none; }

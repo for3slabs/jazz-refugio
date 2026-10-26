@@ -28,7 +28,7 @@ export function Shell({
   const ayuda = bar && asistente;
   return (
     <div
-      className={`mx-auto flex w-full flex-col px-5 pt-5 sm:px-8 ${
+      className={`marco mx-auto flex w-full flex-col px-5 pt-5 sm:px-8 ${
         // The home is exactly one screen tall, so its orb can give room to the notes above it; on a
         // phone its tab bar closes the screen, so the frame adds no bottom padding.
         home

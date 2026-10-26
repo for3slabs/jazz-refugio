@@ -8,6 +8,7 @@ const INK = "oklch(0.2 0.06 315)";
 const W = 390;
 const H = 560;
 export const W_PLAYA = W;
+const PIE = 30;
 export const H_PLAYA = H;
 
 function rng(seed: number) {
@@ -95,16 +96,20 @@ const RAYOS = Array.from({ length: 16 }, (_, j) => {
 // `mostrar`: which places have a flower now (the first `flores` by default) — while her cat plants,
 // the garden shows only what has grown so far. `nuevas`: the ones that sprout as she watches.
 // `children`: drawn on top of the beach, inside the frame — her cat.
+// `cielo`: extra sky above the scene, so it can fill a whole screen while staying anchored at
+// the bottom — the beach and her flowers never move, only more sky shows.
 export function Playa({
   flores,
   mostrar,
   nuevas,
+  cielo = 0,
   className = "",
   children,
 }: {
   flores: number;
   mostrar?: number[];
   nuevas?: Set<number>;
+  cielo?: number;
   className?: string;
   children?: React.ReactNode;
 }) {
@@ -114,7 +119,12 @@ export function Playa({
     .filter(Boolean)
     .sort((a, b) => a.y - b.y);
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className={className} role="img" aria-label={`tu jardín en la playa, con ${flores} ${flores === 1 ? "flor" : "flores"}`}>
+    <svg
+      viewBox={`0 ${-cielo} ${W} ${H + cielo + (cielo ? PIE : 0)}`}
+      preserveAspectRatio="xMidYMax slice"
+      className={className}
+      role="img"
+      aria-label={`tu jardín en la playa, con ${flores} ${flores === 1 ? "flor" : "flores"}`}>
       <defs>
         <pattern id="playa-trama" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
           <circle cx="3.5" cy="3.5" r="1.25" fill={INK} opacity={0.28} />
@@ -123,12 +133,12 @@ export function Playa({
           <circle cx="3" cy="3" r="1.1" fill="oklch(0.7 0.18 40)" opacity={0.55} />
         </pattern>
         <clipPath id="playa-marco">
-          <rect width={W} height={H} rx="22" />
+          <rect y={-cielo} width={W} height={H + cielo + (cielo ? PIE : 0)} rx={cielo ? 0 : 22} />
         </clipPath>
       </defs>
       <g clipPath="url(#playa-marco)">
         {/* the sky in flat comic bands */}
-        <rect width={W} height={H} fill="oklch(0.34 0.15 308)" />
+        <rect y={-cielo} width={W} height={H + cielo} fill="oklch(0.34 0.15 308)" />
         <path d="M0 120 Q 100 104 195 118 T 390 112 V 300 H0Z" fill="oklch(0.5 0.2 330)" />
         <path d="M0 196 Q 110 184 200 196 T 390 190 V 300 H0Z" fill="oklch(0.66 0.18 10)" />
         <path d="M0 250 Q 120 242 210 252 T 390 246 V 300 H0Z" fill="oklch(0.78 0.15 55)" />
@@ -182,6 +192,8 @@ export function Playa({
         <path d={DUNA} transform="translate(0 -9)" fill="oklch(0.95 0.03 330)" stroke={INK} strokeWidth={2.4} />
         <path d={DUNA} fill="oklch(0.82 0.08 65)" stroke={INK} strokeWidth={3} />
         <path d={DUNA} fill="url(#playa-trama)" opacity={0.45} />
+        {/* full screen: a strip of sand under the beach, so the front flowers clear the doors */}
+        {cielo > 0 && <rect y={H - 2} width={W} height={PIE + 2} fill="oklch(0.82 0.08 65)" />}
         {/* a palm framing the panel */}
         <path d="M356 560 C 350 480 342 430 330 382" stroke={INK} strokeWidth={13} fill="none" strokeLinecap="round" />
         <path d="M356 560 C 350 480 342 430 330 382" stroke="oklch(0.55 0.09 50)" strokeWidth={8} fill="none" strokeLinecap="round" />
@@ -196,7 +208,7 @@ export function Playa({
         ))}
         {children}
       </g>
-      <rect x="1.5" y="1.5" width={W - 3} height={H - 3} rx="21" fill="none" stroke={INK} strokeWidth={3} />
+      {!cielo && <rect x="1.5" y="1.5" width={W - 3} height={H - 3} rx="21" fill="none" stroke={INK} strokeWidth={3} />}
     </svg>
   );
 }

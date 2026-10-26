@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, useTransition } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState, useTransition } from "react";
 import { cambiarLibro, guardarAprendido, guardarLibro, soltarDelEstante } from "@/app/actions";
 import { Biblioteca, GATO_MESA, H_BIBLIO, PEDESTAL, acomodo, tapa } from "@/components/biblioteca";
 import { Gato } from "@/components/gato";
 import { Close, Plus } from "@/components/icons";
 import { type Aprendido, type EstadoLibro, type Libro, MAX_NOTA, MAX_TITULO } from "@/lib/estante";
 import { type Mascota, NOMBRE_INICIAL } from "@/lib/objeto";
+import { escenario } from "./cabecera";
 
 const ESTADOS: Record<EstadoLibro, string> = { leyendo: "leyendo", quiero: "quiero leer", leido: "leído" };
 const when = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "long", year: "numeric", timeZone: "America/Mexico_City" });
@@ -31,11 +32,13 @@ export function Librero({
   aprendido,
   otro = "Brian",
   gato = { nombre: NOMBRE_INICIAL, puestos: {} },
+  cabecera,
 }: {
   libros: Libro[];
   aprendido: Aprendido[];
   otro?: string;
   gato?: Mascota;
+  cabecera?: ReactNode;
 }) {
   const sheet = useRef<HTMLDialogElement>(null);
   const titulo = useId();
@@ -158,8 +161,9 @@ export function Librero({
   const libro = hoja?.tipo === "libro" ? libros.find((l) => l.id === hoja.id) : undefined;
 
   return (
-    <div className="mt-6">
-      <div className="rise relative">
+    <div>
+      {/* the room fills the screen above the doors; title, tabs and the two «＋» float on its wall */}
+      <div data-escena className={`rise ${escenario}`}>
         <Biblioteca
           libros={libros}
           aprendidos={vistos}
@@ -167,7 +171,8 @@ export function Librero({
           ocultos={ocultos}
           onLibro={(id) => abrir({ tipo: "libro", id })}
           onPedestal={() => abrir({ tipo: "aprendi" })}
-          className="block h-auto w-full"
+          cielo={320}
+          className="absolute inset-0 block h-full w-full"
         >
           <g style={{ transform: `translate(${pos.x}px, ${pos.y}px)`, transition: `transform ${ms}ms ease-in-out` }} aria-hidden>
             <g transform="scale(1.35)" className={pluma ? "gato-salto" : undefined}>
@@ -181,16 +186,19 @@ export function Librero({
             </g>
           </g>
         </Biblioteca>
+        <div className="relative z-10 px-5 pt-[3.75rem] sm:px-8 lg:pt-6">
+          {cabecera}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button type="button" onClick={() => abrir({ tipo: "nuevo-libro" })} className={botonCartel}>
+              <Plus className="size-4" /> un libro
+            </button>
+            <button type="button" onClick={() => abrir({ tipo: "nuevo-aprendi" })} className={botonCartel}>
+              <Plus className="size-4" /> algo que aprendí
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <button type="button" onClick={() => abrir({ tipo: "nuevo-libro" })} className={boton}>
-          <Plus className="size-4 text-accent" /> un libro
-        </button>
-        <button type="button" onClick={() => abrir({ tipo: "nuevo-aprendi" })} className={boton}>
-          <Plus className="size-4 text-accent" /> algo que aprendí
-        </button>
-      </div>
       <p className="mt-3 text-pretty text-sm text-ink-soft">
         Toca un libro para leer lo que escribiste de él, o el libro grande para ver lo que aprendiste. {otro} ve tus «quiero leer» —solo
         los títulos— para regalarte.
@@ -309,6 +317,9 @@ export function Librero({
   );
 }
 
+// the two «＋» as comic labels on the library wall
+const botonCartel =
+  "press inline-flex items-center gap-1.5 rounded-lg border-[2.5px] border-[oklch(0.2_0.06_315)] bg-[oklch(0.92_0.13_92)] px-3 py-1.5 text-sm font-black text-[oklch(0.2_0.06_315)] shadow-[2px_2px_0_oklch(0.2_0.06_315)]";
 const boton = "press inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2.5 text-sm font-semibold hover:border-accent/60";
 const accion = "press rounded-full bg-accent px-5 py-2.5 font-semibold text-accent-ink disabled:opacity-50";
 const chip = "press rounded-full border border-line bg-surface-2 px-4 py-2 text-sm font-semibold hover:border-accent/60 disabled:opacity-50";
