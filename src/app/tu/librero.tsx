@@ -199,7 +199,7 @@ export function Librero({
         </div>
       </div>
 
-      <p className="mt-3 text-pretty text-sm text-ink-soft">
+      <p className="suelo mt-3 text-pretty text-sm text-ink-soft">
         Toca un libro para leer lo que escribiste de él, o el libro grande para ver lo que aprendiste. {otro} ve tus «quiero leer» —solo
         los títulos— para regalarte.
       </p>

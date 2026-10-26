@@ -53,7 +53,10 @@ export function Garden({
         </div>
       )}
 
-      <Logros counts={{ vueltas: list.length, misiones, mejorDia }} />
+      {/* under the beach, still on its sand: her stickers */}
+      <div className="suelo">
+        <Logros counts={{ vueltas: list.length, misiones, mejorDia }} />
+      </div>
       <div aria-hidden className="h-16" />
     </div>
   );
