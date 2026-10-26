@@ -38,7 +38,8 @@ const ESTANTES = (() => {
     [6, 108],
     [282, 384],
   ]) {
-    for (let fila = 0; fila < 6; fila++) {
+    // rows above the top are hidden in a card and show when the room fills the screen
+    for (let fila = -5; fila < 6; fila++) {
       const base = 78 + fila * 56;
       let x = x0 + 3;
       while (x < x1 - 8) {
@@ -129,6 +130,7 @@ export function Biblioteca({
   ocultos,
   onLibro,
   onPedestal,
+  cielo = 0,
   className = "",
   children,
 }: {
@@ -138,6 +140,7 @@ export function Biblioteca({
   ocultos?: Set<string>;
   onLibro?: (id: string) => void;
   onPedestal?: () => void;
+  cielo?: number;
   className?: string;
   children?: ReactNode;
 }) {
@@ -145,7 +148,12 @@ export function Biblioteca({
   // back to front: the floor piles last, so they sit in front of the table's legs
   const orden = [...libros].filter((l) => pos.has(l.id) && !ocultos?.has(l.id)).sort((a, b) => pos.get(a.id)!.y - pos.get(b.id)!.y);
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className={className} role="img" aria-label={`tu biblioteca, con ${libros.length} ${libros.length === 1 ? "libro" : "libros"}`}>
+    <svg
+      viewBox={`0 ${-cielo} ${W} ${H + cielo}`}
+      preserveAspectRatio="xMidYMax slice"
+      className={className}
+      role="img"
+      aria-label={`tu biblioteca, con ${libros.length} ${libros.length === 1 ? "libro" : "libros"}`}>
       <defs>
         <pattern id="biblio-trama" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(30)">
           <circle cx="3.5" cy="3.5" r="1.2" fill={INK} opacity={0.3} />
@@ -155,16 +163,16 @@ export function Biblioteca({
           <stop offset="1" stopColor="oklch(0.92 0.13 85)" stopOpacity="0" />
         </radialGradient>
         <clipPath id="biblio-marco">
-          <rect width={W} height={H} rx="22" />
+          <rect y={-cielo} width={W} height={H + cielo} rx={cielo ? 0 : 22} />
         </clipPath>
         <clipPath id="biblio-ventana">
           <path d="M130 250 V 120 Q 130 44 195 36 Q 260 44 260 120 V 250Z" />
         </clipPath>
       </defs>
       <g clipPath="url(#biblio-marco)">
-        {/* the wall */}
-        <rect width={W} height={H} fill="oklch(0.3 0.1 318)" />
-        <rect width={W} height="400" fill="url(#biblio-trama)" opacity={0.6} />
+        {/* the wall — taller when the room fills the screen, and the shelves climb with it */}
+        <rect y={-cielo} width={W} height={H + cielo} fill="oklch(0.3 0.1 318)" />
+        <rect y={-cielo} width={W} height={400 + cielo} fill="url(#biblio-trama)" opacity={0.6} />
         {/* the arched window onto a violet night */}
         <g clipPath="url(#biblio-ventana)">
           <rect x="120" y="30" width="150" height="230" fill="oklch(0.36 0.15 308)" />
@@ -190,12 +198,12 @@ export function Biblioteca({
           [0, 112],
           [278, 112],
         ].map(([x, w]) => (
-          <rect key={x} x={x} y="14" width={w} height="392" fill="oklch(0.42 0.08 40)" stroke={INK} strokeWidth={3} />
+          <rect key={x} x={x} y={cielo ? -cielo - 4 : 14} width={w} height={cielo ? 410 + cielo : 392} fill="oklch(0.42 0.08 40)" stroke={INK} strokeWidth={3} />
         ))}
         {ESTANTES.map((b, i) => (
           <rect key={i} x={b.x} y={b.y} width={b.w} height={b.h} fill={b.c} stroke={INK} strokeWidth={1.1} />
         ))}
-        {Array.from({ length: 6 }, (_, f) => (
+        {Array.from({ length: 11 }, (_, j) => j - 5).map((f) => (
           <g key={f}>
             <rect x="0" y={78 + f * 56} width="112" height="7" fill="oklch(0.5 0.08 45)" stroke={INK} strokeWidth={1.8} />
             <rect x="278" y={78 + f * 56} width="112" height="7" fill="oklch(0.5 0.08 45)" stroke={INK} strokeWidth={1.8} />
@@ -267,7 +275,7 @@ export function Biblioteca({
         })}
         {children}
       </g>
-      <rect x="1.5" y="1.5" width={W - 3} height={H - 3} rx="21" fill="none" stroke={INK} strokeWidth={3} />
+      {!cielo && <rect x="1.5" y="1.5" width={W - 3} height={H - 3} rx="21" fill="none" stroke={INK} strokeWidth={3} />}
     </svg>
   );
 }

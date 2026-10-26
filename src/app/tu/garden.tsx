@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState } from "react";
+import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { floresVistas } from "@/app/actions";
 import { Close, More } from "@/components/icons";
 import { Logros } from "@/components/logros";
 import { Gato } from "@/components/gato";
 import { H_PLAYA, Playa, SLOTS, W_PLAYA } from "@/components/playa";
 import type { Moment } from "@/lib/local";
+import { botonComic, escenario } from "./cabecera";
 import { type Mascota, NOMBRE_INICIAL } from "@/lib/objeto";
 
 const when = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
@@ -24,20 +25,22 @@ export function Garden({
   mejorDia = 0,
   vistas = null,
   gato = { nombre: NOMBRE_INICIAL, puestos: {} },
+  cabecera,
 }: {
   misiones?: number;
   vueltas?: Moment[];
   mejorDia?: number;
   vistas?: number | null;
   gato?: Mascota;
+  cabecera?: ReactNode;
 }) {
   const flores = list.length + misiones;
   return (
-    <div className="mt-6">
+    <div>
       {/* Next keeps this page alive, hidden, after she leaves it: coming back with more flowers must
           start the planting over, not resume the old one (Brian, 2026-10-25: «ver mi jardín» showed
           no cat until a reload). A new count is a new garden. */}
-      <JardinVivo key={`${flores}:${vistas}`} flores={flores} vistas={vistas} gato={gato} />
+      <JardinVivo key={`${flores}:${vistas}`} flores={flores} vistas={vistas} gato={gato} cabecera={cabecera} />
 
       {flores === 0 && (
         <div className="mt-6 space-y-4">
@@ -63,7 +66,10 @@ const INICIO = { x: -40, y: H_PLAYA - 40 };
 // to place, a flower sprouts at each one while the caption counts up, then it sits and leaves.
 // Tapping the cat makes it jump. Once done, the server learns they were seen, so it plays once per
 // flower on any device. Without motion everything is simply there.
-function JardinVivo({ flores, vistas, gato }: { flores: number; vistas: number | null; gato: Mascota }) {
+// The beach fills the whole screen above the doors (Brian, 2026-10-25: «que no tenga que hacer
+// scroll… que entre a otro lugar»): the title and tabs float on its sky, the flowers sit just
+// above the doors.
+function JardinVivo({ flores, vistas, gato, cabecera }: { flores: number; vistas: number | null; gato: Mascota; cabecera?: ReactNode }) {
   const ya = Math.min(vistas ?? flores, flores);
   // the new ones, left to right, so the cat walks across the beach instead of zigzagging
   const [nuevas] = useState(() =>
@@ -134,8 +140,8 @@ function JardinVivo({ flores, vistas, gato }: { flores: number; vistas: number |
   const enEscena = fase === "plantando" || fase === "listo" || fase === "saliendo";
 
   return (
-    <div className="rise relative">
-      <Playa flores={flores} mostrar={mostrar} nuevas={new Set(nuevas)} className="block h-auto w-full">
+    <div data-escena className={`rise ${escenario}`}>
+      <Playa flores={flores} mostrar={mostrar} nuevas={new Set(nuevas)} cielo={320} className="absolute inset-0 block h-full w-full">
         {enEscena && (
           <g
             style={{
@@ -159,7 +165,10 @@ function JardinVivo({ flores, vistas, gato }: { flores: number; vistas: number |
         )}
       </Playa>
 
-      <p className="absolute left-3.5 top-3.5 -rotate-2 border-[3px] border-[oklch(0.2_0.06_315)] bg-[oklch(0.92_0.13_92)] px-3 pb-1.5 pt-1 font-black text-[oklch(0.2_0.06_315)] shadow-[3px_3px_0_oklch(0.2_0.06_315)]">
+      <div className="relative z-10 px-5 pt-[3.75rem] sm:px-8 lg:pt-6">
+        {cabecera}
+      </div>
+      <p className="absolute left-5 top-[12.25rem] z-10 -rotate-2 border-[3px] sm:left-8 lg:top-[9rem] border-[oklch(0.2_0.06_315)] bg-[oklch(0.92_0.13_92)] px-3 pb-1.5 pt-1 font-black text-[oklch(0.2_0.06_315)] shadow-[3px_3px_0_oklch(0.2_0.06_315)]">
         {flores === 0 ? (
           <span className="text-base">tu jardín te espera</span>
         ) : (
@@ -176,7 +185,7 @@ function JardinVivo({ flores, vistas, gato }: { flores: number; vistas: number |
       {nuevas.length > 0 && (fase === "plantando" || fase === "listo") && (
         <p
           role="status"
-          className="rise absolute right-3.5 top-16 max-w-[60%] rounded-2xl border-[3px] border-[oklch(0.2_0.06_315)] bg-[oklch(0.97_0.015_330)] px-3 py-1.5 text-sm font-bold text-[oklch(0.2_0.06_315)]"
+          className="rise absolute right-5 top-[12.5rem] z-10 max-w-[55%] sm:right-8 lg:top-[9.25rem] rounded-2xl border-[3px] border-[oklch(0.2_0.06_315)] bg-[oklch(0.97_0.015_330)] px-3 py-1.5 text-sm font-bold text-[oklch(0.2_0.06_315)]"
         >
           {fase === "listo"
             ? "¡listas! 🌸"
@@ -206,7 +215,7 @@ export function MasDelJardin({ misiones = 0, vueltas: list = [] }: { misiones?: 
         aria-haspopup="dialog"
         aria-label="de dónde salieron tus flores"
         onClick={() => sheet.current?.showModal()}
-        className="press grid size-10 shrink-0 place-items-center rounded-full border border-line bg-surface text-ink-soft hover:text-ink"
+        className={botonComic}
       >
         <More className="size-5" />
       </button>
