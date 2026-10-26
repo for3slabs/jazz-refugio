@@ -8,7 +8,7 @@ import { loadMisiones } from "@/lib/misiones";
 import { loadVueltas } from "@/lib/vueltas";
 import { currentRole } from "@/lib/session";
 import { Deseos } from "./deseos";
-import { Garden } from "./garden";
+import { Garden, MasDelJardin } from "./garden";
 import { Librero } from "./librero";
 import { Viajes } from "./viajes";
 
@@ -54,7 +54,9 @@ async function Content({ searchParams }: { searchParams: Search }) {
     const [m, vueltas] = await Promise.all([loadMisiones().catch(() => null), loadVueltas(role).catch(() => [])]);
     return (
       <>
-        <PageTitle icon={<Star className="size-7" />}>tu jardín</PageTitle>
+        <PageTitle icon={<Star className="size-7" />} aside={<MasDelJardin misiones={m?.total ?? 0} vueltas={vueltas} />}>
+          tu jardín
+        </PageTitle>
         {tabs}
         <Garden misiones={m?.total ?? 0} vueltas={vueltas} mejorDia={m?.mejorDia ?? 0} />
       </>
