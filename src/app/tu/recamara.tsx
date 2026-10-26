@@ -6,27 +6,23 @@ import { Gato } from "@/components/gato";
 import { Close, Plus } from "@/components/icons";
 import { BALCON, Pensamiento, Recamara } from "@/components/recamara";
 import { type Deseo, MAX_DESCRIPCION_DESEO, MAX_DESEO } from "@/lib/deseo";
-import type { Deseos as SusDeseos } from "@/lib/estante";
 import { type Mascota, NOMBRE_INICIAL } from "@/lib/objeto";
 import { escenario } from "./cabecera";
 import { MarcaEscena } from "@/components/marca-escena";
-import { Deseos } from "./deseos";
 
-type Hoja = "libro" | "paloma" | "corcho" | "nuevo" | null;
+type Hoja = "libro" | "paloma" | "nuevo" | null;
 const cuando = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "long", timeZone: "America/Mexico_City" });
 
 // Her wishes, in her bedroom at night (Brian, 2026-10-25): her cat sits out on the balcony thinking;
-// on the desk, under the lamp, the book where she writes what she wishes for; above it, a corkboard
-// with what Brian wishes for (so she can give it to him). When Brian sends her a wish, a dove lands
+// on the desk, under the lamp, the book where she writes what she wishes for — her room holds only
+// her things (Brian, 2026-10-25: «es de ella»). When Brian sends her a wish, a dove lands
 // on the railing with a little alert; she taps it, reads it, and it stays in her book «de Brian».
 export function RecamaraDeseos({
   libro,
-  suyos,
   gato = { nombre: NOMBRE_INICIAL, puestos: {} },
   cabecera,
 }: {
   libro: Deseo[];
-  suyos: SusDeseos | null;
   gato?: Mascota;
   cabecera?: ReactNode;
 }) {
@@ -74,8 +70,6 @@ export function RecamaraDeseos({
     setVuela((v) => v + 1);
   }, [hoja, abierta]);
 
-  const suyosN = suyos ? suyos.libros.length + suyos.viajes.length : 0;
-
   return (
     <div>
       <div data-escena="recamara" className={`rise ${escenario}`}>
@@ -85,7 +79,6 @@ export function RecamaraDeseos({
           paloma={!!carta}
           vuela={vuela}
           onLibro={() => abrir("libro")}
-          onCorcho={() => abrir("corcho")}
           onPaloma={leerPaloma}
           cielo={320}
           className="absolute inset-0 block h-full w-full"
@@ -108,8 +101,7 @@ export function RecamaraDeseos({
       </div>
 
       <p className="suelo mt-3 text-pretty text-sm text-ink-soft">
-        Toca tu libro para ver tus deseos, o el corcho para ver lo que Brian desea. Cuando Brian te mande uno, llega una paloma a tu
-        balcón.
+        Toca tu libro para ver tus deseos. Cuando Brian te mande uno, llega una paloma a tu balcón.
       </p>
       <div aria-hidden className="h-16" />
 
@@ -184,16 +176,6 @@ export function RecamaraDeseos({
               )}
               <p className="mt-5 text-sm text-ink-soft">se queda en tu libro de deseos</p>
             </article>
-          )}
-
-          {hoja === "corcho" && (
-            <section>
-              <h2 id={titulo} className="t-display text-3xl">
-                lo que Brian desea
-              </h2>
-              <p className="mt-1 text-sm text-ink-soft">{suyosN === 1 ? "una cosa" : `${suyosN} cosas`} · por si quieres regalarle</p>
-              {suyos ? <Deseos deseos={suyos} nombre="Brian" /> : <p className="mt-5 text-ink-soft">No pude leerlo. Vuelve a abrir en un momento.</p>}
-            </section>
           )}
 
           {hoja === "nuevo" && <Nuevo titulo={titulo} pending={pending} run={run} cancel={cerrar} />}

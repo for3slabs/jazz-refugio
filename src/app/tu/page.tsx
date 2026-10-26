@@ -79,14 +79,10 @@ async function Content({ searchParams }: { searchParams: Search }) {
   }
 
   if (vista === "deseos") {
-    // hers: her bedroom at night, the book of her wishes, the dove, Brian's corkboard
+    // hers: her bedroom at night, the book of her wishes, the dove
     if (role === "jazz") {
-      const [libro, suyos, gato] = await Promise.all([
-        loadLibroDeseos("jazz").catch(() => []),
-        loadDeseos("brian").catch(() => null),
-        loadMascota().catch(() => undefined),
-      ]);
-      return <RecamaraDeseos libro={libro} suyos={suyos} gato={gato} cabecera={<Cabecera titulo="tus deseos" items={items} current={vista} />} />;
+      const [libro, gato] = await Promise.all([loadLibroDeseos("jazz").catch(() => []), loadMascota().catch(() => undefined)]);
+      return <RecamaraDeseos libro={libro} gato={gato} cabecera={<Cabecera titulo="tus deseos" items={items} current={vista} />} />;
     }
     // his: her book of wishes (to give), the dove he sends, and her books and trips she wants
     const [d, libro] = await Promise.all([loadDeseos(otro).catch(() => null), loadLibroDeseos("brian").catch(() => [])]);
