@@ -4,8 +4,8 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { dejarNota, marcarNotasVistas, type NotaState } from "../actions";
 import { Plus } from "@/components/icons";
 
-// The last row of the conversation, like «＋ nueva meta» in misiones: «＋ escribirle a Brian».
-// A tap opens the box in that same row; leaving the note closes it with its confirmation.
+// Under the «papelitos», a blank one: «＋ escribirle un papelito a Brian». A tap opens the box in
+// its place; leaving the note closes it with its confirmation.
 // `para`: the one the note is for.
 export function Composer({ para = "Jazz" }: { para?: string }) {
   const [state, action, pending] = useActionState<NotaState, FormData>(dejarNota, { ok: false, error: null });
@@ -28,15 +28,15 @@ export function Composer({ para = "Jazz" }: { para?: string }) {
       <button
         type="button"
         onClick={() => setAbierto(true)}
-        className="press flex min-h-14 w-full items-center gap-3 px-4 text-left text-ink-soft hover:bg-surface-2 hover:text-ink"
+        className="press mt-5 flex min-h-14 w-full items-center gap-3 rounded-xl border border-dashed border-line px-4 text-left text-ink-soft hover:border-accent/60 hover:text-ink"
       >
         <Plus className="size-5 shrink-0 text-accent" />
-        {aviso ? <span className="rise">guardada. ya la puede ver.</span> : `escribirle a ${para}`}
+        {aviso ? <span className="rise">guardada. ya la puede ver.</span> : `escribirle un papelito a ${para}`}
       </button>
     );
 
   return (
-    <form ref={form} action={action} className="rise space-y-3 bg-surface-2/60 p-4">
+    <form ref={form} action={action} className="rise mt-5 space-y-3 rounded-xl border border-line bg-surface p-4">
       <label htmlFor="texto" className="sr-only">
         una nota para {para}
       </label>

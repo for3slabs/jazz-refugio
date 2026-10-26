@@ -11,7 +11,7 @@ import type { Role } from "@/lib/token";
 import { loadRegalados } from "@/lib/mascota";
 import { borrarNota } from "../actions";
 import { Composer, MarkSeen } from "./composer";
-import { Apartados, caja } from "./plegado";
+import { Apartados } from "./plegado";
 import { EntreLosDos } from "./presente";
 import { Regalos } from "./regalos";
 
@@ -29,8 +29,8 @@ export default function DeBrian({ searchParams }: { searchParams: Search }) {
 }
 
 // Three parts, each in the shape of what it does (Brian, 2026-10-25: «no se notan los apartados»):
-// «notas» a conversation in one box, «regalos» cards like inspiración's boards, «la pregunta» one
-// big card. A dot on «regalos» when one is ready for whoever is looking.
+// «notas» paper notes, «regalos» wrapped boxes, «entre los dos» the question with both halves
+// facing each other. A dot on «regalos» when one is ready for whoever is looking.
 async function Content({ searchParams }: { searchParams: Search }) {
   const role = await currentRole();
   if (!role) redirect("/entrar");
@@ -41,9 +41,9 @@ async function Content({ searchParams }: { searchParams: Search }) {
   const total = role === "jazz" ? (m?.total ?? 0) : 0;
   const current = v === "regalos" || v === "presente" ? v : "notas";
   const subs = {
-    notas: `notas cortas entre ${otro} y tú · se quedan aquí`,
-    regalos: role === "jazz" ? "cupones y cartas que se abren con tus misiones" : "cupones y cartas entre Jazz y tú",
-    presente: `una al día · la de ${otro} se abre cuando contestes`,
+    notas: `déjale un papelito a ${otro} · lo encuentra al entrar`,
+    regalos: role === "jazz" ? "cupones y cartas · algunos esperan tus misiones" : "cupones y cartas · los tuyos esperan sus misiones",
+    presente: "una pregunta al día · los dos contestan lo mismo",
   };
   const tabs = (
     <Apartados
@@ -52,7 +52,7 @@ async function Content({ searchParams }: { searchParams: Search }) {
       items={[
         { key: "notas", href: "/brian", label: "notas" },
         { key: "regalos", href: "/brian?v=regalos", label: "regalos", dot: !!regalos && hayParaAbrir(regalos, total) },
-        { key: "presente", href: "/brian?v=presente", label: "la pregunta" },
+        { key: "presente", href: "/brian?v=presente", label: "entre los dos" },
       ]}
     />
   );
@@ -110,50 +110,53 @@ async function Content({ searchParams }: { searchParams: Search }) {
   );
 }
 
-// Notes both ways in ONE conversation, newest first: the other one's on the left, yours on the
-// right with whether they were seen — and «＋ escribirle» as the last row, like «＋ nueva meta».
+// Notes both ways as «papelitos», newest first (Brian, 2026-10-25: «la estructura se siente
+// rara»): paper with a folded corner, the other one's on the left on tinted paper, yours on the
+// right with «✓ la vio» and the trash — and «＋ escribirle un papelito» under them. Nothing here
+// looks like «entre los dos», where both answer the same question.
 async function Notes({ role }: { role: Role }) {
   const otro = role === "jazz" ? "Brian" : "Jazz";
   const [notes, dejadas] = await Promise.all([loadNotes(role), loadDejadas(role)]);
-  const conversacion = [
+  const papelitos = [
     ...notes.map((n) => ({ ...n, mia: false, visto: false })),
     ...dejadas.map((n) => ({ ...n, mia: true, visto: !!n.visto })),
   ].sort((a, b) => b.at - a.at);
   return (
     <>
       <MarkSeen />
-      <ol className={`mt-3 ${caja}`}>
-        {conversacion.map((n, i) => (
-          <li
-            key={n.id}
-            className={`rise flex flex-col py-3.5 ${n.mia ? "items-end pl-1 pr-4 text-right" : "items-start pl-4 pr-10"}`}
-            style={{ animationDelay: `${Math.min(i, 6) * 40}ms` }}
-          >
-            {/* one line that reads left to right on both sides: who · when · seen — and yours can go */}
-            <div className={`flex items-center gap-2 text-sm ${n.mia ? "w-full justify-end" : ""}`}>
+      {papelitos.length > 0 && (
+        <ol className="mt-5 space-y-4">
+          {papelitos.map((n, i) => (
+            <li
+              key={n.id}
+              className={`rise papel relative w-fit min-w-[55%] max-w-[85%] rounded-b-xl rounded-tl-xl p-4 pr-7 ${
+                n.mia ? "ml-auto rotate-[0.6deg] bg-surface-2" : "-rotate-[0.6deg] bg-accent-soft"
+              }`}
+              style={{ animationDelay: `${Math.min(i, 6) * 40}ms` }}
+            >
+              <p className="text-sm">
+                <span className={`font-semibold ${n.mia ? "text-ink-soft" : "text-accent"}`}>{n.mia ? "tú" : otro}</span>
+                <span className="text-ink-soft"> · {formatDate(n.at)}</span>
+                {n.mia && n.visto && <span className="font-semibold text-accent"> · ✓ la vio</span>}
+              </p>
+              <p className="mt-1.5 whitespace-pre-line text-pretty text-lg leading-relaxed">{n.texto}</p>
               {n.mia && (
-                <form action={borrarNota} className="-my-2 mr-auto">
+                <form action={borrarNota} className="-mb-2 -mr-5 mt-1 flex justify-end">
                   <input type="hidden" name="id" value={n.id} />
                   <button
                     type="submit"
                     aria-label="borrar esta nota"
-                    className="press grid size-10 place-items-center rounded-full text-ink-soft hover:bg-surface-2 hover:text-ink"
+                    className="press grid size-9 place-items-center rounded-full text-ink-soft hover:bg-surface hover:text-ink"
                   >
                     <Trash className="size-4" />
                   </button>
                 </form>
               )}
-              <span className={`font-semibold ${n.mia ? "text-ink-soft" : "text-accent"}`}>{n.mia ? "tú" : otro}</span>
-              <span className="text-ink-soft">· {formatDate(n.at)}</span>
-              {n.mia && n.visto && <span className="font-semibold text-accent">· ✓ la vio</span>}
-            </div>
-            <p className={`mt-1 whitespace-pre-line text-pretty text-lg leading-relaxed ${n.mia ? "text-ink-soft" : ""}`}>{n.texto}</p>
-          </li>
-        ))}
-        <li>
-          <Composer para={otro} />
-        </li>
-      </ol>
+            </li>
+          ))}
+        </ol>
+      )}
+      <Composer para={otro} />
     </>
   );
 }

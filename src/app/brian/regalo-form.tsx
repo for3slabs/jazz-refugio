@@ -1,20 +1,9 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
-import { type RegaloState, borrarRegalo, dejarRegalo, regalarObjeto } from "../actions";
-import { Trash } from "@/components/icons";
+import { type RegaloState, dejarRegalo, regalarObjeto } from "../actions";
 import { objetos, type Regalado } from "@/lib/objeto";
-import { MAX_REGALO, MAX_TITULO, MAX_TRAS, type Regalo, misionesWord } from "@/lib/regalo";
-import { Plegado, caja } from "./plegado";
-
-const when = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "long", timeZone: "America/Mexico_City" });
-
-function estado(r: Regalo, total: number) {
-  if (r.usado) return `cupón usado el ${when.format(r.usado)}`;
-  if (r.abierto) return `abierto el ${when.format(r.abierto)}`;
-  if (total >= r.desde) return "listo para abrir";
-  return `envuelto · faltan ${misionesWord(r.desde - total)}`;
-}
+import { MAX_REGALO, MAX_TITULO, MAX_TRAS } from "@/lib/regalo";
 
 type Tipo = "cupon" | "carta" | "mascota";
 const nombres: Record<Tipo, string> = { cupon: "cupón", carta: "carta", mascota: "para su mascota" };
@@ -125,38 +114,6 @@ export function RegaloNuevo({
         </form>
       )}
     </div>
-  );
-}
-
-// What you gave and what became of each — folded under one line, like «historial» in misiones.
-export function LosQueDiste({ regalos, total }: { regalos: Regalo[]; total: number }) {
-  if (regalos.length === 0) return null;
-  return (
-    <Plegado titulo="los que diste" n={regalos.length}>
-      <ul className={caja}>
-        {regalos.map((r) => (
-          <li key={r.id} className="flex items-center justify-between gap-3 py-2.5 pl-4 pr-1">
-            <div className="min-w-0">
-              <p className="truncate">
-                <span className="mr-2 text-sm font-semibold text-accent">{r.tipo === "cupon" ? "cupón" : "carta"}</span>
-                {r.titulo}
-              </p>
-              <p className="mt-0.5 text-sm text-ink-soft">{estado(r, total)}</p>
-            </div>
-            <form action={borrarRegalo}>
-              <input type="hidden" name="id" value={r.id} />
-              <button
-                type="submit"
-                aria-label={`borrar «${r.titulo}»`}
-                className="press grid size-10 shrink-0 place-items-center rounded-full text-ink-soft hover:bg-surface-2 hover:text-ink"
-              >
-                <Trash className="size-4" />
-              </button>
-            </form>
-          </li>
-        ))}
-      </ul>
-    </Plegado>
   );
 }
 
