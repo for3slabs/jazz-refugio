@@ -9,7 +9,7 @@ import { type Viaje, MAX_NOTA, MAX_TITULO } from "@/lib/estante";
 import { type Mascota, NOMBRE_INICIAL } from "@/lib/objeto";
 import { escenario } from "./cabecera";
 
-type Hoja = { tipo: "pasaporte" } | { tipo: "tablero" } | { tipo: "viaje"; id: string } | { tipo: "nuevo"; estado: "fui" | "quiero" } | null;
+type Hoja = { tipo: "pasaporte" } | { tipo: "tablero" } | { tipo: "nuevo"; estado: "fui" | "quiero" } | null;
 
 const dia = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 const diaCorto = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", year: "2-digit", timeZone: "UTC" });
@@ -65,6 +65,7 @@ export function Viajes({
 
   function abrir(h: Hoja) {
     setMsg(null);
+    setElegido(null);
     setHoja(h);
     if (!sheet.current?.open) sheet.current?.showModal();
   }
@@ -76,7 +77,18 @@ export function Viajes({
       else setMsg(r.error);
     });
 
-  const viaje = hoja?.tipo === "viaje" ? viajes.find((v) => v.id === hoja.id) : undefined;
+  // the stamp or flight she tapped, shown inside the passport or the board
+  const [elegido, setElegido] = useState<string | null>(null);
+  const viaje = viajes.find((v) => v.id === elegido);
+  const detalle = viaje && (
+    <Detalle
+      v={viaje}
+      pending={pending}
+      onFui={() => run(() => cambiarViaje(viaje.id, "fui"))}
+      onSoltar={() => run(() => soltarDelEstante("viajes", viaje.id))}
+      onCerrar={() => setElegido(null)}
+    />
+  );
 
   return (
     <div>
@@ -137,13 +149,20 @@ export function Viajes({
                 tu pasaporte
               </h2>
               <p className="mt-1 text-sm text-ink-soft">{fui.length === 1 ? "un sello" : `${fui.length} sellos`} · toca uno para recordarlo</p>
+              {viaje?.estado === "fui" && detalle}
               {fui.length === 0 ? (
                 <p className="mt-5 text-pretty text-ink-soft">Todavía sin sellos. El primer lugar al que fuiste va aquí.</p>
               ) : (
                 <ul className="mt-5 grid grid-cols-2 gap-3">
                   {fui.map((v, i) => (
                     <li key={v.id}>
-                      <button type="button" onClick={() => abrir({ tipo: "viaje", id: v.id })} className="press block w-full" aria-label={v.lugar}>
+                      <button
+                        type="button"
+                        onClick={() => setElegido(elegido === v.id ? null : v.id)}
+                        aria-pressed={elegido === v.id}
+                        className={`press block w-full rounded-2xl ${elegido === v.id ? "bg-[oklch(0.92_0.13_92/0.35)]" : ""}`}
+                        aria-label={v.lugar}
+                      >
                         <Sello v={v} i={i} />
                       </button>
                     </li>
@@ -163,13 +182,19 @@ export function Viajes({
                 salidas
               </h2>
               <p className="mt-1 text-sm text-ink-soft">{quiero.length === 1 ? "un vuelo" : `${quiero.length} vuelos`} que quieres tomar</p>
+              {viaje?.estado === "quiero" && detalle}
               {quiero.length === 0 ? (
                 <p className="mt-5 text-pretty text-ink-soft">La pantalla está vacía. Agrega el primer lugar al que quieres ir y despega.</p>
               ) : (
                 <ul className="mt-5 overflow-hidden rounded-xl border-[3px] border-[oklch(0.2_0.06_315)] bg-[oklch(0.22_0.05_315)] font-mono">
                   {quiero.map((v, i) => (
                     <li key={v.id} className="border-b border-[oklch(0.35_0.05_315)] last:border-0">
-                      <button type="button" onClick={() => abrir({ tipo: "viaje", id: v.id })} className="press flex w-full items-center gap-3 px-3 py-3 text-left">
+                      <button
+                        type="button"
+                        onClick={() => setElegido(elegido === v.id ? null : v.id)}
+                        aria-pressed={elegido === v.id}
+                        className={`press flex w-full items-center gap-3 px-3 py-3 text-left ${elegido === v.id ? "bg-[oklch(0.32_0.06_315)]" : ""}`}
+                      >
                         <span className="shrink-0 text-xs font-bold text-[oklch(0.92_0.13_92)]">JZ {101 + i}</span>
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-bold uppercase text-[oklch(0.97_0.02_330)]">{v.lugar}</span>
@@ -191,42 +216,6 @@ export function Viajes({
             </section>
           )}
 
-          {viaje && (
-            // one trip, as she wrote it
-            <article>
-              <p className="text-sm font-semibold text-accent">{viaje.estado === "fui" ? "fuiste" : "quieres ir"}</p>
-              <h2 id={titulo} className="t-display mt-1 text-pretty text-3xl leading-tight">
-                {viaje.lugar}
-              </h2>
-              {fechas(viaje) && <p className="mt-1 text-ink-soft">{fechas(viaje)}</p>}
-              {viaje.nota ? (
-                <p className="mt-5 whitespace-pre-line text-pretty text-lg leading-relaxed">«{viaje.nota}»</p>
-              ) : (
-                <p className="mt-5 text-pretty text-ink-soft">No le escribiste nada todavía.</p>
-              )}
-              {viaje.enlace && (
-                <a href={viaje.enlace} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block break-all text-sm font-semibold text-accent underline underline-offset-4">
-                  {new URL(viaje.enlace).hostname.replace(/^www\./, "")}
-                </a>
-              )}
-              <div className="mt-6 flex flex-wrap items-center gap-2">
-                {viaje.estado === "quiero" && (
-                  <button type="button" disabled={pending} onClick={() => run(() => cambiarViaje(viaje.id, "fui"))} className={accion}>
-                    ¡ya fui!
-                  </button>
-                )}
-                <button
-                  type="button"
-                  disabled={pending}
-                  onClick={() => run(() => soltarDelEstante("viajes", viaje.id))}
-                  className="press ml-auto rounded-full px-3 py-2 text-sm font-medium text-ink-soft hover:text-ink"
-                >
-                  soltar
-                </button>
-              </div>
-            </article>
-          )}
-
           {hoja?.tipo === "nuevo" && <Nuevo key={hoja.estado} estado={hoja.estado} titulo={titulo} pending={pending} run={run} cancel={cerrar} gato={gato.nombre} />}
 
           {msg && (
@@ -237,6 +226,46 @@ export function Viajes({
         </div>
       </dialog>
     </div>
+  );
+}
+
+// One trip as she wrote it — shown inside the passport or the board, under the title, so tapping a
+// stamp or a flight never takes the passport away (Brian, 2026-10-25: «le picas al sello y
+// desaparece, eso no queremos»).
+function Detalle({ v, pending, onFui, onSoltar, onCerrar }: { v: Viaje; pending: boolean; onFui: () => void; onSoltar: () => void; onCerrar: () => void }) {
+  return (
+    <article className="rise mt-4 rounded-2xl border-[2.5px] border-[oklch(0.2_0.06_315)] bg-[oklch(0.995_0.005_330)] p-4 shadow-[3px_3px_0_oklch(0.2_0.06_315)]">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-accent">{v.estado === "fui" ? "fuiste" : "quieres ir"}</p>
+          <h3 className="t-display mt-0.5 text-pretty text-2xl leading-tight">{v.lugar}</h3>
+          {fechas(v) && <p className="mt-0.5 text-sm text-ink-soft">{fechas(v)}</p>}
+        </div>
+        <button type="button" aria-label="cerrar este viaje" onClick={onCerrar} className="press -mr-1 -mt-1 grid size-9 shrink-0 place-items-center rounded-full text-ink-soft hover:text-ink">
+          <Close className="size-4" />
+        </button>
+      </div>
+      {v.nota ? (
+        <p className="mt-3 whitespace-pre-line text-pretty leading-relaxed">«{v.nota}»</p>
+      ) : (
+        <p className="mt-3 text-pretty text-sm text-ink-soft">No le escribiste nada todavía.</p>
+      )}
+      {v.enlace && (
+        <a href={v.enlace} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block break-all text-sm font-semibold text-accent underline underline-offset-4">
+          {new URL(v.enlace).hostname.replace(/^www\./, "")}
+        </a>
+      )}
+      <div className="mt-4 flex flex-wrap items-center gap-2">
+        {v.estado === "quiero" && (
+          <button type="button" disabled={pending} onClick={onFui} className={accion}>
+            ¡ya fui!
+          </button>
+        )}
+        <button type="button" disabled={pending} onClick={onSoltar} className="press ml-auto rounded-full px-3 py-2 text-sm font-medium text-ink-soft hover:text-ink">
+          soltar
+        </button>
+      </div>
+    </article>
   );
 }
 
