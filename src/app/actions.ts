@@ -139,7 +139,10 @@ export async function volviste(paso: string): Promise<number | null> {
   const role = await currentRole();
   if (!role) return null;
   try {
-    return await anotarVuelta(role, paso.trim());
+    const n = await anotarVuelta(role, paso.trim());
+    // her garden has one more flower: «ver mi jardín» must load it fresh, so her cat plants it
+    revalidatePath("/tu");
+    return n;
   } catch {
     return null;
   }
@@ -172,6 +175,8 @@ async function deJazz(op: () => Promise<string | void>): Promise<EstadoResult> {
     return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
   }
   refresh();
+  // a mission or a step done may be a new flower: her garden loads fresh next time, cat included
+  revalidatePath("/tu");
   return { ok: true, error: null };
 }
 

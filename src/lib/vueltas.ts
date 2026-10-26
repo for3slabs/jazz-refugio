@@ -1,4 +1,5 @@
 import { hayBase, ms, sql } from "./db";
+import { contarFlores } from "./jardin";
 import type { Moment } from "./local";
 import type { Role } from "./token";
 
@@ -16,10 +17,12 @@ export async function loadVueltas(role: Role): Promise<Moment[]> {
   return rows.map((r) => ({ at: ms(r.en)!, step: r.paso }));
 }
 
-// Returns how many she has now.
+// Returns how many flowers she has now — for Jazz, her whole garden.
 export async function anotarVuelta(role: Role, paso: string): Promise<number> {
   const db = sql();
   await db`insert into momento (persona, paso) values (${role}, ${paso.slice(0, MAX_PASO) || "volver"})`;
+  // hers is the whole garden — returns AND missions — the same number «tu jardín» shows
+  if (role === "jazz") return contarFlores();
   const [c] = await db<{ n: number }[]>`select count(*)::int as n from momento where persona = ${role}`;
   return c.n;
 }
