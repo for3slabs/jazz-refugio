@@ -163,7 +163,7 @@ export function Librero({
   return (
     <div>
       {/* the room fills the screen above the doors; title, tabs and the two «＋» float on its wall */}
-      <div data-escena className={`rise ${escenario}`}>
+      <div data-escena="biblioteca" className={`rise ${escenario}`}>
         <Biblioteca
           libros={libros}
           aprendidos={vistos}

@@ -140,7 +140,7 @@ function JardinVivo({ flores, vistas, gato, cabecera }: { flores: number; vistas
   const enEscena = fase === "plantando" || fase === "listo" || fase === "saliendo";
 
   return (
-    <div data-escena className={`rise ${escenario}`}>
+    <div data-escena="playa" className={`rise ${escenario}`}>
       <Playa flores={flores} mostrar={mostrar} nuevas={new Set(nuevas)} cielo={320} className="absolute inset-0 block h-full w-full">
         {enEscena && (
           <g
