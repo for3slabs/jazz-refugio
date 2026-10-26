@@ -74,7 +74,7 @@ export function EstadoOrb({
     start(async () => {
       setOptimistic(modo ? { modo, at: Date.now() } : null);
       const r = await marcarEstado(modo);
-      setMsg(r.ok ? { text: modo ? "listo, Brian lo sabrá" : "listo, lo quité", ok: true } : { text: r.error ?? "", ok: false });
+      setMsg(r.ok ? { text: modo ? "listo" : "listo, lo quité", ok: true } : { text: r.error ?? "", ok: false });
     });
   }
 
@@ -116,7 +116,7 @@ export function EstadoOrb({
               <h2 id="estado-titulo" className="t-label text-ink-soft">
                 ¿cómo está tu mente?
               </h2>
-              <p className="mt-2 text-pretty text-ink-soft">Brian lo verá. Se borra solo en 12 h.</p>
+              <p className="mt-2 text-pretty text-ink-soft">Se borra solo en 12 h.</p>
             </div>
             <button
               type="button"
@@ -166,10 +166,4 @@ export function EstadoOrb({
       </dialog>
     </Orb>
   );
-}
-
-// Brian's screen: no chip, but the same memory, so his home is born in her colour too.
-export function ModoSync({ estado }: { estado: Estado | null }) {
-  useEffect(() => ultimoModo.set(estado), [estado]);
-  return null;
 }

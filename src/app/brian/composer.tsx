@@ -31,7 +31,7 @@ export function Composer({ para = "Jazz" }: { para?: string }) {
         className="press mt-5 flex min-h-14 w-full items-center gap-3 rounded-xl border border-dashed border-line px-4 text-left text-ink-soft hover:border-accent/60 hover:text-ink"
       >
         <Plus className="size-5 shrink-0 text-accent" />
-        {aviso ? <span className="rise">guardada. ya la puede ver.</span> : `escribirle un papelito a ${para}`}
+        {aviso ? <span className="rise">guardada.</span> : `escribirle un papelito a ${para}`}
       </button>
     );
 

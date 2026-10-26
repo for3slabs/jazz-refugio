@@ -240,17 +240,17 @@ export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tabler
                 >
                   <Pencil className="size-4" />
                 </button>
-                {/* sharing is an icon in the same row (Brian, 2026-10-25): lit when Brian can see it */}
+                {/* sharing is an icon in the same row (Brian, 2026-10-25): lit while it is shared */}
                 <button
                   type="button"
                   aria-pressed={compartido}
-                  aria-label={compartido ? "dejar de compartir con Brian" : "compartir con Brian (solo verlo)"}
+                  aria-label={compartido ? "dejar de compartir con Brian" : "compartir con Brian"}
                   onClick={() => {
                     const si = !compartido;
                     start(async () => {
                       setCompartido(si);
                       const r = await compartirTablero(tablero.id, si);
-                      setMsg(r.ok ? (si ? "listo, Brian puede verlo" : "listo, ya es solo tuyo") : r.error);
+                      setMsg(r.ok ? (si ? "listo, compartido" : "listo, ya es solo tuyo") : r.error);
                     });
                   }}
                   className={`press grid size-10 shrink-0 place-items-center rounded-full hover:bg-surface-2 ${compartido ? "text-accent" : "text-ink-soft hover:text-ink"}`}
@@ -288,7 +288,7 @@ export function Board({ tablero, isBrian, docs: carpetaDocs }: { tablero: Tabler
           {!isBrian && compartido && (
             <p className="mt-1 flex items-center gap-1.5 text-xs text-accent">
               <Share className="size-3" />
-              compartido con Brian · solo puede verlo
+              compartido
             </p>
           )}
         </>

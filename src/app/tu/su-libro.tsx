@@ -5,10 +5,8 @@ import { deseoRegalado } from "@/app/actions";
 import type { Deseo } from "@/lib/deseo";
 import { Nuevo } from "./recamara";
 
-const cuando = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "long", timeZone: "America/Mexico_City" });
-
 // Brian's side of her book of wishes: hers, with «ya se lo regalé» (a mark only he sees), and the
-// ones he sent her — whether the dove was opened yet — and the form that sends the next dove.
+// ones he sent her, and the form that sends the next dove.
 export function SuLibro({ libro }: { libro: Deseo[] }) {
   const titulo = useId();
   const [, start] = useTransition();
@@ -79,9 +77,8 @@ export function SuLibro({ libro }: { libro: Deseo[] }) {
         {mios.length > 0 && (
           <ul className="mt-5 space-y-1 border-t border-line pt-4 text-sm">
             {mios.map((d) => (
-              <li key={d.id} className="flex items-baseline justify-between gap-3">
-                <span className="min-w-0 truncate">{d.titulo}</span>
-                <span className="shrink-0 text-ink-soft">{d.visto ? `lo leyó el ${cuando.format(d.visto)}` : "la paloma espera en su balcón"}</span>
+              <li key={d.id} className="truncate">
+                {d.titulo}
               </li>
             ))}
           </ul>

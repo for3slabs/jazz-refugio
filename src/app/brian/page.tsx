@@ -92,7 +92,7 @@ async function Content({ searchParams }: { searchParams: Search }) {
         <Regalos
           {...vistaDeJazz(regalos, total)}
           de={otro}
-          dados={dados}
+          dados={dados.map((r) => ({ ...r, abierto: null }))}
           total={role === "brian" ? (m?.total ?? 0) : 0}
           regalados={regalados}
         />
@@ -112,14 +112,14 @@ async function Content({ searchParams }: { searchParams: Search }) {
 
 // Notes both ways as «papelitos», newest first (Brian, 2026-10-25: «la estructura se siente
 // rara»): paper with a folded corner, the other one's on the left on tinted paper, yours on the
-// right with «✓ la vio» and the trash — and «＋ escribirle un papelito» under them. Nothing here
+// right with the trash — and «＋ escribirle un papelito» under them. Nothing here
 // looks like «entre los dos», where both answer the same question.
 async function Notes({ role }: { role: Role }) {
   const otro = role === "jazz" ? "Brian" : "Jazz";
   const [notes, dejadas] = await Promise.all([loadNotes(role), loadDejadas(role)]);
   const papelitos = [
-    ...notes.map((n) => ({ ...n, mia: false, visto: false })),
-    ...dejadas.map((n) => ({ ...n, mia: true, visto: !!n.visto })),
+    ...notes.map((n) => ({ ...n, mia: false })),
+    ...dejadas.map((n) => ({ ...n, mia: true })),
   ].sort((a, b) => b.at - a.at);
   return (
     <>
@@ -137,7 +137,6 @@ async function Notes({ role }: { role: Role }) {
               <p className="text-sm">
                 <span className={`font-semibold ${n.mia ? "text-ink-soft" : "text-accent"}`}>{n.mia ? "tú" : otro}</span>
                 <span className="text-ink-soft"> · {formatDate(n.at)}</span>
-                {n.mia && n.visto && <span className="font-semibold text-accent"> · ✓ la vio</span>}
               </p>
               <p className="mt-1.5 whitespace-pre-line text-pretty text-lg leading-relaxed">{n.texto}</p>
               {n.mia && (

@@ -90,7 +90,7 @@ async function Content({ searchParams }: { searchParams: Search }) {
       <>
         <PageTitle icon={<Star className="size-7" />}>sus deseos</PageTitle>
         {tabs}
-        <SuLibro libro={libro} />
+        <SuLibro libro={libro.map((d) => ({ ...d, visto: null }))} />
         {d ? <Deseos deseos={d} nombre={nombreOtro} /> : <p className="mt-8 text-ink-soft">No pude leerlos. Vuelve a abrir en un momento.</p>}
       </>
     );

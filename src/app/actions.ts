@@ -25,7 +25,7 @@ import {
 import { MAX_DESCRIPCION, MAX_DOC, MAX_NOMBRE, MAX_NOTA, isHex } from "@/lib/tablero";
 import { head } from "@vercel/blob";
 import { MAX_RESPUESTA } from "@/lib/entre";
-import { contestar, marcarPresente } from "@/lib/presente";
+import { contestar } from "@/lib/presente";
 import { type Abierto, MAX_REGALO, MAX_TITULO, MAX_TRAS } from "@/lib/regalo";
 import { abrir, borrar, crear, usar } from "@/lib/regalos";
 import { type ObjetoId, isObjeto, limpiarPuestos } from "@/lib/objeto";
@@ -422,16 +422,6 @@ export async function contestarPregunta(t: string): Promise<EstadoResult> {
   return { ok: true, error: null };
 }
 
-export async function aquiEstoy(horas: number): Promise<EstadoResult> {
-  if ((await currentRole()) !== "brian") return { ok: false, error: "Solo Brian marca «aquí estoy»." };
-  try {
-    await marcarPresente([0, 1, 2, 4].includes(horas) ? horas : 0);
-  } catch {
-    return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
-  }
-  refresh();
-  return { ok: true, error: null };
-}
 
 // Her boards: only she changes them (images and drawings arrive through /api/lienzo/subir).
 // The new board's id comes back: the list opens it at once, so naming it is the only step

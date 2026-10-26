@@ -1,18 +1,17 @@
 "use client";
 
 import { useEffect, useOptimistic, useState, useTransition } from "react";
-import { aquiEstoy, contestarPregunta } from "../actions";
+import { contestarPregunta } from "../actions";
 import { Lock } from "@/components/icons";
 import { MAX_RESPUESTA, type Vista } from "@/lib/entre";
 
 const day = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "long", timeZone: "UTC" });
-const hour = new Intl.DateTimeFormat("es-MX", { hour: "numeric", minute: "2-digit", timeZone: "America/Mexico_City" });
 
 // «entre los dos»: the question of the day, then two halves facing each other — yours to write,
 // theirs sealed with a lock until you answer (Brian, 2026-10-25: it felt like «notas»; here both
-// answer the SAME thing) — and, for Brian, the «aquí estoy» switch. The days both answered are dots.
+// answer the SAME thing). The days both answered are dots.
 export function EntreLosDos({ vista, isBrian }: { vista: Vista; isBrian: boolean }) {
-  const { hoy, album, hasta } = vista;
+  const { hoy, album } = vista;
   const [mia, setMia] = useOptimistic(hoy.mia);
   const [, start] = useTransition();
   const [texto, setTexto] = useState("");
@@ -37,12 +36,6 @@ export function EntreLosDos({ vista, isBrian }: { vista: Vista; isBrian: boolean
     });
   }
 
-  function presente(h: number) {
-    start(async () => {
-      const r = await aquiEstoy(h);
-      setMsg(r.ok ? (h ? `listo, Jazz ve que estás presente` : "listo, ya no apareces presente") : r.error);
-    });
-  }
 
   return (
     <div className="mt-6">
@@ -109,33 +102,6 @@ export function EntreLosDos({ vista, isBrian }: { vista: Vista; isBrian: boolean
         </section>
       </div>
 
-      {isBrian && (
-        <section className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-3 rounded-2xl border border-line bg-surface px-4 py-3">
-          <div className="min-w-0 flex-1">
-            <p className="font-semibold">aquí estoy</p>
-            <p className="text-pretty text-sm text-ink-soft">
-              {hasta ? `Jazz ve que estás presente hasta las ${hour.format(hasta)}` : "que Jazz sepa que puede escribirte ahora"}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {[1, 2, 4].map((h) => (
-              <button
-                key={h}
-                type="button"
-                onClick={() => presente(h)}
-                className="press rounded-full border border-line bg-surface-2 px-3.5 py-1.5 text-sm font-semibold hover:border-accent/60"
-              >
-                {h} h
-              </button>
-            ))}
-            {hasta && (
-              <button type="button" onClick={() => presente(0)} className="press rounded-full px-3 py-1.5 text-sm text-ink-soft hover:text-ink">
-                ya no
-              </button>
-            )}
-          </div>
-        </section>
-      )}
 
       {album.length > 0 && <Dias album={album} />}
     </div>

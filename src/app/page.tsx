@@ -5,9 +5,8 @@ import { Shell } from "@/components/shell";
 import { Doors } from "@/components/doors";
 import { DailyLine, RunningTimer } from "@/components/home-live";
 import { AvisoSlot } from "@/components/aviso-slot";
-import { PresenteSlot } from "@/components/presente-slot";
-import { EstadoSlot, WideTile } from "@/components/estado-slot";
-import { BrianTile, GardenTile, TileSkeleton } from "@/components/tiles";
+import { EstadoSlot } from "@/components/estado-slot";
+import { BrianTile, GardenTile, PowerTile, TileSkeleton } from "@/components/tiles";
 import { Sparkle } from "@/components/icons";
 
 // Phone: one column, the way Brian liked it. Wide screen: the same pieces as a bento —
@@ -27,9 +26,6 @@ export default function Home() {
       <div className="flex min-h-0 flex-1 flex-col gap-4 py-[clamp(0.25rem,2dvh,1.5rem)] lg:grid lg:grid-cols-[1.4fr_1fr_0.85fr] lg:grid-rows-[1fr_auto] lg:py-[clamp(1rem,3dvh,2rem)]">
         <section className="lg:mat flex min-h-0 flex-1 flex-col items-center justify-center-safe py-[clamp(0.25rem,2dvh,1.5rem)] lg:gap-[clamp(1rem,3dvh,1.75rem)] lg:row-span-2 lg:rounded-[1.75rem] lg:border lg:border-line lg:bg-surface lg:px-10 lg:py-[clamp(1.5rem,5dvh,3.5rem)]">
           <div className="flex flex-col items-center gap-3 empty:hidden max-lg:mb-3">
-            <Suspense>
-              <PresenteSlot />
-            </Suspense>
             <Suspense>
               <AvisoSlot />
             </Suspense>
@@ -57,7 +53,7 @@ export default function Home() {
           <GardenTile className="hidden lg:flex" />
         </Suspense>
         <Suspense fallback={<TileSkeleton className="hidden lg:col-span-2 lg:block" />}>
-          <WideTile className="hidden lg:col-span-2 lg:flex" />
+          <PowerTile className="hidden lg:col-span-2 lg:flex" />
         </Suspense>
       </div>
       {/* The same five doors on every screen — on a wide one, a row under the bento. */}

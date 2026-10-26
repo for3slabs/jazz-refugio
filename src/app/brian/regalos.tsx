@@ -11,11 +11,11 @@ import { RegaloNuevo } from "./regalo-form";
 
 const when = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "long", timeZone: "America/Mexico_City" });
 
-// What became of a gift you gave, in words — on its box's tag.
+// What became of a gift you gave, in words — on its box's tag. Never whether it was opened: what
+// she does in her refuge is hers (Brian, 2026-10-25); a coupon used is one she asked for.
 function etiqueta(r: Regalo, total: number) {
   if (r.usado) return `usó tu cupón el ${when.format(r.usado)}`;
-  if (r.abierto) return `lo abrió el ${when.format(r.abierto)}`;
-  if (total >= r.desde) return "envuelto · ya lo puede abrir";
+  if (total >= r.desde) return "ya lo puede abrir";
   return `envuelto · en ${misionesWord(r.desde - total)}`;
 }
 
@@ -79,7 +79,7 @@ export function Regalos({
     start(async () => {
       markUsed(id);
       const r = await usarCupon(id);
-      setMsg(r.ok ? `listo, ${de} lo sabrá` : r.error);
+      setMsg(r.ok ? "listo, que lo disfrutes" : r.error);
     });
   }
 
@@ -210,7 +210,7 @@ function Card({ r, onUse, de, onClose }: { r: Abierto; onUse: (id: string) => vo
             <span className="text-sm font-semibold text-ink-soft">usado el {when.format(r.usado)}</span>
           ) : (
             <button type="button" onClick={() => onUse(r.id)} className="press rounded-full bg-accent px-5 py-2.5 font-semibold text-accent-ink">
-              usar cupón <span className="font-normal opacity-80">({de} lo sabrá)</span>
+              usar cupón
             </button>
           )}
         </div>
