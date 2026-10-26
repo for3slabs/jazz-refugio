@@ -500,6 +500,25 @@ a {
   background: oklch(0.995 0.005 330);
 }
 
+/* …and the ground goes on below the scene, down to the doors (Brian, 2026-10-25: «si hace scroll
+   se dará cuenta que no es todo el fondo»): the whole page wears her beach's sand or her
+   library's wood, and what lives down there (her stickers, a line of help) reads on it. */
+:is(html, body):has([data-escena="playa"]) {
+  background:
+    radial-gradient(oklch(0.2 0.06 315 / 0.16) 1.2px, transparent 1.4px) 0 0 / 7px 7px,
+    oklch(0.82 0.08 65);
+}
+:is(html, body):has([data-escena="biblioteca"]) {
+  background:
+    repeating-linear-gradient(0deg, transparent 0 25px, oklch(0.2 0.06 315 / 0.45) 25px 26.5px),
+    radial-gradient(oklch(0.2 0.06 315 / 0.2) 1.2px, transparent 1.4px) 0 0 / 7px 7px,
+    oklch(0.42 0.07 40);
+}
+.marco:has([data-escena="playa"]) .suelo { color: oklch(0.2 0.06 315); }
+.marco:has([data-escena="biblioteca"]) .suelo { color: oklch(0.97 0.02 330); }
+.marco:has([data-escena]) .suelo.text-ink-soft,
+.marco:has([data-escena]) .suelo .text-ink-soft { color: inherit; opacity: 0.85; }
+
 @media (prefers-reduced-motion: reduce) {
   .rise { animation-name: fade; animation-duration: 200ms; }
   .orb-idle, .animate-ping { animation: none; }
