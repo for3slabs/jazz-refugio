@@ -2,7 +2,7 @@ import Link from "next/link";
 import { Suspense, type ReactNode } from "react";
 import { AsistenteGeneral } from "./asistente";
 import { CurrentDoors, Doors } from "./doors";
-import { ArrowLeft, Gear } from "./icons";
+import { GatoLogo, Gear } from "./icons";
 import { ThemeToggle } from "./theme-toggle";
 
 // The frame every screen shares: a quiet top bar, then one readable column — or, `wide`, the
@@ -46,7 +46,7 @@ export function Shell({
             href="/"
             className="press t-label -ml-2 inline-flex items-center gap-2 rounded-full px-2 py-2 text-ink-soft hover:text-ink"
           >
-            <ArrowLeft className="size-4" />
+            <GatoLogo className="size-6" />
             inicio
           </Link>
         ) : (
