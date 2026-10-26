@@ -529,12 +529,19 @@ a {
 .marco:has([data-escena]) .suelo .text-ink-soft { color: inherit; opacity: 0.85; }
 
 /* a plane leaves the runway and climbs out of the window, once per new wish */
+/* the plane that was waiting on the runway rolls, lifts and climbs out of the window; once it is
+   in the air a new one taxis in from the left and parks where the first one waited */
 @keyframes despegue {
-  0% { transform: translate(60px, 316px) rotate(0) scale(0.8); opacity: 1; }
-  35% { transform: translate(170px, 300px) rotate(-6deg) scale(0.9); }
-  100% { transform: translate(420px, 120px) rotate(-22deg) scale(1.3); opacity: 1; }
+  0% { transform: translate(72px, 318px) rotate(0); }
+  35% { transform: translate(150px, 314px) rotate(-4deg); }
+  100% { transform: translate(330px, 150px) rotate(-24deg) scale(1.3); }
 }
 .despegue { animation: despegue 2.6s cubic-bezier(0.45, 0, 0.6, 1) both; }
+@keyframes llega {
+  0% { transform: translate(-60px, 318px); }
+  100% { transform: translate(72px, 318px); }
+}
+.llega { animation: llega 1.4s 1.8s cubic-bezier(0.2, 0.7, 0.3, 1) both; }
 
 @media (prefers-reduced-motion: reduce) {
   .rise { animation-name: fade; animation-duration: 200ms; }
@@ -547,6 +554,7 @@ a {
   .carril-pista { animation: none; }
   .carril { overflow-x: auto; }
   .despegue { display: none; }
+  .llega { animation: none; transform: translate(72px, 318px); }
 }
 
 :root[data-motion="off"] .rise { animation-name: fade; animation-duration: 200ms; }
