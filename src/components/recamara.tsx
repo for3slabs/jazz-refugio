@@ -189,7 +189,7 @@ export function Recamara({
             onClick={onPaloma}
             style={onPaloma ? { cursor: "pointer" } : undefined}
             role={onPaloma ? "button" : undefined}
-            aria-label={onPaloma ? "una paloma trae un deseo de Brian" : undefined}
+            aria-label={onPaloma ? "una paloma trae un deseo" : undefined}
           >
             <g transform={`translate(${PALOMA.x} ${PALOMA.y})`} stroke={INK} strokeWidth={1.8} strokeLinejoin="round">
               <rect x="-26" y="-50" width="52" height="56" fill="transparent" stroke="none" />

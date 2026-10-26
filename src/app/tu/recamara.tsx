@@ -101,7 +101,7 @@ export function RecamaraDeseos({
       </div>
 
       <p className="suelo mt-3 text-pretty text-sm text-ink-soft">
-        Toca tu libro para ver tus deseos. Cuando Brian te mande uno, llega una paloma a tu balcón.
+        Toca tu libro para ver tus deseos. Cuando llegue una paloma a tu balcón, tócala.
       </p>
       <div aria-hidden className="h-16" />
 
@@ -135,7 +135,7 @@ export function RecamaraDeseos({
                         <div className="min-w-0">
                           <p className="font-semibold">{d.titulo}</p>
                           <p className="text-sm text-ink-soft">
-                            {d.de === "brian" ? "de Brian · " : ""}
+                            {d.de === "brian" ? "llegó con una paloma · " : ""}
                             {cuando.format(d.at)}
                           </p>
                         </div>
@@ -164,7 +164,7 @@ export function RecamaraDeseos({
           {hoja === "paloma" && abierta && (
             // the dove's letter: Brian's wish for her
             <article className="text-center">
-              <p className="text-sm font-semibold text-accent">una paloma te trajo un deseo de Brian</p>
+              <p className="text-sm font-semibold text-accent">una paloma te trajo un deseo</p>
               <h2 id={titulo} className="t-display mt-3 text-pretty text-3xl leading-tight">
                 {abierta.titulo}
               </h2>

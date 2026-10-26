@@ -27,17 +27,14 @@ const MESA_Y = GATO_MESA.y;
 // a book is added — or changes state — the cat hops down, fetches it from the shelf and leaves it
 // where it belongs; when she learns something, it walks to the lectern and writes it down. Without
 // motion everything is simply in place.
-// `otro`: who sees the wishes — Brian on her shelf, Jazz on his.
 export function Librero({
   libros,
   aprendido,
-  otro = "Brian",
   gato = { nombre: NOMBRE_INICIAL, puestos: {} },
   cabecera,
 }: {
   libros: Libro[];
   aprendido: Aprendido[];
-  otro?: string;
   gato?: Mascota;
   cabecera?: ReactNode;
 }) {
@@ -202,8 +199,7 @@ export function Librero({
       </div>
 
       <p className="suelo mt-3 text-pretty text-sm text-ink-soft">
-        Toca un libro para leer lo que escribiste de él, o el libro grande para ver lo que aprendiste. {otro} ve tus «quiero leer» —solo
-        los títulos— para regalarte.
+        Toca un libro para leer lo que escribiste de él, o el libro grande para ver lo que aprendiste.
       </p>
       <div aria-hidden className="h-16" />
 

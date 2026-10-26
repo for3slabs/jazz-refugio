@@ -99,11 +99,11 @@ async function Content({ searchParams }: { searchParams: Search }) {
   const [c, gato] = await Promise.all([loadColeccion(role).catch(() => null), loadMascota().catch(() => undefined)]);
   // the library is a scene of its own: its title and tabs ride on its wall
   if (vista === "librero" && c) {
-    return <Librero libros={c.libros} aprendido={c.aprendido} otro={nombreOtro} gato={gato} cabecera={<Cabecera titulo="tu librero" items={items} current={vista} />} />;
+    return <Librero libros={c.libros} aprendido={c.aprendido} gato={gato} cabecera={<Cabecera titulo="tu librero" items={items} current={vista} />} />;
   }
   // and the airport, for her trips
   if (vista === "viajes" && c) {
-    return <Viajes viajes={c.viajes} otro={nombreOtro} gato={gato} cabecera={<Cabecera titulo="tus viajes" items={items} current={vista} />} />;
+    return <Viajes viajes={c.viajes} gato={gato} cabecera={<Cabecera titulo="tus viajes" items={items} current={vista} />} />;
   }
   return (
     <>
@@ -112,9 +112,9 @@ async function Content({ searchParams }: { searchParams: Search }) {
       {!c ? (
         <p className="mt-8 text-ink-soft">No pude leer esta parte. Vuelve a abrir en un momento.</p>
       ) : vista === "librero" ? (
-        <Librero libros={c.libros} aprendido={c.aprendido} otro={nombreOtro} gato={gato} />
+        <Librero libros={c.libros} aprendido={c.aprendido} gato={gato} />
       ) : (
-        <Viajes viajes={c.viajes} otro={nombreOtro} />
+        <Viajes viajes={c.viajes} />
       )}
     </>
   );

@@ -32,15 +32,12 @@ const quieto = () =>
 // in its paw. The passport holds the places she has been, as airport stamps; the departures board
 // holds the places she wants to go. Adding a wish sends a plane off the runway; adding a place she
 // went makes her cat stamp the passport.
-// `otro`: who sees the wishes — Brian on her trips, Jazz on his.
 export function Viajes({
   viajes,
-  otro = "Brian",
   gato = { nombre: NOMBRE_INICIAL, puestos: {} },
   cabecera,
 }: {
   viajes: Viaje[];
-  otro?: string;
   gato?: Mascota;
   cabecera?: ReactNode;
 }) {
@@ -125,8 +122,7 @@ export function Viajes({
       </div>
 
       <p className="suelo mt-3 text-pretty text-sm text-ink-soft">
-        Toca el pasaporte para ver tus sellos, o la pantalla de salidas para tus próximos vuelos. {otro} ve tus «quiero ir» —solo los
-        lugares— para regalarte.
+        Toca el pasaporte para ver tus sellos, o la pantalla de salidas para tus próximos vuelos.
       </p>
       <div aria-hidden className="h-16" />
 
