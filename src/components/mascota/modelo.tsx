@@ -5,6 +5,7 @@ import { useEffect, useMemo } from "react";
 import * as THREE from "three";
 import { DRACOLoader } from "three/examples/jsm/loaders/DRACOLoader.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import type { ModoId } from "@/lib/modos";
 import type { Puestos } from "@/lib/objeto";
 
@@ -246,10 +247,47 @@ function rig(s: THREE.Object3D): Rig {
   estrellas.visible = remolinos.visible = false;
   s.add(estrellas, remolinos);
 
+  // fused last, once every piece sits under its pivot
+  const caras = new Set([...ojoEstrella, ...ojoRemolino]);
+  for (const g of [todo, cabeza, orejaDer, orejaIzq, brazoDer, brazoIzq, cola]) fundir(g, caras);
+  for (const n of Object.keys(ROPA)) {
+    const ropa = s.getObjectByName(n);
+    if (ropa) fundir(ropa);
+  }
+
   return {
     todo, cabeza, ojos, ojoPiezas, orejaDer, orejaIzq, brazoDer, brazoIzq, cola,
     ojoEstrella, ojoRemolino, estrellas, remolinos,
   };
+}
+
+// One draw per material inside each group that moves as one: the 53 sculpted pieces were 53 draws
+// every frame (S102 audit: 41 % of a slow phone's CPU with the home open). Only the meshes that are
+// direct children are fused — nested pivots keep moving on their own, and a garment stays one group
+// that switches on and off. The eyes are left as they are: they blink and swap faces — and the
+// faces drawn over them (`dejar`) switch on and off one by one, so they are never fused.
+function fundir(g: THREE.Object3D, dejar: Set<THREE.Object3D> = new Set()) {
+  g.updateMatrixWorld(true);
+  const inv = new THREE.Matrix4().copy(g.matrixWorld).invert();
+  const cubos = new Map<string, THREE.Mesh[]>();
+  for (const o of g.children) {
+    const m = o as THREE.Mesh;
+    if (!m.isMesh || Array.isArray(m.material) || dejar.has(m)) continue;
+    const attrs = Object.keys(m.geometry.attributes).sort().join(",");
+    const k = `${m.material.uuid}|${attrs}|${m.geometry.index ? 1 : 0}`;
+    cubos.set(k, [...(cubos.get(k) ?? []), m]);
+  }
+  for (const piezas of cubos.values()) {
+    if (piezas.length < 2) continue;
+    const geos = piezas.map((m) => m.geometry.clone().applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, m.matrixWorld)));
+    const fundida = mergeGeometries(geos);
+    for (const x of geos) x.dispose();
+    if (!fundida) continue; // shapes that cannot be joined stay as they were
+    const una = new THREE.Mesh(fundida, piezas[0].material);
+    una.name = `${g.name || "grupo"}:${piezas.map((m) => m.name).join("+")}`.slice(0, 120);
+    for (const m of piezas) g.remove(m);
+    g.add(una);
+  }
 }
 
 function aplicar(r: Rig, p: Pose, modo: ModoId | null) {
