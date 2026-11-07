@@ -1,9 +1,9 @@
 "use client";
 
 import { useActionState, useEffect, useState, useTransition } from "react";
-import { type RegaloState, dejarRegalo, regalarObjeto } from "../actions";
+import { type RegaloState, dejarRegalo, editarRegalo, regalarObjeto } from "../actions";
 import { objetos, type Regalado } from "@/lib/objeto";
-import { MAX_REGALO, MAX_TITULO, MAX_TRAS } from "@/lib/regalo";
+import { MAX_REGALO, MAX_TITULO, MAX_TRAS, type Regalo } from "@/lib/regalo";
 
 type Tipo = "cupon" | "carta" | "mascota";
 const nombres: Record<Tipo, string> = { cupon: "cupón", carta: "carta", mascota: "para su mascota" };
@@ -12,31 +12,34 @@ const nombres: Record<Tipo, string> = { cupon: "cupón", carta: "carta", mascota
 // and, for Brian, something for her pet. Opened by the first card of «regalos», «＋ envolver uno»;
 // leaving the gift (or «cancelar») closes it again and `onClose` carries what to say.
 // `regalados`: the pet objects Brian already gave — null on her screen, where the pet is not a gift.
+// `editando`: a gift still wrapped, to fix its words — same panel, its words already in, no «se abre».
 export function RegaloNuevo({
   para = "Jazz",
   regalados = null,
+  editando = null,
   onClose,
 }: {
   para?: string;
   regalados?: Regalado[] | null;
+  editando?: Regalo | null;
   onClose: (aviso: string | null) => void;
 }) {
-  const [state, action, pending] = useActionState<RegaloState, FormData>(dejarRegalo, { ok: false, error: null });
-  const [tipo, setTipo] = useState<Tipo>("cupon");
+  const [state, action, pending] = useActionState<RegaloState, FormData>(editando ? editarRegalo : dejarRegalo, { ok: false, error: null });
+  const [tipo, setTipo] = useState<Tipo>(editando?.tipo ?? "cupon");
   const [abre, setAbre] = useState<"ya" | "tras">("ya");
 
   // A gift left closes the panel: the next one starts from a fresh panel, «se abre» included.
   useEffect(() => {
-    if (state.ok) onClose("listo. ya lo ve envuelto.");
-  }, [state, onClose]);
+    if (state.ok) onClose(editando ? "listo, quedó corregido." : "listo. ya lo ve envuelto.");
+  }, [state, onClose, editando]);
 
   const field =
     "block w-full rounded-2xl border border-line bg-canvas px-4 py-3 text-lg text-ink placeholder:text-ink-soft/60 focus:border-accent focus:outline-none";
-  const tipos: Tipo[] = regalados ? ["cupon", "carta", "mascota"] : ["cupon", "carta"];
+  const tipos: Tipo[] = regalados && !editando ? ["cupon", "carta", "mascota"] : ["cupon", "carta"];
 
   return (
     <div className="rise mt-4 space-y-4 rounded-3xl border border-accent/40 bg-surface p-5">
-      <p className="font-semibold">un regalo para {para}</p>
+      <p className="font-semibold">{editando ? `corregir tu regalo para ${para}` : `un regalo para ${para}`}</p>
       <div role="radiogroup" aria-label="tipo" className="flex flex-wrap gap-2">
         {tipos.map((t) => (
           <button
@@ -63,11 +66,13 @@ export function RegaloNuevo({
       ) : (
         <form action={action} className="space-y-4">
           <input type="hidden" name="tipo" value={tipo} />
+          {editando && <input type="hidden" name="id" value={editando.id} />}
           <input
             name="titulo"
             required
             autoFocus
             maxLength={MAX_TITULO}
+            defaultValue={editando?.titulo}
             placeholder={tipo === "cupon" ? "vale por un café conmigo" : "el título de tu carta"}
             aria-label="título"
             className={field}
@@ -77,11 +82,12 @@ export function RegaloNuevo({
             rows={3}
             required
             maxLength={MAX_REGALO}
+            defaultValue={editando?.texto}
             placeholder="lo que quieras decirle con él…"
             aria-label="texto"
             className={`${field} resize-y leading-relaxed`}
           />
-          {para === "Jazz" && (
+          {para === "Jazz" && !editando && (
             <fieldset className="space-y-2">
               <legend className="text-sm font-semibold text-ink-soft">se abre</legend>
               <label className="flex items-center gap-3">
@@ -109,7 +115,7 @@ export function RegaloNuevo({
             <p aria-live="polite" className="text-sm text-ink-soft">
               {state.error}
             </p>
-            <Botones pending={pending} onCancel={() => onClose(null)} label="dejar regalo" />
+            <Botones pending={pending} onCancel={() => onClose(null)} label={editando ? "guardar cambios" : "dejar regalo"} />
           </div>
         </form>
       )}

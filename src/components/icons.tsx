@@ -238,3 +238,10 @@ export const GatoLogo = ({ className }: P) => (
     <path d="M12 16.2 q-1 1.2 -2 0.4 M12 16.2 q1 1.2 2 0.4" fill="none" stroke="oklch(0.2 0.06 315)" strokeWidth={0.8} strokeLinecap="round" />
   </svg>
 );
+
+export const Bell = ({ className }: P) => (
+  <svg viewBox="0 0 24 24" className={className} {...base}>
+    <path d="M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 2H5Z" />
+    <path d="M10 20.5a2.2 2.2 0 0 0 4 0" />
+  </svg>
+);
