@@ -1,6 +1,5 @@
 "use server";
 
-import { createHash, timingSafeEqual } from "node:crypto";
 import { refresh, revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { RedirectType, redirect } from "next/navigation";
@@ -53,16 +52,7 @@ import { verFlores } from "@/lib/jardin";
 import { MAX_DESCRIPCION_DESEO, MAX_DESEO, crearDeseo, soltarDeseo } from "@/lib/deseos";
 import { type Tipo as TipoSoltado, recuperar } from "@/lib/soltado";
 import { COOKIE, MAX_AGE_S, type Role, issueToken } from "@/lib/token";
-
-// Forgiving on purpose: case, accents and extra spaces do not matter — a wrong
-// accent should never lock her out of her own place.
-function normalize(s: string) {
-  return s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/\s+/g, " ").trim();
-}
-
-const digest = (s: string) => createHash("sha256").update(normalize(s)).digest();
-const matches = (given: Buffer, expected: string | undefined) =>
-  !!expected && timingSafeEqual(given, digest(expected));
+import { MAX_PALABRA, MIN_PALABRA, esLaDeJazz, guardarLaDeJazz, igualA, normalize } from "@/lib/palabra";
 
 export type EntrarState = { error: string | null };
 
@@ -71,10 +61,15 @@ export async function entrar(_: EntrarState, form: FormData): Promise<EntrarStat
     return { error: "Tu refugio todavía no está listo. Inténtalo en un rato." };
   }
 
-  const given = digest(String(form.get("clave") ?? ""));
+  const given = String(form.get("clave") ?? "");
   // Both words are always compared, so the time taken never says which one was close.
-  const isJazz = matches(given, process.env.REFUGIO_CLAVE);
-  const isBrian = matches(given, process.env.REFUGIO_CLAVE_BRIAN);
+  let isJazz: boolean;
+  try {
+    isJazz = await esLaDeJazz(given);
+  } catch {
+    return { error: "Tu refugio no responde ahorita. Inténtalo en un rato." };
+  }
+  const isBrian = igualA(given, process.env.REFUGIO_CLAVE_BRIAN);
   const role: Role | null = isBrian ? "brian" : isJazz ? "jazz" : null;
 
   const token = role && (await issueToken(role));
@@ -97,6 +92,33 @@ export async function entrar(_: EntrarState, form: FormData): Promise<EntrarStat
 export async function salir() {
   (await cookies()).delete(COOKIE);
   redirect("/entrar");
+}
+
+export type PalabraState = { ok: boolean; error: string | null };
+
+// Her word, changed by her from «ajustes»: the one she has now, the new one twice. Only her session.
+export async function cambiarPalabra(_: PalabraState, form: FormData): Promise<PalabraState> {
+  if ((await currentRole()) !== "jazz") return { ok: false, error: "Solo tú cambias tu palabra." };
+  const ahora = String(form.get("ahora") ?? "");
+  const nueva = String(form.get("nueva") ?? "");
+  const otra = String(form.get("otra") ?? "");
+  const n = normalize(nueva);
+  if (n.length < MIN_PALABRA) return { ok: false, error: `La nueva necesita al menos ${MIN_PALABRA} letras.` };
+  if (n.length > MAX_PALABRA) return { ok: false, error: "La nueva es demasiado larga." };
+  if (n !== normalize(otra)) return { ok: false, error: "La nueva y la repetida no son iguales." };
+  // a word that opens «regalos» as Brian would send her there instead of home
+  if (igualA(nueva, process.env.REFUGIO_CLAVE_BRIAN)) return { ok: false, error: "Esa no se puede. Elige otra." };
+  try {
+    if (!(await esLaDeJazz(ahora))) {
+      await new Promise((r) => setTimeout(r, 700)); // slows down guessing
+      return { ok: false, error: "Tu palabra de ahora no es esa." };
+    }
+    if (n === normalize(ahora)) return { ok: false, error: "Es la misma que ya tienes." };
+    await guardarLaDeJazz(nueva);
+  } catch {
+    return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
+  }
+  return { ok: true, error: null };
 }
 
 export type EstadoResult = { ok: boolean; error: string | null };

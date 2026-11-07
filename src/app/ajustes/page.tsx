@@ -2,6 +2,7 @@ import { PageTitle, Shell } from "@/components/shell";
 import { Gear } from "@/components/icons";
 import { salir } from "../actions";
 import { MotionSwitch } from "./motion-switch";
+import { CambiarPalabra } from "./palabra";
 
 export default function Ajustes() {
   return (
@@ -9,6 +10,7 @@ export default function Ajustes() {
       <PageTitle icon={<Gear className="size-7" />}>ajustes</PageTitle>
       <div className="mt-8 divide-y divide-line rounded-3xl border border-line bg-surface">
         <MotionSwitch />
+        <CambiarPalabra />
         <p className="px-6 py-5 text-sm leading-relaxed text-ink-soft">
           Tu jardín y lo que escribes aquí se guardan solo en este dispositivo. Nadie más los ve.
         </p>

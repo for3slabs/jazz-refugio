@@ -51,8 +51,9 @@ function motionOff() {
 }
 const subscribe = () => () => {};
 
-// `modo`: her mode — it colours the orb behind the canvas; the sculpted pet keeps one happy face.
+// `modo`: her mode — it colours the orb behind the canvas and moves the cat (modelo.tsx · pose).
 export default function Escena({
+  modo,
   puestos,
   className = "",
   interactive = true,
@@ -102,7 +103,7 @@ export default function Escena({
         <Giro angle={angle}>
           {/* the sculpted pet loads after the page; until then the orb just shows its colour */}
           <Suspense fallback={null}>
-            <Modelo puestos={puestos} />
+            <Modelo puestos={puestos} modo={modo} still={still && !turning} />
           </Suspense>
         </Giro>
         <Sombra />
