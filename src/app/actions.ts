@@ -22,8 +22,9 @@ import {
 } from "@/lib/lienzo";
 import { MAX_DESCRIPCION, MAX_DOC, MAX_NOMBRE, MAX_NOTA, isHex } from "@/lib/tablero";
 import { head } from "@vercel/blob";
-import { type Abierto, MAX_REGALO, MAX_TITULO, MAX_TRAS } from "@/lib/regalo";
-import { abrir, borrar, crear, usar } from "@/lib/regalos";
+import { type Abierto, MAX_REGALO, MAX_TITULO, MAX_TRAS, isReaccion } from "@/lib/regalo";
+import { abrir, aceptar, avisarListos, borrar, crear, editar, usar } from "@/lib/regalos";
+import { esSuscripcion, guardarSuscripcion, quitarSuscripcion } from "@/lib/avisos";
 import { type ObjetoId, isObjeto, limpiarPuestos } from "@/lib/objeto";
 import { limpiarNombre, regalar, saveMascota } from "@/lib/mascota";
 import { ESTADOS_MISION, type EstadoMision, MAX_TEXTO } from "@/lib/mision";
@@ -46,6 +47,7 @@ import {
 } from "@/lib/pendientes";
 import { isModo } from "@/lib/modos";
 import { currentRole } from "@/lib/session";
+import { frase } from "@/lib/db";
 import type { Moment } from "@/lib/local";
 import { anotarVuelta, subirVueltas } from "@/lib/vueltas";
 import { verFlores } from "@/lib/jardin";
@@ -142,6 +144,7 @@ export async function volviste(paso: string): Promise<number | null> {
   if (role !== "jazz") return null;
   try {
     const n = await anotarVuelta(role, paso.trim());
+    await avisarListos((await loadMisiones()).total).catch(() => {});
     // her garden has one more flower: «ver mi jardín» must load it fresh, so her cat plants it
     revalidatePath("/tu");
     return n;
@@ -210,6 +213,8 @@ export const cumplirMision = async (id: string) =>
   deJazz(async () => {
     const m = await cumplir(id);
     if (m?.origen) await marcarPaso(m.origen.meta, m.origen.paso, "hecho");
+    // her garden grew: a gift may be ready to open
+    await avisarListos((await loadMisiones()).total).catch(() => {});
   });
 
 // Letting it go sends the step back to wait in its goal — nothing is lost.
@@ -306,32 +311,59 @@ export const cumplirPaso = async (metaId: string, pasoId: string) =>
       }
     }
     await florDePaso(paso.texto);
-    return marcarPaso(metaId, pasoId, "hecho");
+    const err = await marcarPaso(metaId, pasoId, "hecho");
+    await avisarListos((await loadMisiones()).total).catch(() => {});
+    return err;
   });
 
 
 // Gifts go both ways: each one leaves and lets go their own; the other opens and uses them.
 export type RegaloState = { ok: boolean; error: string | null };
 
-export async function dejarRegalo(_: RegaloState, form: FormData): Promise<RegaloState> {
-  const role = await currentRole();
-  if (!role) return { ok: false, error: "Entra primero." };
+// The words of a gift, checked the same way for a new one and for a fix.
+function palabrasDeRegalo(form: FormData): { tipo: "carta" | "cupon"; titulo: string; cuerpo: string } | string {
   const tipo = form.get("tipo") === "carta" ? "carta" : "cupon";
   const titulo = String(form.get("titulo") ?? "").trim();
   const cuerpo = String(form.get("texto") ?? "").trim();
-  if (!titulo) return { ok: false, error: "Ponle un título." };
+  if (!titulo) return "Ponle un título.";
   // the base asks for both (0001 · regalo.texto 1-600): an empty one used to fail as «no se pudo guardar»
-  if (!cuerpo) return { ok: false, error: "Escríbele algo con él." };
-  if (titulo.length > MAX_TITULO) return { ok: false, error: `El título, máximo ${MAX_TITULO} caracteres.` };
-  if (cuerpo.length > MAX_REGALO) return { ok: false, error: `El texto, máximo ${MAX_REGALO} caracteres.` };
+  if (!cuerpo) return "Escríbele algo con él.";
+  if (titulo.length > MAX_TITULO) return `El título, máximo ${MAX_TITULO} caracteres.`;
+  if (cuerpo.length > MAX_REGALO) return `El texto, máximo ${MAX_REGALO} caracteres.`;
+  return { tipo, titulo, cuerpo };
+}
+
+export async function dejarRegalo(_: RegaloState, form: FormData): Promise<RegaloState> {
+  const role = await currentRole();
+  if (!role) return { ok: false, error: "Entra primero." };
+  const p = palabrasDeRegalo(form);
+  if (typeof p === "string") return { ok: false, error: p };
+  const { tipo, titulo, cuerpo } = p;
   // only her gifts can wait for missions: Brian has no garden
   const tras = role === "brian" && form.get("abre") === "tras" ? Math.min(MAX_TRAS, Math.max(1, Math.floor(Number(form.get("n")) || 1))) : 0;
   try {
     // «tras N misiones» counts from her total right now.
-    const desde = tras ? (await loadMisiones()).total + tras : 0;
-    await crear(role, tipo, titulo, cuerpo, desde);
+    const total = role === "brian" ? (await loadMisiones()).total : 0;
+    await crear(role, tipo, titulo, cuerpo, tras ? total + tras : 0, total);
   } catch {
     return { ok: false, error: "No se pudo guardar. Inténtalo de nuevo en un momento." };
+  }
+  refresh();
+  return { ok: true, error: null };
+}
+
+// The giver fixes a gift while it is still wrapped; once opened, what was read stays as it was.
+export async function editarRegalo(_: RegaloState, form: FormData): Promise<RegaloState> {
+  const role = await currentRole();
+  if (!role) return { ok: false, error: "Entra primero." };
+  const p = palabrasDeRegalo(form);
+  if (typeof p === "string") return { ok: false, error: p };
+  try {
+    if (!(await editar(role, String(form.get("id") ?? ""), p.tipo, p.titulo, p.cuerpo))) {
+      return { ok: false, error: "Ya lo abrió: ese ya no se cambia." };
+    }
+  } catch (e) {
+    return { ok: false, error: frase(e) ?? "No se pudo guardar. Inténtalo de nuevo en un momento." };
   }
   refresh();
   return { ok: true, error: null };
@@ -383,6 +415,44 @@ export async function abrirRegalo(id: string): Promise<EstadoResult & { regalo: 
   } catch {
     return { ok: false, error: "No se pudo abrir. Inténtalo otra vez.", regalo: null };
   }
+}
+
+// «acepto», with one of five reactions — the giver sees it and gets a notification.
+export async function aceptarRegalo(id: string, reaccion: string): Promise<EstadoResult> {
+  const role = await currentRole();
+  if (!role) return { ok: false, error: "Entra primero." };
+  if (!isReaccion(reaccion)) return { ok: false, error: "Esa reacción no existe." };
+  try {
+    if (!(await aceptar(role, id, reaccion))) return { ok: false, error: "Ábrelo primero." };
+  } catch {
+    return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
+  }
+  refresh();
+  return { ok: true, error: null };
+}
+
+// «recibir avisos»: this phone's push subscription, for whoever is signed in on it.
+export async function guardarAviso(sub: unknown): Promise<EstadoResult> {
+  const role = await currentRole();
+  if (!role) return { ok: false, error: "Entra primero." };
+  if (!esSuscripcion(sub)) return { ok: false, error: "Este teléfono no dio un aviso válido." };
+  try {
+    await guardarSuscripcion(role, sub);
+  } catch {
+    return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
+  }
+  return { ok: true, error: null };
+}
+
+export async function quitarAviso(endpoint: string): Promise<EstadoResult> {
+  const role = await currentRole();
+  if (!role) return { ok: false, error: "Entra primero." };
+  try {
+    await quitarSuscripcion(role, String(endpoint));
+  } catch {
+    return { ok: false, error: "No se pudo guardar. Inténtalo otra vez." };
+  }
+  return { ok: true, error: null };
 }
 
 export async function usarCupon(id: string): Promise<EstadoResult> {

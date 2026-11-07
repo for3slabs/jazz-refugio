@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { Avisos } from "@/components/avisos";
 import { redirect } from "next/navigation";
 import { PageTitle, Shell } from "@/components/shell";
 import { Gift } from "@/components/icons";
@@ -11,7 +12,8 @@ import { Regalos } from "./regalos";
 
 // «regalos» is the one thing between the two that stays in her refuge (Brian, 2026-10-25: «es su
 // lugar seguro de ella … nada rastro mío y de comunicación», and then «esa función de regalos sí
-// déjala»): letters and coupons both ways, wrapped. No notes, no shared question, no «seen».
+// déjala»): letters and coupons both ways, wrapped. Since 2026-11-06 a gift answers back — opened,
+// accepted, a reaction, and a notification — «que los dos nos volvamos más cercanos». Only here.
 export default function RegalosPage() {
   return (
     <Suspense
@@ -66,11 +68,12 @@ async function Content() {
       <p className="mt-2 text-pretty text-ink-soft">
         {role === "jazz" ? "cupones y cartas · algunos esperan tus misiones" : "cupones y cartas · los tuyos esperan sus misiones"}
       </p>
+      <Avisos className="mt-4" />
       <Regalos
         {...vistaDeJazz(regalos, total)}
         de={otro}
-        // whether the other one opened it is never shown: what she does in her refuge is hers
-        dados={dados.map((r) => ({ ...r, abierto: null }))}
+        // what became of each gift given: opened, accepted, its reaction (0019)
+        dados={dados}
         regalados={regalados}
       />
       {/* room under the last line, so the assistant's floating button never sits on it */}

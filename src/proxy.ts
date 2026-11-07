@@ -3,7 +3,8 @@ import type { NextRequest } from "next/server";
 import { COOKIE, verifyToken } from "@/lib/token";
 
 // Every page sits behind the passphrase; only the door itself and static files are open — and the
-// daily purge, which Vercel's cron calls with its own secret instead of a cookie (api/cron/purga).
+// daily purge, which Vercel's cron calls with its own secret instead of a cookie (api/cron/purga),
+// and the notification worker and app manifest (sw.js, manifest.webmanifest), which say nothing of her.
 // Her refuge is hers (Brian, 2026-10-25: «es su lugar seguro de ella … nada rastro mío»): Brian's
 // word opens «regalos» — to wrap gifts for her and open hers — and every other page sends him back
 // there, so nothing else of hers is ever on his screen.
@@ -25,6 +26,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!entrar|api/cron/purga$|_next/static|_next/image|favicon.ico|icon|apple-icon|.*\\.(?:svg|png|jpg|jpeg|webp|ico|woff2?)$).*)",
+    "/((?!entrar|api/cron/purga$|sw\\.js$|manifest\\.webmanifest$|_next/static|_next/image|favicon.ico|icon|apple-icon|.*\\.(?:svg|png|jpg|jpeg|webp|ico|woff2?)$).*)",
   ],
 };
