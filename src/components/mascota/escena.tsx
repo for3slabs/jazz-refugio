@@ -1,7 +1,7 @@
 "use client";
 
-import { Canvas, useFrame } from "@react-three/fiber";
-import { Suspense, useMemo, useRef, useState, useSyncExternalStore } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Suspense, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import * as THREE from "three";
 import type { ModoId } from "@/lib/modos";
 import type { Puestos } from "@/lib/objeto";
@@ -46,6 +46,41 @@ function Giro({ angle, children }: { angle: React.RefObject<number>; children: R
   );
 }
 
+// The cat is drawn on demand: 30 frames a second while it just lives (its movements are slow — a
+// breath, a wave), every frame while her finger turns it, and none while it is off screen or the
+// tab is hidden. S102 audit: at 60 it kept a slow phone's CPU 41 % busy with the home just open.
+function Ritmo({ fps, activo }: { fps: number; activo: boolean }) {
+  const invalidate = useThree((s) => s.invalidate);
+  useEffect(() => {
+    if (!activo) return;
+    const paso = 1000 / fps;
+    let id = 0;
+    let last = 0;
+    const tick = (t: number) => {
+      if (t - last >= paso - 2) {
+        last = t;
+        invalidate();
+      }
+      id = requestAnimationFrame(tick);
+    };
+    id = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(id);
+  }, [fps, activo, invalidate]);
+  return null;
+}
+
+function useEnPantalla(ref: React.RefObject<HTMLElement | null>) {
+  const [visto, setVisto] = useState(true);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || !("IntersectionObserver" in window)) return;
+    const io = new IntersectionObserver(([e]) => setVisto(e.isIntersecting));
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ref]);
+  return visto;
+}
+
 function motionOff() {
   return document.documentElement.dataset.motion === "off";
 }
@@ -68,9 +103,12 @@ export default function Escena({
   const still = useSyncExternalStore(subscribe, motionOff, () => false);
   // still: drawn on demand — but it follows her finger while she turns it
   const [turning, setTurning] = useState(false);
+  const caja = useRef<HTMLDivElement>(null);
+  const enPantalla = useEnPantalla(caja);
 
   return (
     <div
+      ref={caja}
       className={`${interactive ? "touch-pan-y cursor-grab active:cursor-grabbing" : "pointer-events-none"} ${className}`}
       onPointerDown={(e) => {
         if (!interactive) return;
@@ -92,7 +130,7 @@ export default function Escena({
     >
       <Canvas
         dpr={[1, 2]}
-        frameloop={still && !turning ? "demand" : "always"}
+        frameloop={turning ? "always" : "demand"}
         camera={{ position: [0, 1.6, 7.6], fov: 30 }}
         gl={{ alpha: true, antialias: true }}
         onCreated={({ camera }) => camera.lookAt(0, 1.35, 0)}
@@ -107,6 +145,7 @@ export default function Escena({
           </Suspense>
         </Giro>
         <Sombra />
+        <Ritmo fps={30} activo={!still && !turning && enPantalla} />
       </Canvas>
     </div>
   );
